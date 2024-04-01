@@ -1,4 +1,4 @@
-import { IndexOptions } from "../";
+import { IndexOptions } from "./options/IndexOptions";
 /**
  * Creates a database index.
  * Can be used on entity property or on entity.

@@ -1,4 +1,3 @@
-import { ColumnOptions } from "../../";
 import { SimpleColumnType, SpatialColumnType, WithLengthColumnType, WithPrecisionColumnType, WithWidthColumnType } from "../../driver/types/ColumnTypes";
 import { ColumnCommonOptions } from "../options/ColumnCommonOptions";
 import { SpatialColumnOptions } from "../options/SpatialColumnOptions";
@@ -8,6 +7,7 @@ import { ColumnEnumOptions } from "../options/ColumnEnumOptions";
 import { ColumnEmbeddedOptions } from "../options/ColumnEmbeddedOptions";
 import { ColumnHstoreOptions } from "../options/ColumnHstoreOptions";
 import { ColumnWithWidthOptions } from "../options/ColumnWithWidthOptions";
+import { ColumnOptions } from "../options/ColumnOptions";
 /**
  * Column decorator is used to mark a specific class property as a table column. Only properties decorated with this
  * decorator will be persisted to the database when entity be saved.

@@ -14,9 +14,10 @@ import { AuroraDataApiConnectionOptions } from "../driver/aurora-data-api/Aurora
 import { SapConnectionOptions } from "../driver/sap/SapConnectionOptions";
 import { AuroraDataApiPostgresConnectionOptions } from "../driver/aurora-data-api-pg/AuroraDataApiPostgresConnectionOptions";
 import { BetterSqlite3ConnectionOptions } from "../driver/better-sqlite3/BetterSqlite3ConnectionOptions";
+import { CapacitorConnectionOptions } from "../driver/capacitor/CapacitorConnectionOptions";
 /**
  * ConnectionOptions is an interface with settings and options for specific connection.
  * Options contain database and other connection-related settings.
  * Consumer must provide connection options for each of your connections.
  */
-export declare type ConnectionOptions = MysqlConnectionOptions | PostgresConnectionOptions | CockroachConnectionOptions | SqliteConnectionOptions | SqlServerConnectionOptions | SapConnectionOptions | OracleConnectionOptions | CordovaConnectionOptions | NativescriptConnectionOptions | ReactNativeConnectionOptions | SqljsConnectionOptions | MongoConnectionOptions | AuroraDataApiConnectionOptions | AuroraDataApiPostgresConnectionOptions | ExpoConnectionOptions | BetterSqlite3ConnectionOptions;
+export declare type ConnectionOptions = MysqlConnectionOptions | PostgresConnectionOptions | CockroachConnectionOptions | SqliteConnectionOptions | SqlServerConnectionOptions | SapConnectionOptions | OracleConnectionOptions | CordovaConnectionOptions | NativescriptConnectionOptions | ReactNativeConnectionOptions | SqljsConnectionOptions | MongoConnectionOptions | AuroraDataApiConnectionOptions | AuroraDataApiPostgresConnectionOptions | ExpoConnectionOptions | BetterSqlite3ConnectionOptions | CapacitorConnectionOptions;

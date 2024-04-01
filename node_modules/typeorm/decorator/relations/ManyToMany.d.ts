@@ -1,4 +1,5 @@
-import { ObjectType, RelationOptions } from "../../";
+import { ObjectType } from "../../common/ObjectType";
+import { RelationOptions } from "../options/RelationOptions";
 /**
  * Many-to-many is a type of relationship when Entity1 can have multiple instances of Entity2, and Entity2 can have
  * multiple instances of Entity1. To achieve it, this type of relation creates a junction table, where it storage

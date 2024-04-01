@@ -1,4 +1,4 @@
-import { SelectQueryBuilder } from "../../";
+import { SelectQueryBuilder } from "../../query-builder/SelectQueryBuilder";
 /**
  * Holds a number of children in the closure table of the column.
  *
