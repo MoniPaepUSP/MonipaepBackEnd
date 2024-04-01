@@ -75,5 +75,3 @@ Implementação da base de dados para o aplicativo MonipaEp e seu sistema web de
 	<li>ci: afeta apenas os componentes de configuração do CI, arquivos ou scripts (Travis, Circle, BrowserStack, SauceLabs)</li>
 	<li>chore: outras mudanças que não afetam o source ou arquivos de teste.</li>
 </ul>
-
-CI
