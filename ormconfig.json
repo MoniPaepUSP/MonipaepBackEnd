@@ -1,9 +1,9 @@
 {
     "type": "postgres",
-    "host": "postgres",
+    "host": "localhost",
     "port": 5432,
     "username": "postgres",
-    "password": "postgres",
+    "password": "posgres",
     "database": "postgres",
     "logging": true,
     "migrations": ["./src/database/migrations/**.ts"],
