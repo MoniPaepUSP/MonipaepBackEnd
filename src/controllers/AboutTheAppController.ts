@@ -1,13 +1,16 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from 'typeorm'
+import { getCustomRepository, getRepository, Like } from 'typeorm'
 import { AboutTheApp } from "../models";
 import { AboutTheAppsRepository } from "../repositories";
+
+import { AppDataSource } from "src/database";
 
 class AboutTheAppController{
   async create(request: Request, response: Response){
     const body = request.body
     
     const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
+    // const AboutTheAppRepository = AppDataSource.getRepository(AboutTheApp)
 
     const AboutTheAppAlreadyExists = await AboutTheAppRepository.findOne({
       main: body.main
