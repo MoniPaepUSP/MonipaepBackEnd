@@ -1,16 +1,28 @@
 import { Request, Response } from "express";
-import { getCustomRepository } from "typeorm";
-import { AppointmentsRepository, PatientsRepository } from "../repositories";
+// import { AppointmentsRepository, PatientsRepository } from "../repositories";
+import { Appointment, Patient } from "src/models";
+import { AppDataSource } from "src/database";
+import { Repository } from "typeorm";
+
 
 class AppointmentController {
+    private appointmentsRepository : Repository<Appointment>;
+    private patientsRepository : Repository<Patient>;
+
+    constructor() {
+        this.appointmentsRepository = AppDataSource.getRepository(Appointment);
+        this.patientsRepository = AppDataSource.getRepository(Patient);
+    }
+
     async create(request: Request, response: Response){
         const body = request.body
+        
 
-        const appointmentsRepository = getCustomRepository(AppointmentsRepository)
-        const patientsRepository = getCustomRepository(PatientsRepository)
-
-        const patientExists = await patientsRepository.findOne({
-            id: body.patient_id
+        const patientExists = await this.patientsRepository.findOne(
+            {
+                where :{
+                    id : body.patient_id
+                }
         })
 
         if(!patientExists){
@@ -19,9 +31,9 @@ class AppointmentController {
             })
         }
 
-        const appointment = appointmentsRepository.create(body)
+        const appointment = this.appointmentsRepository.create(body)
 
-        await appointmentsRepository.save(appointment)
+        await this.appointmentsRepository.save(appointment)
 
         return response.status(201).json(appointment)
     }

@@ -1,19 +1,27 @@
 import { Request, Response } from "express";
-import { getCustomRepository, getRepository, Like } from 'typeorm'
+import {  Like, Repository } from 'typeorm'
 import { AboutTheApp } from "../models";
-import { AboutTheAppsRepository } from "../repositories";
+// import { AboutTheAppsRepository } from "../repositories";
 
 import { AppDataSource } from "src/database";
 
 class AboutTheAppController{
+  private AboutTheAppRepository : Repository<AboutTheApp>;
+  
+  constructor() { // cria o repositorio que sera compartilhado por todo controller
+    this.AboutTheAppRepository = AppDataSource.getRepository(AboutTheApp);
+  }
+
   async create(request: Request, response: Response){
     const body = request.body
     
-    const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
-    // const AboutTheAppRepository = AppDataSource.getRepository(AboutTheApp)
+    // const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
+    
 
-    const AboutTheAppAlreadyExists = await AboutTheAppRepository.findOne({
-      main: body.main
+    const AboutTheAppAlreadyExists = await this.AboutTheAppRepository.findOne({
+      where : {
+        main: body.main
+      }
     })
 
     if(AboutTheAppAlreadyExists){
@@ -23,8 +31,8 @@ class AboutTheAppController{
     }
 
     try {
-      const AboutTheAppBody = AboutTheAppRepository.create(body)
-      const about: any = await AboutTheAppRepository.save(AboutTheAppBody)
+      const AboutTheAppBody = this.AboutTheAppRepository.create(body)
+      const about: any = await this.AboutTheAppRepository.save(AboutTheAppBody)
   
       return response.status(201).json({
         success: "Informação registrada com sucesso",
@@ -40,12 +48,11 @@ class AboutTheAppController{
   async list(request: Request, response: Response) {
     const { main, id } = request.query
 
-    const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
     let filters = {}
 
     if(id) {
-      const mainExists = await AboutTheAppRepository.findOne({
-        id: String(id)
+      const mainExists = await this.AboutTheAppRepository.findOne({
+        where: {id: String(id)}
       })
 
       if(!mainExists) {
@@ -61,7 +68,7 @@ class AboutTheAppController{
       filters = { ...filters, main: Like(`%${String(main)}%`) }
     }
 
-    const mainsList = await AboutTheAppRepository.findAndCount({
+    const mainsList = await this.AboutTheAppRepository.findAndCount({
       where: filters,
       order: {
         main: "ASC"
@@ -78,9 +85,8 @@ class AboutTheAppController{
     const body = request.body
     const { id } = request.params
 
-    const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
 
-    const mainExists = await AboutTheAppRepository.findOne({ id })
+    const mainExists = await this.AboutTheAppRepository.findOne({where: { id : id} })
 
     if(!mainExists) {
       return response.status(404).json({
@@ -89,7 +95,7 @@ class AboutTheAppController{
     }
 
     try {
-      await AboutTheAppRepository.createQueryBuilder()
+      await this.AboutTheAppRepository.createQueryBuilder()
         .update(AboutTheApp)
         .set(body)
         .where("id = :id", { id })
@@ -107,9 +113,8 @@ class AboutTheAppController{
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
-    const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
 
-    const questionExists = await AboutTheAppRepository.findOne({ id })
+    const questionExists = await this.AboutTheAppRepository.findOne({ where: {id : id} })
 
     if(!questionExists) {
       return response.status(404).json({
@@ -118,7 +123,7 @@ class AboutTheAppController{
     }
     
     try {
-      await AboutTheAppRepository.createQueryBuilder()
+      await this.AboutTheAppRepository.createQueryBuilder()
         .delete()
         .from(AboutTheApp)
         .where("id = :id", { id })

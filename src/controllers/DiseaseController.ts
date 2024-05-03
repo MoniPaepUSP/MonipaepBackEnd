@@ -1,15 +1,25 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from "typeorm";
+import { Like, Repository } from "typeorm";
 import { Disease } from "../models";
-import { DiseaseRepository } from "../repositories";
+// import { DiseaseRepository } from "../repositories";
+import { AppDataSource } from "src/database";
 class DiseaseController{
+  private diseaseRepository : Repository<Disease>;
+
+  constructor() {
+    this.diseaseRepository = AppDataSource.getRepository(Disease);
+  }
+  
+
   async create(request: Request, response: Response){
     const body = request.body
 
-    const diseaseRepository = getCustomRepository(DiseaseRepository)
 
-    const diseaseAlreadyExists = await diseaseRepository.findOne({
-      name: body.name
+
+    const diseaseAlreadyExists = await this.diseaseRepository.findOne({
+      where: {
+        name: body.name
+      }
     })
 
     if(diseaseAlreadyExists){
@@ -19,8 +29,8 @@ class DiseaseController{
     }
     
     try {
-      const disease = diseaseRepository.create(body)
-      await diseaseRepository.save(disease)
+      const disease = this.diseaseRepository.create(body)
+      await this.diseaseRepository.save(disease)
 
       return response.status(201).json({
         success: "Doença registrada com sucesso"
@@ -36,7 +46,9 @@ class DiseaseController{
     const { name, page } = request.query
     let filters = {}
 
-    const diseaseRepository = getCustomRepository(DiseaseRepository)
+    // const diseaseRepository = getCustomRepository(DiseaseRepository)
+    // const diseaseRepository = AppDataSource.getRepository(Disease);
+
 
     if(name) {
       filters = { name: Like(`%${String(name)}%`) }
@@ -54,7 +66,7 @@ class DiseaseController{
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
-    const diseaseList = await diseaseRepository.findAndCount(options)
+    const diseaseList = await this.diseaseRepository.findAndCount(options)
 
     return response.status(200).json({
       diseases: diseaseList[0],
@@ -66,9 +78,15 @@ class DiseaseController{
     const body = request.body
     const { name } = request.params
 
-    const diseaseRepository = getCustomRepository(DiseaseRepository)
+    // const diseaseRepository = getCustomRepository(DiseaseRepository)
+    // const diseaseRepository = 
 
-    const isValidDisease = await diseaseRepository.findOne({ name })
+    const isValidDisease = await this.diseaseRepository.findOne(
+      {
+        where: { 
+          name
+        } 
+      })
     
     if(!isValidDisease){
       return response.status(404).json({
@@ -77,7 +95,7 @@ class DiseaseController{
     }
 
     try {
-      await diseaseRepository.createQueryBuilder()
+      await this.diseaseRepository.createQueryBuilder()
         .update(Disease)
         .set(body)
         .where("name = :name", { name })
@@ -95,9 +113,15 @@ class DiseaseController{
   async deleteOne(request: Request, response: Response){
     const { name } = request.params
 
-    const diseaseRepository = getCustomRepository(DiseaseRepository)
+    // const diseaseRepository = getCustomRepository(DiseaseRepository)
+    // const diseaseRepository = AppDataSource.getRepository(Disease);
 
-    const isValidDisease = await diseaseRepository.findOne({ name })
+
+    const isValidDisease = await this.diseaseRepository.findOne({ 
+      where: {
+        name
+      } 
+    })
     
     if(!isValidDisease){
       return response.status(404).json({
@@ -106,7 +130,7 @@ class DiseaseController{
     }
     
     try {
-      await diseaseRepository.createQueryBuilder()
+      await this.diseaseRepository.createQueryBuilder()
         .delete()
         .from(Disease)
         .where("name = :name", { name })
