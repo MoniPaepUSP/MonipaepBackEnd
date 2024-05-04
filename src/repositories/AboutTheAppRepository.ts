@@ -1,7 +1,5 @@
-import { EntityRepository, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { AboutTheApp } from "../models";
+import { AppDataSource } from "src/database";
 
-@EntityRepository(AboutTheApp)
-class AboutTheAppsRepository extends Repository<AboutTheApp> {}
-
-export {AboutTheAppsRepository}
+export const AboutTheAppRepository : Repository<AboutTheApp> = AppDataSource.getRepository(AboutTheApp);

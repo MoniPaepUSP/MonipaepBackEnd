@@ -1,5 +1,5 @@
 # docker-compose.yml
-version: "3"
+version: "3.1"
 services:
   app:
     restart: on-failure
@@ -8,30 +8,46 @@ services:
       - postgres
     environment:
       #             protocolo usuario   senha    dominio  porta  servico
-      DATABASE_URL: postgres://postgres:postgreslabesmonipaep@postgres:5432/monipaep # esta aqui mas nao esta sendo usado no codigo, nao altera nada por enquanto
+      # DATABASE_URL: postgres://postgres:postgreslabesmonipaep@postgres:5432/monipaep # esta aqui mas nao esta sendo usado no codigo, nao altera nada por enquanto
       NODE_ENV: development
+
+      POSTGRES_HOST: localhost
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: monipaep
+
       PORT: 3000
     ports:
-      - "80:3333"
+      - "81:3333"
       - "443:3333"
     command: npm run dev
     volumes:
       - .:/app/
       - /app/node_modules
+    
+    secrets:
+      - db-password
 
         # nome do container : dominio
   postgres:
     image: postgres:11
     ports:
       - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgreslabesmonipaep
-      - POSTGRES_DB=monipaep
+    secrets:
+      - db-password
 
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+      POSTGRES_DB: monipaep
+
+    #  mounting postgres configuration outside 
     volumes:
       - /home/monipaep/IC-MoniPaEp-Backend/postgres_volume/:/var/lib/postgresql/data/
-      #- /home/monipaep/IC-MoniPaEp-Backend/confpg/:/var/lib/postgresql/data/
-      #- type: bind
-        #source: /home/monipaep/IC-MoniPaEp-Backend/confpg/p.conf
-          # target: /var/lib/postgresql/data/pf_hba.conf         
+
+
+# managing repository secrets
+
+secrets:
+  db-password:
+    file: secrets/postgres-password.txt

@@ -1,7 +1,5 @@
-import { EntityRepository, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { SystemUser } from "../models/SystemUser";
+import { AppDataSource } from "src/database";
 
-@EntityRepository(SystemUser)
-class SystemUserRepository extends Repository<SystemUser> {}
-
-export { SystemUserRepository }
+export const SystemUserRepository : Repository<SystemUser> = AppDataSource.getRepository(SystemUser);

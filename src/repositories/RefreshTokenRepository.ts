@@ -1,7 +1,7 @@
-import { EntityRepository, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { RefreshToken } from "../models";
+import { AppDataSource } from "src/database";
 
-@EntityRepository(RefreshToken)
-class RefreshTokenRepository extends Repository<RefreshToken> {}
 
-export { RefreshTokenRepository }
+
+export const RefreshTokenRepository : Repository<RefreshToken> = AppDataSource.getRepository(RefreshToken);

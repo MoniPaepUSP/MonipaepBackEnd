@@ -1,20 +1,33 @@
 import { Request, Response } from "express";
-import { getCustomRepository } from "typeorm";
+// import { getCustomRepository } from "typeorm";
 import dayjs from 'dayjs'
 import * as jwt from "../jwt"
 
-import { RefreshToken } from "../models";
-import { PermissionsRepository, RefreshTokenRepository, SystemUserRepository } from "../repositories";
+import { Permissions, RefreshToken, SystemUser } from "../models";
+// import { PermissionsRepository, RefreshTokenRepository, SystemUserRepository } from "../repositories";
 import { refreshTokenExpiresIn } from "../refreshTokenExpiration";
+import { Repository } from "typeorm";
+import { AppDataSource } from "src/database";
 
 class RefreshTokenController {
+  private refreshTokenRepository : Repository<RefreshToken>;
+  private permissionsRepository : Repository<Permissions>;
+  private systemUserRepository : Repository<SystemUser>;
+
+  constructor() {
+    this.refreshTokenRepository = AppDataSource.getRepository(RefreshToken);
+    this.permissionsRepository = AppDataSource.getRepository(Permissions);
+    this.systemUserRepository = AppDataSource.getRepository(SystemUser);
+  }
+
   async create(request: Request, response: Response){
     const { refreshToken } = request.body
 
-    const refreshTokenRepository = getCustomRepository(RefreshTokenRepository)
 
-    const refreshTokenExists = await refreshTokenRepository.findOne({
-      id: refreshToken
+    const refreshTokenExists = await this.refreshTokenRepository.findOne({
+      where: {
+        id: refreshToken
+      }
     })
 
     if(!refreshTokenExists) {
@@ -28,7 +41,7 @@ class RefreshTokenController {
 
     if(refreshTokenExpired) {
       try {
-        await refreshTokenRepository.createQueryBuilder()
+        await this.refreshTokenRepository.createQueryBuilder()
           .delete()
           .from(RefreshToken)
           .where("id = :id", { id: refreshTokenExists.id })
@@ -50,7 +63,7 @@ class RefreshTokenController {
     const isSystemUserId = refreshTokenExists.systemUserId
 
     try {
-      await refreshTokenRepository.createQueryBuilder()
+      await this.refreshTokenRepository.createQueryBuilder()
         .delete()
         .from(RefreshToken)
         .where("id = :id", { id: refreshTokenExists.id })
@@ -62,21 +75,21 @@ class RefreshTokenController {
           type: 'patient'
         })
 
-        const refreshTokenBody = refreshTokenRepository.create({
+        const refreshTokenBody = this.refreshTokenRepository.create({
           patientId: isPatientId,
           expiresIn: refreshTokenExpiresIn()
         })
 
-        const refreshToken = await refreshTokenRepository.save(refreshTokenBody)
+        const refreshToken = await this.refreshTokenRepository.save(refreshTokenBody)
         
         return response.status(200).json({ isPatientId, token, refreshToken })
 
       } else if(isSystemUserId) {
-        const systemUserRepository = getCustomRepository(SystemUserRepository)
-        const permissionsRepository = getCustomRepository(PermissionsRepository)
 
-        const user = await systemUserRepository.findOne({
-          id: isSystemUserId
+        const user = await this.systemUserRepository.findOne({
+          where: {
+            id: isSystemUserId
+          }
         })
 
         if(!user) {
@@ -86,8 +99,10 @@ class RefreshTokenController {
           })
         }
 
-        const userPermissions = await permissionsRepository.findOne({
-          userId: isSystemUserId
+        const userPermissions = await this.permissionsRepository.findOne({
+          where: {
+            userId: isSystemUserId
+          }
         })
 
         if(!userPermissions) {
@@ -130,12 +145,12 @@ class RefreshTokenController {
           roles
         })
 
-        const refreshTokenBody = refreshTokenRepository.create({
+        const refreshTokenBody = this.refreshTokenRepository.create({
           systemUserId: isSystemUserId,
           expiresIn: refreshTokenExpiresIn()
         })
 
-        const refreshToken = await refreshTokenRepository.save(refreshTokenBody)
+        const refreshToken = await this.refreshTokenRepository.save(refreshTokenBody)
         
         return response.status(200).json({ token, refreshToken: refreshToken.id })
 

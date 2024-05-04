@@ -1,24 +1,33 @@
 import { Request, Response } from "express";
-import { getCustomRepository, In, IsNull } from "typeorm";
+import {  In, IsNull, Repository } from "typeorm";
 
-import { Patient, SymptomOccurrence } from "../models";
-import { 
-  DiseaseOccurrenceRepository, 
-  PatientsRepository, 
-  SymptomOccurrenceRepository, 
-  SymptomRepository 
-} from "../repositories";
+import { DiseaseOccurrence, Patient, Symptom, SymptomOccurrence } from "../models";
+import { AppDataSource } from "src/database";
+// import { 
+//   DiseaseOccurrenceRepository, 
+//   PatientsRepository, 
+//   SymptomOccurrenceRepository, 
+//   SymptomRepository 
+// } from "../repositories";
+
 class SymptomOccurrenceController {
+  private patientsRepository : Repository<Patient>;
+  private symptomOccurrenceRepository : Repository<SymptomOccurrence>;
+  private diseaseOccurrenceRepository : Repository<DiseaseOccurrence>;
+  private symptomRepository : Repository<Symptom>;
+
   async create(request: Request, response: Response){
     const body = request.body
 
-    const patientsRepository = getCustomRepository(PatientsRepository)
-    const symptomOccurrenceRepository = getCustomRepository(SymptomOccurrenceRepository)
-    const diseaseOccurrenceRepository = getCustomRepository(DiseaseOccurrenceRepository)
-    const symptomRepository = getCustomRepository(SymptomRepository)
+    this.patientsRepository = AppDataSource.getRepository(Patient);
+    this.symptomOccurrenceRepository = AppDataSource.getRepository(SymptomOccurrence);
+    this.diseaseOccurrenceRepository = AppDataSource.getRepository(DiseaseOccurrence);
+    this.symptomRepository = AppDataSource.getRepository(Symptom);
 
-    const isValidPatient = await patientsRepository.findOne({
-      id: body.patient_id
+    const isValidPatient = await this.patientsRepository.findOne({
+      where: {
+        id: body.patient_id
+      }
     })
 
     if(!isValidPatient) {
@@ -35,7 +44,7 @@ class SymptomOccurrenceController {
     
     
 
-    const existOngoingDiseaseOccurrences = await diseaseOccurrenceRepository.find({
+    const existOngoingDiseaseOccurrences = await this.diseaseOccurrenceRepository.find({
       where: {
         patient_id: body.patient_id,
         status: In(["Suspeito", "Infectado"]),
@@ -47,8 +56,8 @@ class SymptomOccurrenceController {
     if(existOngoingDiseaseOccurrences.length === 0) {
       try {
         body.disease_occurrence_id = undefined
-        const symptomOccurrence = symptomOccurrenceRepository.create(body)
-        await symptomOccurrenceRepository.save(symptomOccurrence)
+        const symptomOccurrence = this.symptomOccurrenceRepository.create(body)
+        await this.symptomOccurrenceRepository.save(symptomOccurrence)
     
         return response.status(201).json({
           success: "Sintoma registrado com sucesso"
@@ -64,8 +73,8 @@ class SymptomOccurrenceController {
       for(const diseaseOccurrence of existOngoingDiseaseOccurrences) {
         try {
           body.disease_occurrence_id = diseaseOccurrence.id
-          const symptomOccurrence = symptomOccurrenceRepository.create(body)
-          await symptomOccurrenceRepository.save(symptomOccurrence)
+          const symptomOccurrence = this.symptomOccurrenceRepository.create(body)
+          await this.symptomOccurrenceRepository.save(symptomOccurrence)
         } catch (error) {
           return response.status(403).json({
             error: "Erro no cadastro do sintoma"
@@ -81,13 +90,12 @@ class SymptomOccurrenceController {
   async createSeveral(request: Request, response: Response){
     const body = request.body
     
-    const patientsRepository = getCustomRepository(PatientsRepository)
-    const symptomOccurrenceRepository = getCustomRepository(SymptomOccurrenceRepository)
-    const diseaseOccurrenceRepository = getCustomRepository(DiseaseOccurrenceRepository)
-    const symptomRepository = getCustomRepository(SymptomRepository)
+    
 
-    const isValidPatient = await patientsRepository.findOne({
-      id: body.patient_id
+    const isValidPatient = await this.patientsRepository.findOne({
+      where: {
+        id: body.patient_id
+      }
     })
 
     if(!isValidPatient) {
@@ -96,7 +104,7 @@ class SymptomOccurrenceController {
       })
     }
     
-    const existOngoingDiseaseOccurrences = await diseaseOccurrenceRepository.find({
+    const existOngoingDiseaseOccurrences = await this.diseaseOccurrenceRepository.find({
       where: {
         patient_id: body.patient_id,
         status: In(["Suspeito", "Infectado"]),
@@ -118,14 +126,14 @@ class SymptomOccurrenceController {
       body.disease_occurrence_id = undefined
       for(let i  in body.symptoms){
         try {
-          const symptomOccurrence = symptomOccurrenceRepository.create({
+          const symptomOccurrence = this.symptomOccurrenceRepository.create({
             patient_id: body.patient_id,
             disease_occurrence_id: body.disease_occurrence_id,
             registered_date: body.registered_date,
             symptom_name: body.symptoms[i]
           })
 
-          await symptomOccurrenceRepository.save(symptomOccurrence)
+          await this.symptomOccurrenceRepository.save(symptomOccurrence)
 
         } catch (error) {
           console.log(error)
@@ -141,12 +149,12 @@ class SymptomOccurrenceController {
         try {
           body.disease_occurrence_id = diseaseOccurrence.id
           for(let i  in body.symptoms){
-            const symptomOccurrenceBody = symptomOccurrenceRepository.create({
+            const symptomOccurrenceBody = this.symptomOccurrenceRepository.create({
               ...body,
               symptom_name: body.symtoms[i]
             })
   
-            await symptomOccurrenceRepository.save(symptomOccurrenceBody)
+            await this.symptomOccurrenceRepository.save(symptomOccurrenceBody)
           }
         } catch (error) {
           return response.status(403).json({
@@ -157,7 +165,7 @@ class SymptomOccurrenceController {
     }
     //Atualizando data de última atualização do paciente
     try {
-      await patientsRepository.createQueryBuilder()
+      await this.patientsRepository.createQueryBuilder()
         .update(Patient)
         .set({ lastUpdate:  body.registered_date })
         .where("id = :id", { id: body.patient_id })
@@ -178,7 +186,6 @@ class SymptomOccurrenceController {
     const take = 10
     const skip = page ? ((Number(page) - 1) * take) : 0 
 
-    const symptomOccurrenceRepository = getCustomRepository(SymptomOccurrenceRepository)
 
     let whereConditions = "symptom_occurrence.disease_occurrence_id IS NULL"
     let whereParameters = {}
@@ -188,7 +195,7 @@ class SymptomOccurrenceController {
       whereParameters = { name: `%${patient_name}%` }
     }
     try {
-      const items = await symptomOccurrenceRepository.createQueryBuilder("symptom_occurrence")
+      const items = await this.symptomOccurrenceRepository.createQueryBuilder("symptom_occurrence")
         .addSelect("MIN(symptom_occurrence.registered_date)", "registered_date")
         .leftJoinAndSelect("symptom_occurrence.patient", "patients")
         .where(whereConditions, whereParameters)
@@ -230,14 +237,15 @@ class SymptomOccurrenceController {
       unassigned
     } = request.query
 
-    const symptomOccurrenceRepository = getCustomRepository(SymptomOccurrenceRepository)
     let filters = {}
 
     if(id) {
       filters = { ...filters, id: String(id) }
 
-      const isValidOccurrence = await symptomOccurrenceRepository.findOne({
-        id: String(id)
+      const isValidOccurrence = await this.symptomOccurrenceRepository.findOne({
+        where: {
+          id: String(id)
+        }
       })
 
       if(!isValidOccurrence) {
@@ -250,9 +258,10 @@ class SymptomOccurrenceController {
     if(patient_id) {
       filters = { ...filters, patient_id: String(patient_id) }
 
-      const patientsRepository = getCustomRepository(PatientsRepository)
-      const isValidPatient = await patientsRepository.findOne({
-        id: String(patient_id)
+      const isValidPatient = await this.patientsRepository.findOne({
+        where: {
+          id: String(patient_id)
+        }
       })
 
       if(!isValidPatient) {
@@ -265,9 +274,10 @@ class SymptomOccurrenceController {
     if(symptom_name) {
       filters = { ...filters, symptom_name: String(symptom_name) }
 
-      const symptomRepository = getCustomRepository(SymptomRepository)
-      const isValidSymptom = await symptomRepository.findOne({
-        symptom: String(symptom_name)
+      const isValidSymptom = await this.symptomRepository.findOne({
+        where: {
+          symptom: String(symptom_name)
+        }
       })
 
       if(!isValidSymptom) {
@@ -280,9 +290,10 @@ class SymptomOccurrenceController {
     if(disease_occurrence_id) {
       filters = { ...filters, disease_occurrence_id: String(disease_occurrence_id) }
 
-      const diseaseOccurrenceRepository = getCustomRepository(DiseaseOccurrenceRepository)
-      const isValidDiseaseOccurrence = await diseaseOccurrenceRepository.findOne({
-        id: String(disease_occurrence_id)
+      const isValidDiseaseOccurrence = await this.diseaseOccurrenceRepository.findOne({
+        where: {
+          id: String(disease_occurrence_id)
+        }
       })
 
       if(!isValidDiseaseOccurrence) {
@@ -296,7 +307,7 @@ class SymptomOccurrenceController {
       filters = { ...filters, disease_occurrence_id: IsNull() }
     }
 
-    const occurrencesList = await symptomOccurrenceRepository.find({
+    const occurrencesList = await this.symptomOccurrenceRepository.find({
       where: filters,
       order: {
         registered_date: 'DESC'
@@ -309,11 +320,12 @@ class SymptomOccurrenceController {
   async listOccurences(request: Request, response: Response) {
     const { patient_id } = request.body
 
-    const symptomOccurrenceRepository = getCustomRepository(SymptomOccurrenceRepository)
     let filters = {}
 
-      const isValidOccurrence = await symptomOccurrenceRepository.find({
-        patient_id: String(patient_id)
+      const isValidOccurrence = await this.symptomOccurrenceRepository.find({
+        where: {
+          patient_id: String(patient_id)
+        }
       })
 
       if(!isValidOccurrence) {
@@ -325,9 +337,10 @@ class SymptomOccurrenceController {
     if(patient_id) {
       filters = { ...filters, patient_id: String(patient_id) }
 
-      const patientsRepository = getCustomRepository(PatientsRepository)
-      const isValidPatient = await patientsRepository.findOne({
-        id: String(patient_id)
+      const isValidPatient = await this.patientsRepository.findOne({
+        where: {
+          id: String(patient_id)
+        }
       })
 
       if(!isValidPatient) {
@@ -336,7 +349,7 @@ class SymptomOccurrenceController {
         })
       }
     }
-    const occurrencesList = await symptomOccurrenceRepository.find({
+    const occurrencesList = await this.symptomOccurrenceRepository.find({
       where: filters,
       order: {
         registered_date: 'DESC'
@@ -352,9 +365,8 @@ class SymptomOccurrenceController {
     const body = request.body
     const { id } = request.params
 
-    const symptomOccurrenceRepository = getCustomRepository(SymptomOccurrenceRepository)
 
-    const isValidSymptomOccurrence = await symptomOccurrenceRepository.findOne({ id })
+    const isValidSymptomOccurrence = await this.symptomOccurrenceRepository.findOne({where: { id: id} })
 
     if(!isValidSymptomOccurrence) {
       return response.status(404).json({
@@ -363,7 +375,7 @@ class SymptomOccurrenceController {
     }
 
     try {
-      await symptomOccurrenceRepository.createQueryBuilder()
+      await this.symptomOccurrenceRepository.createQueryBuilder()
         .update(SymptomOccurrence)
         .set(body)
         .where("id = :id", { id })
@@ -381,9 +393,8 @@ class SymptomOccurrenceController {
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
-    const symptomOccurrenceRepository = getCustomRepository(SymptomOccurrenceRepository)
 
-    const isValidSymptomOccurrence = await symptomOccurrenceRepository.findOne({ id })
+    const isValidSymptomOccurrence = await this.symptomOccurrenceRepository.findOne({ where: {id :id} })
 
     if(!isValidSymptomOccurrence) {
       return response.status(404).json({
@@ -392,7 +403,7 @@ class SymptomOccurrenceController {
     }
 
     try {
-      await symptomOccurrenceRepository.createQueryBuilder()
+      await this.symptomOccurrenceRepository.createQueryBuilder()
         .delete()
         .from(SymptomOccurrence)
         .where("id = :id", { id })

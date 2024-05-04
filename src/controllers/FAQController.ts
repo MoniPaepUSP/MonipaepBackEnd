@@ -1,16 +1,20 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from 'typeorm'
+import {  Like, Repository } from 'typeorm'
 import { FAQ } from "../models";
+
 import { FAQRepository } from "../repositories/FAQRepository";
 
 class FAQController{
+ 
+
   async create(request: Request, response: Response){
     const body = request.body
     
-    const faqRepository = getCustomRepository(FAQRepository)
 
-    const faqAlreadyExists = await faqRepository.findOne({
-      question: body.question
+    const faqAlreadyExists = await FAQRepository.findOne({
+      where : {
+        question: body.question
+      }
     })
 
     if(faqAlreadyExists){
@@ -20,8 +24,8 @@ class FAQController{
     }
 
     try {
-      const faqBody = faqRepository.create(body)
-      const faq: any = await faqRepository.save(faqBody)
+      const faqBody = FAQRepository.create(body)
+      const faq: any = await FAQRepository.save(faqBody)
   
       return response.status(201).json({
         success: "Questão registrada com sucesso",
@@ -37,12 +41,13 @@ class FAQController{
   async list(request: Request, response: Response) {
     const { question, id } = request.query
 
-    const faqRepository = getCustomRepository(FAQRepository)
     let filters = {}
 
     if(id) {
-      const questionExists = await faqRepository.findOne({
-        id: String(id)
+      const questionExists = await FAQRepository.findOne({
+        where: {
+          id: String(id)
+        }
       })
 
       if(!questionExists) {
@@ -58,7 +63,7 @@ class FAQController{
       filters = { ...filters, question: Like(`%${String(question)}%`) }
     }
 
-    const questionsList = await faqRepository.findAndCount({
+    const questionsList = await FAQRepository.findAndCount({
       where: filters,
       order: {
         question: "ASC"
@@ -75,9 +80,8 @@ class FAQController{
     const body = request.body
     const { id } = request.params
 
-    const faqRepository = getCustomRepository(FAQRepository)
 
-    const questionExists = await faqRepository.findOne({ id })
+    const questionExists = await FAQRepository.findOne({ where: {id} })
 
     if(!questionExists) {
       return response.status(404).json({
@@ -86,7 +90,7 @@ class FAQController{
     }
 
     try {
-      await faqRepository.createQueryBuilder()
+      await FAQRepository.createQueryBuilder()
         .update(FAQ)
         .set(body)
         .where("id = :id", { id })
@@ -104,9 +108,8 @@ class FAQController{
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
-    const faqRepository = getCustomRepository(FAQRepository)
 
-    const questionExists = await faqRepository.findOne({ id })
+    const questionExists = await FAQRepository.findOne({ where: {id} })
 
     if(!questionExists) {
       return response.status(404).json({
@@ -115,7 +118,7 @@ class FAQController{
     }
     
     try {
-      await faqRepository.createQueryBuilder()
+      await FAQRepository.createQueryBuilder()
         .delete()
         .from(FAQ)
         .where("id = :id", { id })

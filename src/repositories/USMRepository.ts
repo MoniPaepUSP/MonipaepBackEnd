@@ -1,7 +1,7 @@
-import { EntityRepository, Repository } from "typeorm"
+import { Repository } from "typeorm"
 import { USM } from "../models"
+import { AppDataSource } from "src/database";
 
-@EntityRepository(USM)
-class USMRepository extends Repository<USM> {}
 
-export { USMRepository }
+
+export const USMRepository : Repository<USM> = AppDataSource.getRepository(USM);

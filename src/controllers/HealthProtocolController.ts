@@ -1,15 +1,18 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from "typeorm";
+import {  Like } from "typeorm";
 import { HealthProtocol } from "../models";
 import { HealthProtocolRepository } from "../repositories/HealthProtocolRepository";
 
 class HealthProtocolController {
+
+
   async create(request: Request, response: Response) {
     const body = request.body
 
-    const healthProtocolRepository = getCustomRepository(HealthProtocolRepository)
-    const isAlreadyRegistered = await healthProtocolRepository.findOne({
-      title: body.title
+    const isAlreadyRegistered = await HealthProtocolRepository.findOne({
+      where: {
+        title: body.title
+      }
     })
 
     if (isAlreadyRegistered) {
@@ -19,8 +22,8 @@ class HealthProtocolController {
     }
 
     try {
-      const healthProtocolBody = healthProtocolRepository.create(body)
-      const healthProtocol = await healthProtocolRepository.save(healthProtocolBody)
+      const healthProtocolBody = HealthProtocolRepository.create(body)
+      const healthProtocol = await HealthProtocolRepository.save(healthProtocolBody)
 
       return response.status(201).json({
         success: "Protocolo de saúde registrado com sucesso",
@@ -37,11 +40,12 @@ class HealthProtocolController {
     const { id, page, title, description } = request.query
     let filters = {}
     
-    const healthProtocolRepository = getCustomRepository(HealthProtocolRepository)
 
     if(id) {
-      const isValidHealthProtocol = await healthProtocolRepository.findOne({
-        id: String(id)
+      const isValidHealthProtocol = await HealthProtocolRepository.findOne({
+        where : {
+          id: String(id)
+        }
       })
 
       if(!isValidHealthProtocol) {
@@ -74,7 +78,7 @@ class HealthProtocolController {
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
-    const healthProtocolList = await healthProtocolRepository.findAndCount(options)
+    const healthProtocolList = await HealthProtocolRepository.findAndCount(options)
 
     return response.status(200).json({
       healthProtocols: healthProtocolList[0],
@@ -86,9 +90,8 @@ class HealthProtocolController {
     const body = request.body
     const { id } = request.params
 
-    const healthProtocolRepository = getCustomRepository(HealthProtocolRepository)
 
-    const isValidHealthProtocol = await healthProtocolRepository.findOne({ id })
+    const isValidHealthProtocol = await HealthProtocolRepository.findOne({ where: {id} })
     
     if(!isValidHealthProtocol){
       return response.status(404).json({
@@ -96,8 +99,10 @@ class HealthProtocolController {
       })
     }
 
-    const isAlreadyRegistered = await healthProtocolRepository.findOne({
-      title: body.title
+    const isAlreadyRegistered = await HealthProtocolRepository.findOne({
+      where: {
+        title: body.title
+      }
     })
 
     if (isAlreadyRegistered) {
@@ -107,7 +112,7 @@ class HealthProtocolController {
     }
 
     try {
-      await healthProtocolRepository.createQueryBuilder()
+      await HealthProtocolRepository.createQueryBuilder()
         .update(HealthProtocol)
         .set(body)
         .where("id = :id", { id })
@@ -125,9 +130,8 @@ class HealthProtocolController {
   async deleteOne(request: Request, response: Response){
     const { id } = request.params
 
-    const healthProtocolRepository = getCustomRepository(HealthProtocolRepository)
 
-    const isValidHealthProtocol = await healthProtocolRepository.findOne({ id })
+    const isValidHealthProtocol = await HealthProtocolRepository.findOne({ where: {id} })
     
     if(!isValidHealthProtocol){
       return response.status(404).json({
@@ -136,7 +140,7 @@ class HealthProtocolController {
     }
 
     try {
-      await healthProtocolRepository.createQueryBuilder()
+      await HealthProtocolRepository.createQueryBuilder()
         .delete()
         .from(HealthProtocol)
         .where("id = :id", { id })

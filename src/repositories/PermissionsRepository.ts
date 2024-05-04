@@ -1,6 +1,6 @@
-import { EntityRepository, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { Permissions } from "../models/Permissions";
-@EntityRepository(Permissions)
-class PermissionsRepository extends Repository<Permissions> {}
+import { AppDataSource } from "src/database";
 
-export { PermissionsRepository }
+
+export const PermissionsRepository : Repository<Permissions> = AppDataSource.getRepository(Permissions);

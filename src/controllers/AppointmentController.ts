@@ -1,16 +1,20 @@
 import { Request, Response } from "express";
-import { getCustomRepository } from "typeorm";
 import { AppointmentsRepository, PatientsRepository } from "../repositories";
 
+
+
 class AppointmentController {
+  
+
     async create(request: Request, response: Response){
         const body = request.body
+        
 
-        const appointmentsRepository = getCustomRepository(AppointmentsRepository)
-        const patientsRepository = getCustomRepository(PatientsRepository)
-
-        const patientExists = await patientsRepository.findOne({
-            id: body.patient_id
+        const patientExists = await PatientsRepository.findOne(
+            {
+                where :{
+                    id : body.patient_id
+                }
         })
 
         if(!patientExists){
@@ -19,9 +23,9 @@ class AppointmentController {
             })
         }
 
-        const appointment = appointmentsRepository.create(body)
+        const appointment = AppointmentsRepository.create(body)
 
-        await appointmentsRepository.save(appointment)
+        await AppointmentsRepository.save(appointment)
 
         return response.status(201).json(appointment)
     }
