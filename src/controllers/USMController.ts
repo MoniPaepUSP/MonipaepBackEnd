@@ -1,15 +1,23 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from "typeorm";
+import {  Like, Repository } from "typeorm";
 import { USM } from "../models";
-import { USMRepository } from "../repositories";
+import { AppDataSource } from "src/database";
+// import { USMRepository } from "../repositories";
 class USMController{
+  private usmRepository : Repository<USM>;
+
+  constructor() {
+    this.usmRepository = AppDataSource.getRepository(USM);
+  }
+
   async create(request: Request, response: Response){
     const body = request.body
 
-    const usmRepository = getCustomRepository(USMRepository)
 
-    const usmAlreadyExists =  await usmRepository.findOne({
-      name: body.name
+    const usmAlreadyExists =  await this.usmRepository.findOne({
+      where : {
+        name: body.name
+      }
     })
 
     if(usmAlreadyExists){
@@ -19,8 +27,8 @@ class USMController{
     }
 
     try {
-      const usm = usmRepository.create(body)
-      await usmRepository.save(usm)
+      const usm = this.usmRepository.create(body)
+      await this.usmRepository.save(usm)
       
       return response.status(201).json({
         success: "Unidade de saúde cadastrada com sucesso"
@@ -52,8 +60,7 @@ class USMController{
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
-    const usmRepository = getCustomRepository(USMRepository)
-    const usmList = await usmRepository.findAndCount(options)
+    const usmList = await this.usmRepository.findAndCount(options)
 
     return response.status(200).json({
       usms: usmList[0],
@@ -65,9 +72,8 @@ class USMController{
     const body = request.body
     const { name } = request.params
 
-    const usmRepository = getCustomRepository(USMRepository)
 
-    const isValidUsm = await usmRepository.findOne({ name })
+    const isValidUsm = await this.usmRepository.findOne({ where: { name : name} })
     
     if(!isValidUsm){
       return response.status(404).json({
@@ -76,7 +82,7 @@ class USMController{
     }
 
     try {
-      await usmRepository.createQueryBuilder()
+      await this.usmRepository.createQueryBuilder()
         .update(USM)
         .set(body)
         .where("name = :name", { name })
@@ -94,9 +100,8 @@ class USMController{
   async deleteOne(request: Request, response: Response){
     const { name } = request.params
 
-    const usmRepository = getCustomRepository(USMRepository)
 
-    const isValidUsm = await usmRepository.findOne({ name })
+    const isValidUsm = await this.usmRepository.findOne({ where: {name : name} })
     
     if(!isValidUsm){
       return response.status(404).json({
@@ -105,7 +110,7 @@ class USMController{
     }
     
     try {
-      await usmRepository.createQueryBuilder()
+      await this.usmRepository.createQueryBuilder()
         .delete()
         .from(USM)
         .where("name = :name", { name })

@@ -1,20 +1,30 @@
 import { Request, Response } from "express";
-import { getCustomRepository } from "typeorm";
-import { SystemUserRepository } from "../repositories/SystemUserRepository";
+import { Repository } from "typeorm";
+// import { SystemUserRepository } from "../repositories/SystemUserRepository";
 import * as jwt from "../jwt"
 
 import bcrypt from 'bcrypt'
-import { PermissionsRepository, RefreshTokenRepository } from "../repositories";
-import { RefreshToken, SystemUser } from "../models";
+// import { PermissionsRepository, RefreshTokenRepository } from "../repositories";
+import { Permissions, RefreshToken, SystemUser } from "../models";
 import { refreshTokenExpiresIn } from "src/refreshTokenExpiration";
+import { AppDataSource } from "src/database";
 class SystemUserController {
+  private permissionRepository : Repository<Permissions>;
+  private systemUserRepository : Repository<SystemUser>;
+  private refreshTokenRepository : Repository<RefreshToken>;
+  
+  constructor () {
+    this.permissionRepository = AppDataSource.getRepository(Permissions);
+    this.systemUserRepository = AppDataSource.getRepository(SystemUser);
+    this.refreshTokenRepository = AppDataSource.getRepository(RefreshToken);
+  }
+
   async create(request: Request, response: Response) {
     const body = request.body
 
-    const permissionRepository = getCustomRepository(PermissionsRepository)
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
+   
 
-    const userAlreadyExists = await systemUserRepository.findOne({
+    const userAlreadyExists = await this.systemUserRepository.findOne({
       where: [
         { CPF: body.CPF },
         { email: body.email }
@@ -31,15 +41,15 @@ class SystemUserController {
     body.createdAt = new Date()
 
     try {
-      const user = systemUserRepository.create(body)
-      const userSaved: any = await systemUserRepository.save(user)
-      const permissions = permissionRepository.create({
+      const user = this.systemUserRepository.create(body)
+      const userSaved: any = await this.systemUserRepository.save(user)
+      const permissions = this.permissionRepository.create({
         userId: userSaved.id,
         localAdm: false,
         generalAdm: false,
         authorized: false
       })
-      await permissionRepository.save(permissions)
+      await this.permissionRepository.save(permissions)
     
       userSaved.password = undefined      
       return response.status(201).json({
@@ -65,8 +75,7 @@ class SystemUserController {
 
     const [email, password] = Buffer.from(hash, 'base64').toString().split(':')
     
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
-    const userExists = await systemUserRepository.findOne({
+    const userExists = await this.systemUserRepository.findOne({
       where: { email }, 
       select: ['id', 'email', 'password', 'name', 'department']
     })
@@ -87,9 +96,10 @@ class SystemUserController {
     }
 
     try {
-      const permissionsRepository = getCustomRepository(PermissionsRepository)
-      const userPermissions = await permissionsRepository.findOne({
-        userId: systemUserId
+      const userPermissions = await this.permissionRepository.findOne({
+        where: {
+          userId: systemUserId
+        }
       })
 
       if(!userPermissions) {
@@ -104,25 +114,26 @@ class SystemUserController {
         })
       }
       
-      const refreshTokenRepository = getCustomRepository(RefreshTokenRepository)
-      const refreshTokenExists = await refreshTokenRepository.findOne({
-        systemUserId
+      const refreshTokenExists = await this.refreshTokenRepository.findOne({
+        where: {
+          systemUserId : systemUserId
+        }
       })
       
       if(refreshTokenExists) {
-        await refreshTokenRepository.createQueryBuilder()
+        await this.refreshTokenRepository.createQueryBuilder()
         .delete()
         .from(RefreshToken)
         .where("systemUserId = :id", { id: systemUserId })
         .execute()
       }
 
-      const refreshTokenBody = refreshTokenRepository.create({
+      const refreshTokenBody = this.refreshTokenRepository.create({
         systemUserId,
         expiresIn: refreshTokenExpiresIn()
       })
 
-      const refreshToken = await refreshTokenRepository.save(refreshTokenBody)
+      const refreshToken = await this.refreshTokenRepository.save(refreshTokenBody)
 
       userExists.password = undefined
       const permissions: string[] = []
@@ -170,13 +181,14 @@ class SystemUserController {
     const { id, department } = request.query
     let filters = {}
     
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
 
     if(id) {
       filters = { ...filters, id: String(id) }
 
-      const user = await systemUserRepository.findOne({
-        id: String(id)
+      const user = await this.systemUserRepository.findOne({
+        where: {
+          id: String(id)
+        }
       })
     
       if(!user){
@@ -190,7 +202,7 @@ class SystemUserController {
       filters = { ...filters, department: String(department) }
     }
 
-    const users = await systemUserRepository.find(filters)
+    const users = await this.systemUserRepository.find(filters)
 
     return response.status(200).json(users)
   }
@@ -204,10 +216,8 @@ class SystemUserController {
       })
     }
     
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
-    const permissionsRepository = getCustomRepository(PermissionsRepository)
 
-    const user = await systemUserRepository.findOne({
+    const user = await this.systemUserRepository.findOne({
       where: { id }, 
       select: ['id', 'email', 'password', 'name', 'department']
     })
@@ -218,8 +228,10 @@ class SystemUserController {
       })
     }
 
-    const userPermissions = await permissionsRepository.findOne({
-      userId: id
+    const userPermissions = await this.permissionRepository.findOne({
+      where: {
+        userId: id
+      }
     })
 
     if(!userPermissions) {
@@ -267,9 +279,8 @@ class SystemUserController {
       })
     }
 
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
     
-    const userExists = await systemUserRepository.findOne({
+    const userExists = await this.systemUserRepository.findOne({
       where: { id }, 
       select: ['password']
     })
@@ -291,7 +302,7 @@ class SystemUserController {
     const newPasswordHash = await bcrypt.hash(new_password, 10)
     
     try {
-      await systemUserRepository.createQueryBuilder()
+      await this.systemUserRepository.createQueryBuilder()
         .update(SystemUser)
         .set({ password: newPasswordHash })
         .where("id = :id", { id })
@@ -310,8 +321,7 @@ class SystemUserController {
     const body = request.body
     const { id } = request.params
 
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
-    const userExists = await systemUserRepository.findOne({ id })
+    const userExists = await this.systemUserRepository.findOne({ where: { id:id} })
 
     if(!userExists){
       return response.status(401).json({
@@ -325,7 +335,7 @@ class SystemUserController {
     }
 
     try {
-      await systemUserRepository.createQueryBuilder()
+      await this.systemUserRepository.createQueryBuilder()
         .update(SystemUser)
         .set(body)
         .where("id = :id", { id })
@@ -343,8 +353,7 @@ class SystemUserController {
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
-    const userExists = await systemUserRepository.findOne({ id })
+    const userExists = await this.systemUserRepository.findOne({ where: {id :id} })
 
     if(!userExists){
       return response.status(401).json({
@@ -353,7 +362,7 @@ class SystemUserController {
     }
 
     try {
-      await systemUserRepository.createQueryBuilder()
+      await this.systemUserRepository.createQueryBuilder()
         .delete()
         .from(SystemUser)
         .where("id = :id", { id })
