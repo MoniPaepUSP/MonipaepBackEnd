@@ -1,28 +1,23 @@
 import { Request, Response } from "express";
 import { Patient, USM, Vaccine } from "../models";
-import { Repository } from "typeorm";
-import { AppDataSource } from "src/database";
-// import { PatientsRepository, USMRepository, VaccinesRepository } from "../repositories";
+// import { Repository } from "typeorm";
+// import { AppDataSource } from "src/database";
+import { PatientsRepository, USMRepository, VaccinesRepository } from "../repositories";
 
 class VaccineController{
-  private vaccineRepository : Repository<Vaccine>;
-  private patientsRepository : Repository<Patient>;
-  private usmRepository : Repository<USM>;
-
+  
   async create(request: Request, response:Response){
     const body = request.body
 
-    this.vaccineRepository = AppDataSource.getRepository(Vaccine);
-    this.patientsRepository = AppDataSource.getRepository(Patient);
-    this.usmRepository = AppDataSource.getRepository(USM);
+  
 
-    const patientExists = await this.patientsRepository.findOne({
+    const patientExists = await PatientsRepository.findOne({
       where: {
         id: body.patient_id
       }
     })
 
-    const usmExists = await this.usmRepository.findOne({
+    const usmExists = await USMRepository.findOne({
       where: {
         name: body.usm_name
       }
@@ -41,8 +36,8 @@ class VaccineController{
     }
 
     try {
-      const vaccine = this.vaccineRepository.create(body)
-      await this.vaccineRepository.save(vaccine)
+      const vaccine = VaccinesRepository.create(body)
+      await VaccinesRepository.save(vaccine)
 
       return response.status(201).json(vaccine)
     } catch (error) {
@@ -54,7 +49,7 @@ class VaccineController{
 
   async list(request: Request, response: Response){
 
-    const vaccineList = await this.vaccineRepository.find()
+    const vaccineList = await VaccinesRepository.find()
 
     return response.json(vaccineList)
   }
@@ -63,7 +58,7 @@ class VaccineController{
     const {vaccine_id} = request.params
 
 
-    const vaccine = await this.vaccineRepository.findOne({
+    const vaccine = await VaccinesRepository.findOne({
       where: {
         id: vaccine_id
       }
@@ -83,7 +78,7 @@ class VaccineController{
     const {vaccine_id} = request.params
 
 
-    const vaccine = await this.vaccineRepository.findOne({
+    const vaccine = await VaccinesRepository.findOne({
       where: {
         id: vaccine_id
       }
@@ -95,7 +90,7 @@ class VaccineController{
       })
     }
     try {
-      await this.vaccineRepository.createQueryBuilder()
+      await VaccinesRepository.createQueryBuilder()
         .update(Vaccine)
         .set(body)
         .where("id = :id", { id: vaccine_id })
@@ -112,7 +107,7 @@ class VaccineController{
     const {vaccine_id} = request.params
 
 
-    const vaccine = await this.vaccineRepository.findOne({
+    const vaccine = await VaccinesRepository.findOne({
       where: {
         id: vaccine_id
       }
@@ -125,7 +120,7 @@ class VaccineController{
     }
 
     try {
-      await this.vaccineRepository.createQueryBuilder()
+      await VaccinesRepository.createQueryBuilder()
         .delete()
         .from(Vaccine)
         .where("id = :id", { id: vaccine_id })

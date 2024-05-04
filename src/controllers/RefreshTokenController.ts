@@ -3,28 +3,19 @@ import { Request, Response } from "express";
 import dayjs from 'dayjs'
 import * as jwt from "../jwt"
 
-import { Permissions, RefreshToken, SystemUser } from "../models";
-// import { PermissionsRepository, RefreshTokenRepository, SystemUserRepository } from "../repositories";
+import { RefreshToken } from "../models";
+import { PermissionsRepository, RefreshTokenRepository, SystemUserRepository } from "../repositories";
 import { refreshTokenExpiresIn } from "../refreshTokenExpiration";
-import { Repository } from "typeorm";
-import { AppDataSource } from "src/database";
+
 
 class RefreshTokenController {
-  private refreshTokenRepository : Repository<RefreshToken>;
-  private permissionsRepository : Repository<Permissions>;
-  private systemUserRepository : Repository<SystemUser>;
-
-  constructor() {
-    this.refreshTokenRepository = AppDataSource.getRepository(RefreshToken);
-    this.permissionsRepository = AppDataSource.getRepository(Permissions);
-    this.systemUserRepository = AppDataSource.getRepository(SystemUser);
-  }
+ 
 
   async create(request: Request, response: Response){
     const { refreshToken } = request.body
 
 
-    const refreshTokenExists = await this.refreshTokenRepository.findOne({
+    const refreshTokenExists = await RefreshTokenRepository.findOne({
       where: {
         id: refreshToken
       }
@@ -41,7 +32,7 @@ class RefreshTokenController {
 
     if(refreshTokenExpired) {
       try {
-        await this.refreshTokenRepository.createQueryBuilder()
+        await RefreshTokenRepository.createQueryBuilder()
           .delete()
           .from(RefreshToken)
           .where("id = :id", { id: refreshTokenExists.id })
@@ -63,7 +54,7 @@ class RefreshTokenController {
     const isSystemUserId = refreshTokenExists.systemUserId
 
     try {
-      await this.refreshTokenRepository.createQueryBuilder()
+      await RefreshTokenRepository.createQueryBuilder()
         .delete()
         .from(RefreshToken)
         .where("id = :id", { id: refreshTokenExists.id })
@@ -75,18 +66,18 @@ class RefreshTokenController {
           type: 'patient'
         })
 
-        const refreshTokenBody = this.refreshTokenRepository.create({
+        const refreshTokenBody = RefreshTokenRepository.create({
           patientId: isPatientId,
           expiresIn: refreshTokenExpiresIn()
         })
 
-        const refreshToken = await this.refreshTokenRepository.save(refreshTokenBody)
+        const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
         
         return response.status(200).json({ isPatientId, token, refreshToken })
 
       } else if(isSystemUserId) {
 
-        const user = await this.systemUserRepository.findOne({
+        const user = await SystemUserRepository.findOne({
           where: {
             id: isSystemUserId
           }
@@ -99,7 +90,7 @@ class RefreshTokenController {
           })
         }
 
-        const userPermissions = await this.permissionsRepository.findOne({
+        const userPermissions = await PermissionsRepository.findOne({
           where: {
             userId: isSystemUserId
           }
@@ -145,12 +136,12 @@ class RefreshTokenController {
           roles
         })
 
-        const refreshTokenBody = this.refreshTokenRepository.create({
+        const refreshTokenBody = RefreshTokenRepository.create({
           systemUserId: isSystemUserId,
           expiresIn: refreshTokenExpiresIn()
         })
 
-        const refreshToken = await this.refreshTokenRepository.save(refreshTokenBody)
+        const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
         
         return response.status(200).json({ token, refreshToken: refreshToken.id })
 

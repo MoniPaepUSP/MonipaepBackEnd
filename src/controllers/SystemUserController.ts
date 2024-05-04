@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import * as jwt from "../jwt"
 
 import bcrypt from 'bcrypt'
-// import { PermissionsRepository, RefreshTokenRepository } from "../repositories";
 import { RefreshToken, SystemUser } from "../models";
 import { refreshTokenExpiresIn } from "src/refreshTokenExpiration";
 

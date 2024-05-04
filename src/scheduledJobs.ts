@@ -1,12 +1,12 @@
-import { getCustomRepository, In } from "typeorm";
+import {  In } from "typeorm";
 import { DiseaseOccurrenceRepository, PatientsRepository } from "./repositories";
 import { DiseaseOccurrence, Patient } from "./models";
     
 export const verifyOccurrencesExpiration = async () => {
-  const diseaseOccurrenceRepository = getCustomRepository(DiseaseOccurrenceRepository)
-  const patientsRepository = getCustomRepository(PatientsRepository)
+  // const diseaseOccurrenceRepository = getCustomRepository(DiseaseOccurrenceRepository)
+  // const patientsRepository = getCustomRepository(PatientsRepository)
 
-  const occurrences = await diseaseOccurrenceRepository.find({
+  const occurrences = await DiseaseOccurrenceRepository.find({
     where: {
       status: In(["Suspeito", "Infectado"])
     },
@@ -27,14 +27,16 @@ export const verifyOccurrencesExpiration = async () => {
     if(currentDate >= expirationDate) {
       const newStatus = occurrence.status === "Suspeito" ? "Saudável" : "Curado"
       try {
-        await diseaseOccurrenceRepository.createQueryBuilder()
+        await DiseaseOccurrenceRepository.createQueryBuilder()
         .update(DiseaseOccurrence)
         .set({ status: newStatus, date_end: new Date() })
         .where("id = :id", { id: occurrence.id })
         .execute()
 
-        const patientDiseaseOccurrences = await diseaseOccurrenceRepository.find({
-          patient_id: occurrence.patient_id
+        const patientDiseaseOccurrences = await DiseaseOccurrenceRepository.find({
+          where: {
+            patient_id: occurrence.patient_id
+          }
         })
 
         let finalStatus = patientDiseaseOccurrences[0].status
@@ -60,7 +62,7 @@ export const verifyOccurrencesExpiration = async () => {
         }
 
         try {
-          await patientsRepository.createQueryBuilder()
+          await PatientsRepository.createQueryBuilder()
           .update(Patient)
           .set({ status: finalStatus })
           .where("id = :id", { id: occurrence.patient_id })

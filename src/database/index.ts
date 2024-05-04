@@ -16,20 +16,34 @@ const {
     POSTGRES_PASSWORD_FILE: PASSWORD_FILE,
     POSTGRES_DB: DB,
     POSTGRES_DB_FILE: DB_FILE,
+
+    ENVIRONMENT_TYPE : ENVIRONMENT
 } = process.env;
 
+// development
+let host = "localhost"
+let user = "postgres"
+let password = "postgreslabesmonipaep"
+let database = "monipaep"
 
 // production
-    // const host = HOST_FILE ? fs.readFileSync(HOST_FILE) : HOST;
-    // const user = USER_FILE ? fs.readFileSync(USER_FILE) : USER;
-    // const password = PASSWORD_FILE ? fs.readFileSync(PASSWORD_FILE, 'utf8') : PASSWORD;
-    // const database = DB_FILE ? fs.readFileSync(DB_FILE) : DB;
+if(ENVIRONMENT == "PRODUCTION") {
+    console.log("Entering production mode")
+ 
+    host = HOST_FILE ? fs.readFileSync(HOST_FILE).toString() : HOST;
+    user = USER_FILE ? fs.readFileSync(USER_FILE).toString() : USER;
+    password = PASSWORD_FILE ? fs.readFileSync(PASSWORD_FILE, 'utf8').toString() : PASSWORD;
+    database = DB_FILE ? fs.readFileSync(DB_FILE).toString() : DB;
+} else {
+    console.log("Production: DEVELOPMENT");
+    console.log("Variables:");
+    console.log(host);
+    console.log(user);
+    console.log(password);
+    console.log(database);
+}
 
-//development
-const host = "localhost"
-const user = "postgres"
-const password = "postgreslabesmonipaep"
-const database = "monipaep"
+
 
 export const AppDataSource = new DataSource({
     "type": "postgres",
@@ -51,10 +65,10 @@ export const AppDataSource = new DataSource({
 AppDataSource.initialize()
     .then(() => {
         console.log("Data source typeorm initialized!");
-        console.log(host);
-        console.log(user);
-        console.log(password);
-        console.log(database);
+        // console.log(host);
+        // console.log(user);
+        // console.log(password);
+        // console.log(database);
         
         
     })

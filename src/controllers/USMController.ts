@@ -1,20 +1,15 @@
 import { Request, Response } from "express";
 import {  Like, Repository } from "typeorm";
 import { USM } from "../models";
-import { AppDataSource } from "src/database";
-// import { USMRepository } from "../repositories";
+// import { AppDataSource } from "src/database";
+import { USMRepository } from "../repositories";
 class USMController{
-  private usmRepository : Repository<USM>;
-
-  constructor() {
-    this.usmRepository = AppDataSource.getRepository(USM);
-  }
 
   async create(request: Request, response: Response){
     const body = request.body
 
 
-    const usmAlreadyExists =  await this.usmRepository.findOne({
+    const usmAlreadyExists =  await USMRepository.findOne({
       where : {
         name: body.name
       }
@@ -27,8 +22,8 @@ class USMController{
     }
 
     try {
-      const usm = this.usmRepository.create(body)
-      await this.usmRepository.save(usm)
+      const usm = USMRepository.create(body)
+      await USMRepository.save(usm)
       
       return response.status(201).json({
         success: "Unidade de saúde cadastrada com sucesso"
@@ -60,7 +55,7 @@ class USMController{
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
-    const usmList = await this.usmRepository.findAndCount(options)
+    const usmList = await USMRepository.findAndCount(options)
 
     return response.status(200).json({
       usms: usmList[0],
@@ -73,7 +68,7 @@ class USMController{
     const { name } = request.params
 
 
-    const isValidUsm = await this.usmRepository.findOne({ where: { name : name} })
+    const isValidUsm = await USMRepository.findOne({ where: { name : name} })
     
     if(!isValidUsm){
       return response.status(404).json({
@@ -82,7 +77,7 @@ class USMController{
     }
 
     try {
-      await this.usmRepository.createQueryBuilder()
+      await USMRepository.createQueryBuilder()
         .update(USM)
         .set(body)
         .where("name = :name", { name })
@@ -101,7 +96,7 @@ class USMController{
     const { name } = request.params
 
 
-    const isValidUsm = await this.usmRepository.findOne({ where: {name : name} })
+    const isValidUsm = await USMRepository.findOne({ where: {name : name} })
     
     if(!isValidUsm){
       return response.status(404).json({
@@ -110,7 +105,7 @@ class USMController{
     }
     
     try {
-      await this.usmRepository.createQueryBuilder()
+      await USMRepository.createQueryBuilder()
         .delete()
         .from(USM)
         .where("name = :name", { name })
