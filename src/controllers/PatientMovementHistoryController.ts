@@ -1,16 +1,27 @@
 import { Request, Response } from "express";
-import { getCustomRepository } from "typeorm";
-import { PatientMovementHistory } from "../models";
-import { DiseaseOccurrenceRepository, PatientMovementHistoryRepository } from "../repositories";
+// import { getCustomRepository } from "typeorm";
+import { DiseaseOccurrence, PatientMovementHistory } from "../models";
+import { Repository } from "typeorm";
+import { AppDataSource } from "src/database";
+// import { DiseaseOccurrenceRepository, PatientMovementHistoryRepository } from "../repositories";
 class PatientMovementHistoryController {
+  private diseaseOccurrenceRepository : Repository<DiseaseOccurrence>;
+  private patientMovementRepository : Repository<PatientMovementHistory>;
+
+  constructor() {
+    this.diseaseOccurrenceRepository = AppDataSource.getRepository(DiseaseOccurrence);
+    this.patientMovementRepository = AppDataSource.getRepository(PatientMovementHistory);
+  }
+
   async create(request: Request, response: Response) {
     const body = request.body
 
-    const diseaseOccurrenceRepository = getCustomRepository(DiseaseOccurrenceRepository)
-    const patientMovementRepository = getCustomRepository(PatientMovementHistoryRepository)
+    
 
-    const isValidDiseaseOccurrence = await diseaseOccurrenceRepository.findOne({
-      id: body.disease_occurrence_id
+    const isValidDiseaseOccurrence = await this.diseaseOccurrenceRepository.findOne({
+      where: {
+        id: body.disease_occurrence_id
+      }
     })
 
     if (!isValidDiseaseOccurrence) {
@@ -20,8 +31,8 @@ class PatientMovementHistoryController {
     }
 
     try {
-      const patientMovementHistoryBody = patientMovementRepository.create(body)
-      const patientMovementHistory = await patientMovementRepository.save(patientMovementHistoryBody)
+      const patientMovementHistoryBody = this.patientMovementRepository.create(body)
+      const patientMovementHistory = await this.patientMovementRepository.save(patientMovementHistoryBody)
   
       return response.status(201).json({
         success: "Histórico de movimentação registrado com sucesso",
@@ -37,14 +48,15 @@ class PatientMovementHistoryController {
   async list(request: Request, response: Response) {
     const { disease_occurrence_id, id } = request.query
 
-    const patientMovementRepository = getCustomRepository(PatientMovementHistoryRepository)
     let filters = {}
 
     if(id) {
       filters = { ...filters, id: String(id) }
 
-      const isValidPatientMovementHistory = await patientMovementRepository.findOne({
-        id: String(id)
+      const isValidPatientMovementHistory = await this.patientMovementRepository.findOne({
+        where: {
+          id: String(id)
+        }
       })
 
       if (!isValidPatientMovementHistory) {
@@ -57,9 +69,10 @@ class PatientMovementHistoryController {
     if(disease_occurrence_id) {
       filters = { ...filters, disease_occurrence_id: String(disease_occurrence_id) }
 
-      const diseaseOccurrenceRepository = getCustomRepository(DiseaseOccurrenceRepository)
-      const isValidDiseaseOccurrence = await diseaseOccurrenceRepository.findOne({
-        id: String(disease_occurrence_id)
+      const isValidDiseaseOccurrence = await this.diseaseOccurrenceRepository.findOne({
+        where: {
+          id: String(disease_occurrence_id)
+        }
       })
   
       if (!isValidDiseaseOccurrence) {
@@ -68,7 +81,7 @@ class PatientMovementHistoryController {
         })
       }
     }
-    const movementHistoryItems = await patientMovementRepository.find(filters)
+    const movementHistoryItems = await this.patientMovementRepository.find(filters)
 
     return response.status(200).json(movementHistoryItems)
   }
@@ -77,9 +90,8 @@ class PatientMovementHistoryController {
     const body = request.body
     const { id } = request.params
             
-    const patientMovementRepository = getCustomRepository(PatientMovementHistoryRepository)
 
-    const isValidMovement = await patientMovementRepository.findOne({ id })
+    const isValidMovement = await this.patientMovementRepository.findOne({ where: {id : id} })
 
     if(!isValidMovement) {
       return response.status(404).json({
@@ -88,7 +100,7 @@ class PatientMovementHistoryController {
     }
 
     try {
-      await patientMovementRepository.createQueryBuilder()
+      await this.patientMovementRepository.createQueryBuilder()
         .update(PatientMovementHistory)
         .set(body)
         .where("id = :id", { id })
@@ -106,9 +118,8 @@ class PatientMovementHistoryController {
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
             
-    const patientMovementRepository = getCustomRepository(PatientMovementHistoryRepository)
 
-    const isValidMovement = await patientMovementRepository.findOne({ id })
+    const isValidMovement = await this.patientMovementRepository.findOne({ where: {id :id} })
 
     if(!isValidMovement) {
       return response.status(404).json({
@@ -117,7 +128,7 @@ class PatientMovementHistoryController {
     }
 
     try {
-      await patientMovementRepository.createQueryBuilder()
+      await this.patientMovementRepository.createQueryBuilder()
         .delete()
         .from(PatientMovementHistory)
         .where("id = :id", { id })
