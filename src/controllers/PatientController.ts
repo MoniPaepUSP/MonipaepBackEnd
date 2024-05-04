@@ -1,28 +1,21 @@
 import { Request, Response } from "express";
-import {  Like, Repository } from 'typeorm';
+import {  Like } from 'typeorm';
 import bcrypt from 'bcrypt'
 
 import * as jwt from "../jwt"
 import { Patient, RefreshToken } from "../models";
-// import { RefreshTokenRepository, PatientsRepository } from "../repositories";
+import { RefreshTokenRepository, PatientsRepository } from "../repositories";
 import { PatientAlreadyExistsError } from "../errors";
 import { refreshTokenExpiresIn } from "../refreshTokenExpiration";
-import { AppDataSource } from "src/database";
 
 class PatientController{
-  private patientsRepository : Repository<Patient>;
-  private refreshTokenRepository : Repository<RefreshToken>;
-
-  constructor() {
-    this.patientsRepository = AppDataSource.getRepository(Patient);
-    this.refreshTokenRepository = AppDataSource.getRepository(RefreshToken);
-  }
+  
 
   async create(request: Request, response: Response){
     const body = request.body;
     
 
-    const patientAlreadyExists = await this.patientsRepository.findOne({ 
+    const patientAlreadyExists = await PatientsRepository.findOne({ 
       where: [
         { CPF: body.CPF }, 
         { email: body.email }
@@ -38,17 +31,17 @@ class PatientController{
     body.lastUpdate = body.createdAt
 
     try {
-      const patientBody = this.patientsRepository.create(body)
-      const patient: any = await this.patientsRepository.save(patientBody)
+      const patientBody = PatientsRepository.create(body)
+      const patient: any = await PatientsRepository.save(patientBody)
       const patientId = patient.id
       
 
-      const refreshTokenBody = this.refreshTokenRepository.create({
+      const refreshTokenBody = RefreshTokenRepository.create({
         patientId,
         expiresIn: refreshTokenExpiresIn()
       })
 
-      const refreshToken = await this.refreshTokenRepository.save(refreshTokenBody)
+      const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
 
       const token = jwt.sign({
           id: patient.id,
@@ -79,7 +72,7 @@ class PatientController{
       })
     }
     
-    const patientExists: any = await this.patientsRepository.findOne({
+    const patientExists: any = await PatientsRepository.findOne({
       where: { CPF }, 
       select: ['id', 'CPF', 'password']
     })
@@ -103,25 +96,25 @@ class PatientController{
         })
   
   
-        const refreshTokenExists = await this.refreshTokenRepository.findOne({
+        const refreshTokenExists = await RefreshTokenRepository.findOne({
           where: {patientId : patientId}
         })
         
         if(refreshTokenExists) {
-          await this.refreshTokenRepository.createQueryBuilder()
+          await RefreshTokenRepository.createQueryBuilder()
           .delete()
           .from(RefreshToken)
           .where("patientId = :id", { id: patientId })
           .execute()
         }
   
-        const refreshTokenBody = this.refreshTokenRepository.create({
+        const refreshTokenBody = RefreshTokenRepository.create({
           patientId,
           expiresIn: refreshTokenExpiresIn()
         })
   
-        const refreshToken = await this.refreshTokenRepository.save(refreshTokenBody)
-        const patient = await this.patientsRepository.findOne({where: {CPF}})
+        const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
+        const patient = await PatientsRepository.findOne({where: {CPF}})
 
         refreshToken.patientId = undefined
         patient.password = undefined
@@ -155,7 +148,7 @@ class PatientController{
     if(id) {
       filters = { ...filters, id: String(id) }
 
-      const patient = await this.patientsRepository.findOne({
+      const patient = await PatientsRepository.findOne({
         where: {id: String(id)}
       })
     
@@ -206,7 +199,7 @@ class PatientController{
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
     
-    const patientsList = await this.patientsRepository.findAndCount(options)
+    const patientsList = await PatientsRepository.findAndCount(options)
     return response.json({
       patients: patientsList[0],
       totalPatients: patientsList[1]
@@ -222,7 +215,7 @@ class PatientController{
       })
     }
     
-    const user = await this.patientsRepository.findOne({ where:{id:id} })
+    const user = await PatientsRepository.findOne({ where:{id:id} })
 
     if(!user) {
       return response.status(401).json({
@@ -239,7 +232,7 @@ class PatientController{
 
 
     
-    const patient = await this.patientsRepository.findOne({ where: {id : id} })
+    const patient = await PatientsRepository.findOne({ where: {id : id} })
       
     if(!patient){
       return response.status(404).json({
@@ -253,7 +246,7 @@ class PatientController{
     }
 
     try {
-      await this.patientsRepository.createQueryBuilder()
+      await PatientsRepository.createQueryBuilder()
         .update(Patient)
         .set(body)
         .where("id = :id", { id })
@@ -272,7 +265,7 @@ class PatientController{
     const { id } = request.params
 
 
-    const patient = await this.patientsRepository.findOne({ where: {id: id} })
+    const patient = await PatientsRepository.findOne({ where: {id: id} })
     
     if(!patient){
       return response.status(404).json({
@@ -281,7 +274,7 @@ class PatientController{
     }
 
     try {
-      await this.patientsRepository.createQueryBuilder()
+      await PatientsRepository.createQueryBuilder()
         .delete()
         .from(Patient)
         .where("id = :id", { id })
@@ -300,7 +293,7 @@ class PatientController{
     const { id } = request.params
 
 
-    const patient = await this.patientsRepository.findOne({ where: {id : id} })
+    const patient = await PatientsRepository.findOne({ where: {id : id} })
     
     if(!patient){
       return response.status(404).json({
@@ -309,7 +302,7 @@ class PatientController{
     }
 
     try {
-      await this.patientsRepository.createQueryBuilder()
+      await PatientsRepository.createQueryBuilder()
         .update(Patient)
         .set({ activeAccount: false })
         .where("id = :id", { id })

@@ -1,20 +1,15 @@
 import { Request, Response } from "express";
-import {  Like, Repository } from "typeorm";
+import {  Like } from "typeorm";
 import { HealthProtocol } from "../models";
-import { AppDataSource } from "src/database";
-// import { HealthProtocolRepository } from "../repositories/HealthProtocolRepository";
+import { HealthProtocolRepository } from "../repositories/HealthProtocolRepository";
 
 class HealthProtocolController {
-  private healthProtocolRepository : Repository<HealthProtocol>;
 
-  constructor() {
-    this.healthProtocolRepository = AppDataSource.getRepository(HealthProtocol);
-  }
 
   async create(request: Request, response: Response) {
     const body = request.body
 
-    const isAlreadyRegistered = await this.healthProtocolRepository.findOne({
+    const isAlreadyRegistered = await HealthProtocolRepository.findOne({
       where: {
         title: body.title
       }
@@ -27,8 +22,8 @@ class HealthProtocolController {
     }
 
     try {
-      const healthProtocolBody = this.healthProtocolRepository.create(body)
-      const healthProtocol = await this.healthProtocolRepository.save(healthProtocolBody)
+      const healthProtocolBody = HealthProtocolRepository.create(body)
+      const healthProtocol = await HealthProtocolRepository.save(healthProtocolBody)
 
       return response.status(201).json({
         success: "Protocolo de saúde registrado com sucesso",
@@ -47,7 +42,7 @@ class HealthProtocolController {
     
 
     if(id) {
-      const isValidHealthProtocol = await this.healthProtocolRepository.findOne({
+      const isValidHealthProtocol = await HealthProtocolRepository.findOne({
         where : {
           id: String(id)
         }
@@ -83,7 +78,7 @@ class HealthProtocolController {
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
-    const healthProtocolList = await this.healthProtocolRepository.findAndCount(options)
+    const healthProtocolList = await HealthProtocolRepository.findAndCount(options)
 
     return response.status(200).json({
       healthProtocols: healthProtocolList[0],
@@ -96,7 +91,7 @@ class HealthProtocolController {
     const { id } = request.params
 
 
-    const isValidHealthProtocol = await this.healthProtocolRepository.findOne({ where: {id} })
+    const isValidHealthProtocol = await HealthProtocolRepository.findOne({ where: {id} })
     
     if(!isValidHealthProtocol){
       return response.status(404).json({
@@ -104,7 +99,7 @@ class HealthProtocolController {
       })
     }
 
-    const isAlreadyRegistered = await this.healthProtocolRepository.findOne({
+    const isAlreadyRegistered = await HealthProtocolRepository.findOne({
       where: {
         title: body.title
       }
@@ -117,7 +112,7 @@ class HealthProtocolController {
     }
 
     try {
-      await this.healthProtocolRepository.createQueryBuilder()
+      await HealthProtocolRepository.createQueryBuilder()
         .update(HealthProtocol)
         .set(body)
         .where("id = :id", { id })
@@ -136,7 +131,7 @@ class HealthProtocolController {
     const { id } = request.params
 
 
-    const isValidHealthProtocol = await this.healthProtocolRepository.findOne({ where: {id} })
+    const isValidHealthProtocol = await HealthProtocolRepository.findOne({ where: {id} })
     
     if(!isValidHealthProtocol){
       return response.status(404).json({
@@ -145,7 +140,7 @@ class HealthProtocolController {
     }
 
     try {
-      await this.healthProtocolRepository.createQueryBuilder()
+      await HealthProtocolRepository.createQueryBuilder()
         .delete()
         .from(HealthProtocol)
         .where("id = :id", { id })

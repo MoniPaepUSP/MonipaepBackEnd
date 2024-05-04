@@ -1,14 +1,9 @@
 import { Request, Response } from "express";
-import { Like, Repository } from "typeorm";
+import { Like } from "typeorm";
 import { Disease } from "../models";
-// import { DiseaseRepository } from "../repositories";
-import { AppDataSource } from "src/database";
-class DiseaseController{
-  private diseaseRepository : Repository<Disease>;
+import { DiseaseRepository } from "../repositories";
 
-  constructor() {
-    this.diseaseRepository = AppDataSource.getRepository(Disease);
-  }
+class DiseaseController{
   
 
   async create(request: Request, response: Response){
@@ -16,7 +11,7 @@ class DiseaseController{
 
 
 
-    const diseaseAlreadyExists = await this.diseaseRepository.findOne({
+    const diseaseAlreadyExists = await DiseaseRepository.findOne({
       where: {
         name: body.name
       }
@@ -29,8 +24,8 @@ class DiseaseController{
     }
     
     try {
-      const disease = this.diseaseRepository.create(body)
-      await this.diseaseRepository.save(disease)
+      const disease = DiseaseRepository.create(body)
+      await DiseaseRepository.save(disease)
 
       return response.status(201).json({
         success: "Doença registrada com sucesso"
@@ -66,7 +61,7 @@ class DiseaseController{
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
-    const diseaseList = await this.diseaseRepository.findAndCount(options)
+    const diseaseList = await DiseaseRepository.findAndCount(options)
 
     return response.status(200).json({
       diseases: diseaseList[0],
@@ -81,7 +76,7 @@ class DiseaseController{
     // const diseaseRepository = getCustomRepository(DiseaseRepository)
     // const diseaseRepository = 
 
-    const isValidDisease = await this.diseaseRepository.findOne(
+    const isValidDisease = await DiseaseRepository.findOne(
       {
         where: { 
           name
@@ -95,7 +90,7 @@ class DiseaseController{
     }
 
     try {
-      await this.diseaseRepository.createQueryBuilder()
+      await DiseaseRepository.createQueryBuilder()
         .update(Disease)
         .set(body)
         .where("name = :name", { name })
@@ -117,7 +112,7 @@ class DiseaseController{
     // const diseaseRepository = AppDataSource.getRepository(Disease);
 
 
-    const isValidDisease = await this.diseaseRepository.findOne({ 
+    const isValidDisease = await DiseaseRepository.findOne({ 
       where: {
         name
       } 
@@ -130,7 +125,7 @@ class DiseaseController{
     }
     
     try {
-      await this.diseaseRepository.createQueryBuilder()
+      await DiseaseRepository.createQueryBuilder()
         .delete()
         .from(Disease)
         .where("name = :name", { name })

@@ -1,24 +1,16 @@
 import { Request, Response } from "express";
-// import { AppointmentsRepository, PatientsRepository } from "../repositories";
-import { Appointment, Patient } from "src/models";
-import { AppDataSource } from "src/database";
-import { Repository } from "typeorm";
+import { AppointmentsRepository, PatientsRepository } from "../repositories";
+
 
 
 class AppointmentController {
-    private appointmentsRepository : Repository<Appointment>;
-    private patientsRepository : Repository<Patient>;
-
-    constructor() {
-        this.appointmentsRepository = AppDataSource.getRepository(Appointment);
-        this.patientsRepository = AppDataSource.getRepository(Patient);
-    }
+  
 
     async create(request: Request, response: Response){
         const body = request.body
         
 
-        const patientExists = await this.patientsRepository.findOne(
+        const patientExists = await PatientsRepository.findOne(
             {
                 where :{
                     id : body.patient_id
@@ -31,9 +23,9 @@ class AppointmentController {
             })
         }
 
-        const appointment = this.appointmentsRepository.create(body)
+        const appointment = AppointmentsRepository.create(body)
 
-        await this.appointmentsRepository.save(appointment)
+        await AppointmentsRepository.save(appointment)
 
         return response.status(201).json(appointment)
     }

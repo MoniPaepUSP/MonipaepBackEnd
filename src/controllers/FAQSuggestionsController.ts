@@ -1,23 +1,17 @@
 import { Request, Response } from "express"
 // import { Repository, getCustomRepository } from "typeorm"
 import { FAQSuggestions } from "../models"
-import { AppDataSource } from "src/database";
-import { Repository } from "typeorm";
-// import { FAQSuggestionsRepository } from "../repositories"
+
+import { FAQSuggestionsRepository } from "../repositories"
 
 class FAQSuggestionsController {
-  private faqSuggestionsRepository : Repository<FAQSuggestions>;
 
-
-  constructor() {
-    this.faqSuggestionsRepository = AppDataSource.getRepository(FAQSuggestions);
-  }
 
   async create(request: Request, response: Response){
     const body = request.body
     
 
-    const faqSuggestedExists = await this.faqSuggestionsRepository.findOne({
+    const faqSuggestedExists = await FAQSuggestionsRepository.findOne({
       where: {
         question: body.question
       }
@@ -30,8 +24,8 @@ class FAQSuggestionsController {
     }
 
     try {
-      const faqBody = this.faqSuggestionsRepository.create(body)
-      const faq: any = await this.faqSuggestionsRepository.save(faqBody)
+      const faqBody = FAQSuggestionsRepository.create(body)
+      const faq: any = await FAQSuggestionsRepository.save(faqBody)
   
       return response.status(201).json({
         success: "Sugestão de questão registrada com sucesso",
@@ -52,7 +46,7 @@ class FAQSuggestionsController {
     if(id) {
       filters = { ...filters, id: String(id) }
 
-      const questionExists = await this.faqSuggestionsRepository.findOne({
+      const questionExists = await FAQSuggestionsRepository.findOne({
         where : {
           id: String(id)
         }
@@ -68,7 +62,7 @@ class FAQSuggestionsController {
     if(question) {
       filters = { ...filters, question: String(question) }
 
-      const questionExists = await this.faqSuggestionsRepository.findOne({
+      const questionExists = await FAQSuggestionsRepository.findOne({
         where: {
           question: String(question)
         }
@@ -80,7 +74,7 @@ class FAQSuggestionsController {
         })
       }
     }
-    const questionsList = await this.faqSuggestionsRepository.find(filters)
+    const questionsList = await FAQSuggestionsRepository.find(filters)
 
     return response.status(200).json(questionsList)
   }
@@ -89,7 +83,7 @@ class FAQSuggestionsController {
     const { id } = request.params
 
 
-    const questionExists = await this.faqSuggestionsRepository.findOne({ where: {id} })
+    const questionExists = await FAQSuggestionsRepository.findOne({ where: {id} })
 
     if(!questionExists) {
       return response.status(404).json({
@@ -98,7 +92,7 @@ class FAQSuggestionsController {
     }
     
     try {
-      await this.faqSuggestionsRepository.createQueryBuilder()
+      await FAQSuggestionsRepository.createQueryBuilder()
         .delete()
         .from(FAQSuggestions)
         .where("id = :id", { id })

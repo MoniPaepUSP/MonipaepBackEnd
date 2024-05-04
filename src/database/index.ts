@@ -55,6 +55,8 @@ AppDataSource.initialize()
         console.log(user);
         console.log(password);
         console.log(database);
+        
+        
     })
     .catch((err) => {
         console.error("Error on data source typeorm intialization ", err);
