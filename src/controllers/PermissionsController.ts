@@ -1,24 +1,17 @@
 import { Request, Response } from "express";
 // import { getCustomRepository } from "typeorm";
-import { Permissions, SystemUser } from "../models";
-import { Repository } from "typeorm";
-import { AppDataSource } from "src/database";
-// import { PermissionsRepository, SystemUserRepository } from "../repositories";
+import { Permissions } from "../models";
+
+import { PermissionsRepository, SystemUserRepository } from "../repositories";
 
 class PermissionsController {
-  private permissionsRepository: Repository<Permissions>;
-  private systemUserRepository : Repository<SystemUser>;
-
-  constructor() {
-    this.permissionsRepository = AppDataSource.getRepository(Permissions);
-    this.systemUserRepository = AppDataSource.getRepository(SystemUser);
-  }
+  
 
   async create(request: Request, response: Response){
     const body = request.body
 
 
-    const userExists = await this.systemUserRepository.findOne({
+    const userExists = await SystemUserRepository.findOne({
       where : {
         id: body.userId
       }
@@ -30,7 +23,7 @@ class PermissionsController {
       })
     }
 
-    const permissionExists = await this.permissionsRepository.findOne({
+    const permissionExists = await PermissionsRepository.findOne({
       where: {
         userId: body.userId
       }
@@ -46,8 +39,8 @@ class PermissionsController {
       body.localAdm = false
       body.generalAdm = false
       body.authorized = false
-      const permissions = this.permissionsRepository.create(body)
-      await this.permissionsRepository.save(permissions)
+      const permissions = PermissionsRepository.create(body)
+      await PermissionsRepository.save(permissions)
 
       return response.status(201).json({
         success: "Permissões do usuário criadas com sucesso"
@@ -82,7 +75,7 @@ class PermissionsController {
     if(id) {
       filters = { ...filters, userId: String(id) }
 
-      const userIsValid = await this.permissionsRepository.findOne({
+      const userIsValid = await PermissionsRepository.findOne({
         where: {
           userId: String(id)
         }
@@ -99,7 +92,7 @@ class PermissionsController {
       const skip = page ? ((Number(page) - 1) * take) : 0 
       const limit = page ? take : 99999999
       try {
-        const items = await this.permissionsRepository.createQueryBuilder("permissions")
+        const items = await PermissionsRepository.createQueryBuilder("permissions")
           .leftJoinAndSelect("permissions.systemUser", "systemUser")
           .where("systemUser.name like :name", { name: `%${name}%` })
           .skip(skip)
@@ -116,7 +109,7 @@ class PermissionsController {
       }
     }
 
-    const permissionsList = await this.permissionsRepository.findAndCount(options)
+    const permissionsList = await PermissionsRepository.findAndCount(options)
 
     return response.status(200).json({
       systemUsers: permissionsList[0],
@@ -130,7 +123,7 @@ class PermissionsController {
     const { id } = request.params
 
 
-    const userExists = await this.permissionsRepository.findOne({
+    const userExists = await PermissionsRepository.findOne({
       where: {
         userId: id
       }
@@ -143,7 +136,7 @@ class PermissionsController {
     }
 
     if(body.generalAdm !== undefined) {
-      const tokenUser = await this.permissionsRepository.findOne({
+      const tokenUser = await PermissionsRepository.findOne({
         where: {
           userId: tokenPayload.id
         }
@@ -156,7 +149,7 @@ class PermissionsController {
     }
 
     try {
-      await this.permissionsRepository.createQueryBuilder()
+      await PermissionsRepository.createQueryBuilder()
         .update(Permissions)
         .set(body)
         .where("userId = :id", { id })
@@ -175,7 +168,7 @@ class PermissionsController {
     const { id } = request.params
 
 
-    const userExists = await this.permissionsRepository.findOne({
+    const userExists = await PermissionsRepository.findOne({
       where: {
         userId: id
       }
@@ -188,7 +181,7 @@ class PermissionsController {
     }
 
     try {
-      await this.permissionsRepository.createQueryBuilder()
+      await PermissionsRepository.createQueryBuilder()
         .delete()
         .from(Permissions)
         .where("userId = :id", { id })

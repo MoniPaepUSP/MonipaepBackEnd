@@ -1,10 +1,12 @@
-FROM node:14.2
+FROM node:20.11
 
 WORKDIR /app
 
 COPY ./package.json .
-RUN npm cache clean --force
-RUN npm install
+# RUN npm cache clean --force
+# RUN npm install
+RUN yarn cache clean --all
+RUN yarn install
 COPY . .
 
 EXPOSE 3333

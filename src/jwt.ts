@@ -1,5 +1,5 @@
 import { Response } from 'express'
-import { getCustomRepository } from 'typeorm'
+// import {  } from 'typeorm'
 import jwt from 'jsonwebtoken'
 
 import { PermissionsRepository, SystemUserRepository } from './repositories'
@@ -57,10 +57,12 @@ export const adminMiddleware = async (request, response: Response, next) => {
     })
   }
   
-  const permissionsRepository = getCustomRepository(PermissionsRepository)
+  // const permissionsRepository = getCustomRepository(PermissionsRepository)
 
-  const user = await permissionsRepository.findOne({
-    userId: id
+  const user = await PermissionsRepository.findOne({
+    where: {
+      userId: id
+    }
   })
 
   if(!user) {
@@ -91,10 +93,12 @@ export const localAdminMiddleware = async (request, response: Response, next) =>
     })
   }
   
-  const permissionsRepository = getCustomRepository(PermissionsRepository)
+  // const permissionsRepository = getCustomRepository(PermissionsRepository)
 
-  const user = await permissionsRepository.findOne({
-    userId: id
+  const user = await PermissionsRepository.findOne({
+    where: {
+      userId: id
+    }
   })
 
   if(!user) {
@@ -118,8 +122,8 @@ export const systemUserMiddleware = async (request, response: Response, next) =>
   const { id, type } = request.tokenPayload
 
   if (type === "system_user") {
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
-    const isValidId = await systemUserRepository.findOne({ id })
+    // const systemUserRepository = getCustomRepository(SystemUserRepository)
+    const isValidId = await SystemUserRepository.findOne({ where: {id:id} })
     if(isValidId) {
       return next()
     }
@@ -139,8 +143,8 @@ export const usmUserMiddleware = async (request, response: Response, next) => {
   const { id, type } = request.tokenPayload
 
   if (type === "system_user") {
-    const systemUserRepository = getCustomRepository(SystemUserRepository)
-    const isValidId = await systemUserRepository.findOne({ id })
+    // const systemUserRepository = getCustomRepository(SystemUserRepository)
+    const isValidId = await SystemUserRepository.findOne({ where: {id:id} })
 
     if(!isValidId) {
       return response.status(401).json({
@@ -148,8 +152,8 @@ export const usmUserMiddleware = async (request, response: Response, next) => {
         code: "invalid.system.user"
       })
     } else {
-      const permissionsRepository = getCustomRepository(PermissionsRepository)
-      const userPermissions = await permissionsRepository.findOne({ userId: id })
+      // const permissionsRepository = getCustomRepository(PermissionsRepository)
+      const userPermissions = await PermissionsRepository.findOne({ where: {userId: id} })
       if(isValidId.department === "USM" || userPermissions.generalAdm) {
         return next()
       } else {

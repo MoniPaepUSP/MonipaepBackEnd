@@ -11,16 +11,17 @@ services:
       # DATABASE_URL: postgres://postgres:postgreslabesmonipaep@postgres:5432/monipaep # esta aqui mas nao esta sendo usado no codigo, nao altera nada por enquanto
       NODE_ENV: development
 
-      POSTGRES_HOST: localhost
+      POSTGRES_HOST: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/db-password
       POSTGRES_USER: postgres
       POSTGRES_DB: monipaep
+      ENVIRONMENT_TYPE: PRODUCTION
 
       PORT: 3000
     ports:
       - "81:3333"
       - "443:3333"
-    command: npm run dev
+    # command: npm run dev
     volumes:
       - .:/app/
       - /app/node_modules
