@@ -1,16 +1,19 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from "typeorm";
+import {  Like, Repository } from "typeorm";
 import { Symptom } from "../models";
 import { SymptomRepository } from "../repositories/SymptomRepository";
 
 class SymptomController {
+  
+
   async create(request: Request, response: Response) {
     const body = request.body
 
-    const symptomRepository = getCustomRepository(SymptomRepository)
 
-    const symptomAlreadyExists = await symptomRepository.findOne({
-      symptom: body.symptom
+    const symptomAlreadyExists = await SymptomRepository.findOne({
+      where: {
+        symptom: body.symptom
+      }
     })
 
     if(symptomAlreadyExists) {
@@ -20,8 +23,8 @@ class SymptomController {
     }
 
     try {
-      const symptom = symptomRepository.create(body)
-      await symptomRepository.save(symptom)
+      const symptom = SymptomRepository.create(body)
+      await SymptomRepository.save(symptom)
   
       return response.status(201).json({
         success: "Sintoma registrado com sucesso"
@@ -37,7 +40,6 @@ class SymptomController {
     const { symptom, page } = request.query
     let filters = {}
     
-    const symptomRepository = getCustomRepository(SymptomRepository)
 
     if(symptom) {
       filters = { symptom: Like(`%${String(symptom)}%`) }
@@ -55,7 +57,7 @@ class SymptomController {
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
-    const symptomsList = await symptomRepository.findAndCount(options)
+    const symptomsList = await SymptomRepository.findAndCount(options)
 
     return response.status(200).json({
       symptoms: symptomsList[0],
@@ -67,8 +69,7 @@ class SymptomController {
     const body = request.body
     const { symptom } = request.params
 
-    const symptomRepository = getCustomRepository(SymptomRepository)
-    const isValidSymptom = await symptomRepository.findOne({ symptom })
+    const isValidSymptom = await SymptomRepository.findOne({ where: {symptom} })
 
     if(!isValidSymptom){
       return response.status(404).json({
@@ -77,7 +78,7 @@ class SymptomController {
     }
 
     try {
-      await symptomRepository.createQueryBuilder()
+      await SymptomRepository.createQueryBuilder()
         .update(Symptom)
         .set(body)
         .where("symptom = :symptom", { symptom })
@@ -95,8 +96,7 @@ class SymptomController {
   async deleteOne(request: Request, response: Response) {
     const { symptom } = request.params
 
-    const symptomRepository = getCustomRepository(SymptomRepository)
-    const isValidSymptom = await symptomRepository.findOne({ symptom })
+    const isValidSymptom = await SymptomRepository.findOne({ where: {symptom} })
 
     if(!isValidSymptom){
       return response.status(404).json({
@@ -105,7 +105,7 @@ class SymptomController {
     }
 
     try {
-      await symptomRepository.createQueryBuilder()
+      await SymptomRepository.createQueryBuilder()
         .delete()
         .from(Symptom)
         .where("symptom = :symptom", { symptom })

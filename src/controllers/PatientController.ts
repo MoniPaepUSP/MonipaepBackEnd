@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from 'typeorm';
+import {  Like } from 'typeorm';
 import bcrypt from 'bcrypt'
 
 import * as jwt from "../jwt"
@@ -9,12 +9,13 @@ import { PatientAlreadyExistsError } from "../errors";
 import { refreshTokenExpiresIn } from "../refreshTokenExpiration";
 
 class PatientController{
+  
+
   async create(request: Request, response: Response){
     const body = request.body;
     
-    const patientsRepository = getCustomRepository(PatientsRepository)
 
-    const patientAlreadyExists = await patientsRepository.findOne({ 
+    const patientAlreadyExists = await PatientsRepository.findOne({ 
       where: [
         { CPF: body.CPF }, 
         { email: body.email }
@@ -30,18 +31,17 @@ class PatientController{
     body.lastUpdate = body.createdAt
 
     try {
-      const patientBody = patientsRepository.create(body)
-      const patient: any = await patientsRepository.save(patientBody)
+      const patientBody = PatientsRepository.create(body)
+      const patient: any = await PatientsRepository.save(patientBody)
       const patientId = patient.id
       
-      const refreshTokenRepository = getCustomRepository(RefreshTokenRepository)
 
-      const refreshTokenBody = refreshTokenRepository.create({
+      const refreshTokenBody = RefreshTokenRepository.create({
         patientId,
         expiresIn: refreshTokenExpiresIn()
       })
 
-      const refreshToken = await refreshTokenRepository.save(refreshTokenBody)
+      const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
 
       const token = jwt.sign({
           id: patient.id,
@@ -65,7 +65,6 @@ class PatientController{
   async loginPost(request: Request, response: Response){
     const { CPF, password } = request.body
 
-    const patientsRepository = getCustomRepository(PatientsRepository)
     
     if(!password) {
       return response.status(401).json({
@@ -73,7 +72,7 @@ class PatientController{
       })
     }
     
-    const patientExists: any = await patientsRepository.findOne({
+    const patientExists: any = await PatientsRepository.findOne({
       where: { CPF }, 
       select: ['id', 'CPF', 'password']
     })
@@ -96,27 +95,26 @@ class PatientController{
           type: 'patient'
         })
   
-        const refreshTokenRepository = getCustomRepository(RefreshTokenRepository)
   
-        const refreshTokenExists = await refreshTokenRepository.findOne({
-          patientId
+        const refreshTokenExists = await RefreshTokenRepository.findOne({
+          where: {patientId : patientId}
         })
         
         if(refreshTokenExists) {
-          await refreshTokenRepository.createQueryBuilder()
+          await RefreshTokenRepository.createQueryBuilder()
           .delete()
           .from(RefreshToken)
           .where("patientId = :id", { id: patientId })
           .execute()
         }
   
-        const refreshTokenBody = refreshTokenRepository.create({
+        const refreshTokenBody = RefreshTokenRepository.create({
           patientId,
           expiresIn: refreshTokenExpiresIn()
         })
   
-        const refreshToken = await refreshTokenRepository.save(refreshTokenBody)
-        const patient = await patientsRepository.findOne({CPF})
+        const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
+        const patient = await PatientsRepository.findOne({where: {CPF}})
 
         refreshToken.patientId = undefined
         patient.password = undefined
@@ -146,13 +144,12 @@ class PatientController{
       page } = request.query
     let filters = {}
 
-    const patientsRepository = getCustomRepository(PatientsRepository)
 
     if(id) {
       filters = { ...filters, id: String(id) }
 
-      const patient = await patientsRepository.findOne({
-        id: String(id)
+      const patient = await PatientsRepository.findOne({
+        where: {id: String(id)}
       })
     
       if(!patient){
@@ -202,7 +199,7 @@ class PatientController{
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
     
-    const patientsList = await patientsRepository.findAndCount(options)
+    const patientsList = await PatientsRepository.findAndCount(options)
     return response.json({
       patients: patientsList[0],
       totalPatients: patientsList[1]
@@ -218,8 +215,7 @@ class PatientController{
       })
     }
     
-    const patientsRepository = getCustomRepository(PatientsRepository)
-    const user = await patientsRepository.findOne({ id })
+    const user = await PatientsRepository.findOne({ where:{id:id} })
 
     if(!user) {
       return response.status(401).json({
@@ -234,9 +230,9 @@ class PatientController{
     const body = request.body
     const { id } = request.params
 
-    const patientsRepository = getCustomRepository(PatientsRepository)
 
-    const patient = await patientsRepository.findOne({ id })
+    
+    const patient = await PatientsRepository.findOne({ where: {id : id} })
       
     if(!patient){
       return response.status(404).json({
@@ -250,7 +246,7 @@ class PatientController{
     }
 
     try {
-      await patientsRepository.createQueryBuilder()
+      await PatientsRepository.createQueryBuilder()
         .update(Patient)
         .set(body)
         .where("id = :id", { id })
@@ -268,9 +264,8 @@ class PatientController{
   async deleteOne(request: Request, response: Response){
     const { id } = request.params
 
-    const patientsRepository = getCustomRepository(PatientsRepository)
 
-    const patient = await patientsRepository.findOne({ id })
+    const patient = await PatientsRepository.findOne({ where: {id: id} })
     
     if(!patient){
       return response.status(404).json({
@@ -279,7 +274,7 @@ class PatientController{
     }
 
     try {
-      await patientsRepository.createQueryBuilder()
+      await PatientsRepository.createQueryBuilder()
         .delete()
         .from(Patient)
         .where("id = :id", { id })
@@ -297,9 +292,8 @@ class PatientController{
   async deactivateAccount(request: Request, response: Response){
     const { id } = request.params
 
-    const patientsRepository = getCustomRepository(PatientsRepository)
 
-    const patient = await patientsRepository.findOne({ id })
+    const patient = await PatientsRepository.findOne({ where: {id : id} })
     
     if(!patient){
       return response.status(404).json({
@@ -308,7 +302,7 @@ class PatientController{
     }
 
     try {
-      await patientsRepository.createQueryBuilder()
+      await PatientsRepository.createQueryBuilder()
         .update(Patient)
         .set({ activeAccount: false })
         .where("id = :id", { id })

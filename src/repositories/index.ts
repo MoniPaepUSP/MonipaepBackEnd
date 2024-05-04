@@ -1,3 +1,6 @@
+// import { AppDataSource } from "src/database"
+// import { SystemUser } from "src/models"
+
 export * from "./AppointmentsRepository"
 export * from "./FAQRepository"
 export * from "./PatientsRepository"
@@ -15,3 +18,5 @@ export * from "./PermissionsRepository"
 export * from "./FAQSuggestionsRepository"
 export * from "./RefreshTokenRepository"
 export * from './AboutTheAppRepository'
+
+// export const SystemUserRepository = AppDataSource.getRepository(SystemUser);

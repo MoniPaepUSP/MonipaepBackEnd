@@ -1,20 +1,19 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from "typeorm";
-import { AssignedHealthProtocol } from "../models";
-import { DiseaseRepository } from "../repositories";
-import { AssignedHealthProtocolRepository } from "../repositories/AssignedHealthProtocolRepository";
-import { HealthProtocolRepository } from "../repositories/HealthProtocolRepository";
+import {  Like } from "typeorm";
+import { AssignedHealthProtocol, } from "../models";
+
+
+import { AssignedHealthProtocolRepository, DiseaseRepository, HealthProtocolRepository } from "src/repositories";
 
 class AssignedHealthProtocolController {
+ 
   async create(request: Request, response: Response) {
-    const body = request.body
+    const body = request.body    
 
-    const assignedHealthProtocolRepository = getCustomRepository(AssignedHealthProtocolRepository)
-    const healthProtocolRepository = getCustomRepository(HealthProtocolRepository)
-    const diseaseRepository = getCustomRepository(DiseaseRepository)
-
-    const isValidDisease = await diseaseRepository.findOne({
-      name: body.disease_name
+    const isValidDisease = await DiseaseRepository.findOne({
+      where : {
+        name: body.disease_name
+      }
     })
 
     if(!isValidDisease) {
@@ -23,8 +22,10 @@ class AssignedHealthProtocolController {
       })
     }
 
-    const isValidHealthProtocol = await healthProtocolRepository.findOne({
-      id: body.healthprotocol_id
+    const isValidHealthProtocol = await HealthProtocolRepository.findOne({
+      where : {
+        id: body.healthprotocol_id
+      }
     })
     
     if(!isValidHealthProtocol) {
@@ -33,9 +34,11 @@ class AssignedHealthProtocolController {
       })
     }
 
-    const isAlreadyAssigned = await assignedHealthProtocolRepository.findOne({
-      disease_name: body.disease_name,
-      healthprotocol_id: body.healthprotocol_id
+    const isAlreadyAssigned = await AssignedHealthProtocolRepository.findOne({
+     where: { 
+        disease_name: body.disease_name,
+        healthprotocol_id: body.healthprotocol_id
+      }
     })
 
     if(isAlreadyAssigned) {
@@ -45,8 +48,8 @@ class AssignedHealthProtocolController {
     }
 
     try {
-      const assignedHealthProtocolBody = assignedHealthProtocolRepository.create(body)
-      const assignedHealthProtocol = await assignedHealthProtocolRepository.save(assignedHealthProtocolBody)
+      const assignedHealthProtocolBody = AssignedHealthProtocolRepository.create(body)
+      const assignedHealthProtocol = await AssignedHealthProtocolRepository.save(assignedHealthProtocolBody)
   
       return response.status(201).json({
         success: "Protocolo de saúde atribuído à essa doença com sucesso",
@@ -69,7 +72,7 @@ class AssignedHealthProtocolController {
     const take = 10
     let filters = {}
 
-    const assignedHealthProtocolRepository = getCustomRepository(AssignedHealthProtocolRepository)
+
 
     if(disease_name) {
       filters = { ...filters, disease_name: Like(`%${String(disease_name)}%`) }
@@ -83,7 +86,7 @@ class AssignedHealthProtocolController {
       const skip = page ? ((Number(page) - 1) * take) : 0 
       const limit = page ? take : 99999999
       try {
-        const items = await assignedHealthProtocolRepository.createQueryBuilder("assigned_healthprotocol")
+        const items = await AssignedHealthProtocolRepository.createQueryBuilder("assigned_healthprotocol")
           .leftJoinAndSelect("assigned_healthprotocol.healthprotocol", "healthProtocols")
           .where("healthProtocols.title like :title", { title: `%${healthprotocol_title}%` })
           .skip(skip)
@@ -109,7 +112,7 @@ class AssignedHealthProtocolController {
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
-    const associationList = await assignedHealthProtocolRepository.findAndCount(options)
+    const associationList = await AssignedHealthProtocolRepository.findAndCount(options)
 
     return response.status(200).json({
       assignedHealthProtocols: associationList[0],
@@ -120,12 +123,11 @@ class AssignedHealthProtocolController {
   async deleteOne(request: Request, response: Response) {
     const { disease_name, healthprotocol_id } = request.params
     
-    const assignedHealthProtocolRepository = getCustomRepository(AssignedHealthProtocolRepository)
-    const diseaseRepository = getCustomRepository(DiseaseRepository)
-    const healthProtocolRepository = getCustomRepository(HealthProtocolRepository)
-
-    const diseaseExists = await diseaseRepository.findOne({
-      name: String(disease_name)
+   
+    const diseaseExists = await DiseaseRepository.findOne({
+      where : {
+        name: String(disease_name)
+      }
     })
 
     if(!diseaseExists) {
@@ -134,8 +136,10 @@ class AssignedHealthProtocolController {
       })
     }
 
-    const healthProtocolExists = await healthProtocolRepository.findOne({
-      id: String(healthprotocol_id)
+    const healthProtocolExists = await HealthProtocolRepository.findOne({
+      where :{ 
+        id: String(healthprotocol_id)
+      }
     })
     
     if(!healthProtocolExists) {
@@ -144,9 +148,11 @@ class AssignedHealthProtocolController {
       })
     }
 
-    const associationExists = await assignedHealthProtocolRepository.findOne({
-      healthprotocol_id: String(healthprotocol_id),
-      disease_name: String(disease_name)
+    const associationExists = await AssignedHealthProtocolRepository.findOne({
+      where: {
+        healthprotocol_id: String(healthprotocol_id),
+        disease_name: String(disease_name)
+      }
     })
 
     if(!associationExists) {
@@ -156,7 +162,7 @@ class AssignedHealthProtocolController {
     }
 
     try {
-      await assignedHealthProtocolRepository.createQueryBuilder()
+      await AssignedHealthProtocolRepository.createQueryBuilder()
         .delete()
         .from(AssignedHealthProtocol)
         .where("healthprotocol_id = :healthprotocol_id and disease_name = :disease_name", {

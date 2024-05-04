@@ -1,16 +1,23 @@
 import { Request, Response } from "express";
-import { getCustomRepository, Like } from 'typeorm'
+import {  Like, Repository } from 'typeorm'
 import { AboutTheApp } from "../models";
-import { AboutTheAppsRepository } from "../repositories";
+
+import { AboutTheAppRepository } from "src/repositories";
 
 class AboutTheAppController{
+
+
+
   async create(request: Request, response: Response){
     const body = request.body
     
-    const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
+    // const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
+    
 
     const AboutTheAppAlreadyExists = await AboutTheAppRepository.findOne({
-      main: body.main
+      where : {
+        main: body.main
+      }
     })
 
     if(AboutTheAppAlreadyExists){
@@ -37,12 +44,11 @@ class AboutTheAppController{
   async list(request: Request, response: Response) {
     const { main, id } = request.query
 
-    const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
     let filters = {}
 
     if(id) {
       const mainExists = await AboutTheAppRepository.findOne({
-        id: String(id)
+        where: {id: String(id)}
       })
 
       if(!mainExists) {
@@ -75,9 +81,8 @@ class AboutTheAppController{
     const body = request.body
     const { id } = request.params
 
-    const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
 
-    const mainExists = await AboutTheAppRepository.findOne({ id })
+    const mainExists = await AboutTheAppRepository.findOne({where: { id : id} })
 
     if(!mainExists) {
       return response.status(404).json({
@@ -104,9 +109,8 @@ class AboutTheAppController{
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
-    const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
 
-    const questionExists = await AboutTheAppRepository.findOne({ id })
+    const questionExists = await AboutTheAppRepository.findOne({ where: {id : id} })
 
     if(!questionExists) {
       return response.status(404).json({
