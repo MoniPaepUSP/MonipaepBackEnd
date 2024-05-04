@@ -12,6 +12,7 @@ Implementação da base de dados para o aplicativo MonipaEp e seu sistema web de
 ## Como executar
 
 <ul>
+	<li> <strong>(A ser atualizado!! Deconsiderar)</strong> </li>
 	<li>Fazer um clone do projeto para o seu computador </li>
 	<li>Instale o sistema de empacotamento de software Yarn: https://classic.yarnpkg.com/en/</li>
 	<!-- <li>Instale o SQLite: https://www.sqlite.org/download.html</li> -->
