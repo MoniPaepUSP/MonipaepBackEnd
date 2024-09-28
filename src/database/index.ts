@@ -18,7 +18,7 @@ const {
     POSTGRES_DB_FILE: DB_FILE,
 
     ENVIRONMENT_TYPE : ENVIRONMENT
-} = process.env;
+} = process.env; // reading from environment all usefull variables
 
 // development
 let host = "localhost"
@@ -29,7 +29,8 @@ let database = "monipaep"
 // production
 if(ENVIRONMENT == "PRODUCTION") {
     console.log("Entering production mode")
- 
+    
+    // reading docker secrets in case it runs on production mode
     host = HOST_FILE ? fs.readFileSync(HOST_FILE).toString() : HOST;
     user = USER_FILE ? fs.readFileSync(USER_FILE).toString() : USER;
     password = PASSWORD_FILE ? fs.readFileSync(PASSWORD_FILE, 'utf8').toString() : PASSWORD;
@@ -44,7 +45,7 @@ if(ENVIRONMENT == "PRODUCTION") {
 }
 
 
-
+// initializing database with typeorm
 export const AppDataSource = new DataSource({
     "type": "postgres",
     "host": `${host}`,
