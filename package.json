@@ -7,7 +7,8 @@
     "dev": "ts-node-dev -r tsconfig-paths/register --transpile-only --ignore-watch node_modules  ./src/server.ts",
     "commit": "git add .& cz",
     "typeorm": "ts-node-dev node_modules/typeorm/cli.js",
-    "test": "NODE_ENV=test jest"
+    "test": "NODE_ENV=test jest",
+    "migration:run" : "npx typeorm-ts-node-commonjs migration:run -d src/database/index.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^3.0.1",
