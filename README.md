@@ -11,14 +11,36 @@ Implementação da base de dados para o aplicativo MonipaEp e seu sistema web de
 
 ## Como executar
 
-<ul>
-	<li> <strong>(A ser atualizado!! Deconsiderar)</strong> </li>
-	<li>Fazer um clone do projeto para o seu computador </li>
-	<li>Instale o sistema de empacotamento de software Yarn: https://classic.yarnpkg.com/en/</li>
-	<!-- <li>Instale o SQLite: https://www.sqlite.org/download.html</li> -->
-	<li>Rodar yarn install no diretório raiz</li>
-	<li>Execute yarn dev para executar a base de dados</li>
-</ul>
+- Fazer um clone do projeto para o seu computador com:
+  ```
+  git clone https://github.com/MoniPaepUSP/MonipaepBackEnd/tree/main
+  ```
+- Instale o sistema de empacotamento de software `Yarn` (se não possuir):
+  ```
+  npm install --global yarn
+  ```
+- Instale `Docker` (se não possuir)
+- Crie a pasta `secrets` com as credenciais necessarias dentro da raiz do projeto:
+  ```
+  cd MonipaepBackEnd
+  mkdir secrets/
+  cd secrets/ 
+  touch postgres-password.txt # inserir a senha do postgres aqui dentro
+  ```
+- (Na primeira vez!) Rode o código que está dentro de `initdatabase.sh` (para rodar um único container do banco de dados)
+- (Na primeira vez!) Rode as migrations que existem no projeto:
+  ```
+  npm migration:run
+  ```
+- (Na primeira vez!) Feche o container do banco de dados:
+  ```
+  docker compose down
+  ```
+- Rode o docker compose dentro da raiz do projeto:
+  ```
+  sudo docker-compose up # caso queira deixar em segundo plano, usar -d
+  ```
+  
 
   
 
@@ -64,15 +86,13 @@ Implementação da base de dados para o aplicativo MonipaEp e seu sistema web de
 
 ## Padrão Commitizen
 
-<ul>
-	<li>feat: adiciona ou remove novas funcionalidades.</li>
-	<li>fix: corrige algum bug.</li>
-	<li>refactor: commits que reescrevem ou reestruturam o código, porém não alteram o comportamento da aplicação.</li>
-	<li>perf: direcionados para melhoria de desempenho.</li>
-	<li>style: mudanças no código que não afetam o seu comportamento (ponto e vírgula, espaço em branco, formatação).</li>
-	<li>test: adiciona ou corrige testes existentes.</li>
-	<li>docs: commits que afetam apenas a documentação.</li>
-	<li>build: afeta apenas os componentes de construção (ferramentas, dependências, versão do projeto...).</li>
-	<li>ci: afeta apenas os componentes de configuração do CI, arquivos ou scripts (Travis, Circle, BrowserStack, SauceLabs)</li>
-	<li>chore: outras mudanças que não afetam o source ou arquivos de teste.</li>
-</ul>
+- `feat`: adiciona ou remove novas funcionalidades.
+- `fix`: corrige algum bug.
+- `refactor`: commits que reescrevem ou reestruturam o código, porém não alteram o comportamento da aplicação.
+- `perf`: direcionados para melhoria de desempenho.
+- `style`: mudanças no código que não afetam o seu comportamento (ponto e vírgula, espaço em branco, formatação).
+- `test`: adiciona ou corrige testes existentes.
+- `docs`: commits que afetam apenas a documentação.
+- `build`: afeta apenas os componentes de construção (ferramentas, dependências, versão do projeto...).
+- `ci`: afeta apenas os componentes de configuração do CI, arquivos ou scripts (Travis, Circle, BrowserStack, SauceLabs)
+- `chore`: outras mudanças que não afetam o source ou arquivos de teste.
