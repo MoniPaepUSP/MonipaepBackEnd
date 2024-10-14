@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from "typeorm";
 
- @Entity("Disease")
+ @Entity("disease")
  class Disease {
   @PrimaryColumn()
   name: string;

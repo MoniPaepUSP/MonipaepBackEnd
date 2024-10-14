@@ -1,0 +1,1 @@
+psql -h localhost -U postgres -d monipaep -f populate_db.sql
