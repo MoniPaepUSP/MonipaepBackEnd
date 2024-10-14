@@ -11,31 +11,26 @@ Implementação da base de dados para o aplicativo MonipaEp e seu sistema web de
 
 ## Como executar
 
+### Requisitos
+
+- `Docker`
+- `Yarm`
+
+### Passos
+
 - Fazer um clone do projeto para o seu computador com:
   ```
   git clone https://github.com/MoniPaepUSP/MonipaepBackEnd/tree/main
   ```
-- Instale o sistema de empacotamento de software `Yarn` (se não possuir):
-  ```
-  npm install --global yarn
-  ```
-- Instale `Docker` (se não possuir)
-- Crie a pasta `secrets` com as credenciais necessarias dentro da raiz do projeto:
-  ```
-  cd MonipaepBackEnd
-  mkdir secrets/
-  cd secrets/ 
-  touch postgres-password.txt # inserir a senha do postgres aqui dentro
-  ```
-- (Na primeira vez!) Rode o código que está dentro de `initdatabase.sh` (para rodar um único container do banco de dados)
-- (Na primeira vez!) Rode as migrations que existem no projeto:
-  ```
-  npm migration:run
-  ```
-- (Na primeira vez!) Feche o container do banco de dados:
-  ```
-  docker compose down
-  ```
+- Renomeie `.env.example` para `.env`.
+
+#### Na primeira vez
+- Rode o banco de dados: `docker compose up -d`
+- Rode as migrations que existem no projeto: `npm run migration:run`
+- Insira os dados de exemplo: `psql -h localhost -U postgres -d monipaep -f populate_db.sql` (insira a senha)
+- Feche o container do banco de dados: `docker compose down`
+
+#### Nas vezes que for rodar:
 - Rode o docker compose dentro da raiz do projeto:
   ```
   sudo docker-compose up # caso queira deixar em segundo plano, usar -d

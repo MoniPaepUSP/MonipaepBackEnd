@@ -1,4 +1,3 @@
-# docker-compose.yml
 version: "3.1"
 services:
   app:
@@ -7,48 +6,37 @@ services:
     depends_on:
       - postgres
     environment:
-      #             protocolo usuario   senha    dominio  porta  servico
-      # DATABASE_URL: postgres://postgres:postgreslabesmonipaep@postgres:5432/monipaep # esta aqui mas nao esta sendo usado no codigo, nao altera nada por enquanto
       NODE_ENV: development
-
       POSTGRES_HOST: postgres
-      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
-      POSTGRES_USER: postgres
-      POSTGRES_DB: monipaep
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       ENVIRONMENT_TYPE: PRODUCTION
-
       PORT: 3000
     ports:
       - "81:3333"
       - "443:3333"
-    # command: npm run dev
     volumes:
       - .:/app/
       - /app/node_modules
-    
-    secrets:
-      - db-password
 
-        # nome do container : dominio
   postgres:
     image: postgres:11
     ports:
       - "5432:5432"
-    secrets:
-      - db-password
-
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
-      POSTGRES_DB: monipaep
-
-    #  mounting postgres configuration outside 
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - /home/monipaep/IC-MoniPaEp-Backend/postgres_volume/:/var/lib/postgresql/data/
 
-
-# managing repository secrets
-
-secrets:
-  db-password:
-    file: secrets/postgres-password.txt
+  pgweb:
+    image: sosedoff/pgweb
+    restart: on-failure
+    ports:
+      - "8081:8081"
+    environment:
+      PGWEB_DATABASE_URL: ${PGWEB_DATABASE_URL}
+    depends_on:
+      - postgres

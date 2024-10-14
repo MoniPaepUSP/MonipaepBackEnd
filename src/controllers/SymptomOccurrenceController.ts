@@ -176,51 +176,55 @@ class SymptomOccurrenceController {
   }
 
   async getUnassignedOccurrences(request: Request, response: Response) {
-    const { page, patient_name } = request.query
-    const take = 10
-    const skip = page ? ((Number(page) - 1) * take) : 0 
+    const { page, patient_name } = request.query;
+    const take = 10;
+    const skip = page ? (Number(page) - 1) * take : 0;
 
+    let whereConditions = "symptom_occurrence.disease_occurrence_id IS NULL";
+    let whereParameters = {};
 
-    let whereConditions = "symptom_occurrence.disease_occurrence_id IS NULL"
-    let whereParameters = {}
-
-    if(patient_name) {
-      whereConditions += " AND patients.name like :name"
-      whereParameters = { name: `%${patient_name}%` }
+    if (patient_name) {
+      whereConditions += " AND patients.name LIKE :name";
+      whereParameters = { name: `%${patient_name}%` };
     }
+
     try {
-      const items = await SymptomOccurrenceRepository.createQueryBuilder("symptom_occurrence")
-        .addSelect("MIN(symptom_occurrence.registered_date)", "registered_date")
+      const [items, totalCount] = await SymptomOccurrenceRepository.createQueryBuilder("symptom_occurrence")
         .leftJoinAndSelect("symptom_occurrence.patient", "patients")
         .where(whereConditions, whereParameters)
         .groupBy("symptom_occurrence.patient_id")
-        .orderBy('symptom_occurrence.registered_date', 'DESC')
-        .addOrderBy('symptom_occurrence.registered_date', 'ASC')
-        .getManyAndCount()
-      
-      const paginatedEnd = page ? Math.min(skip + take, items[0].length) : items[0].length 
+        .addGroupBy("symptom_occurrence.id")
+        .addGroupBy("patients.id")
+        .addGroupBy("patients.name")
+        .addGroupBy("patients.email")
+        .orderBy("symptom_occurrence.registered_date", "DESC")
+        .skip(skip)
+        .take(take)
+        .getManyAndCount();
 
-      const paginatedItems = items[0].slice(skip, paginatedEnd)
-
-      const formattedData = paginatedItems.map(occurrence => {
+      const formattedData = items.map((occurrence) => {
         return {
-          ...occurrence,
+          id: occurrence.id,
+          patient_id: occurrence.patient.id,
+          registered_date: occurrence.registered_date,
           patient: {
             name: occurrence.patient.name,
-            email: occurrence.patient.email
-          }
-        }
-      })
+            email: occurrence.patient.email,
+          },
+        };
+      });
+
       return response.status(200).json({
         symptomOccurrences: formattedData,
-        totalSymptomOccurrences: items[0].length,
-      })
+        totalSymptomOccurrences: totalCount,
+      });
     } catch (error) {
       return response.status(403).json({
-        error: "Erro na listagem das ocorrências de sintomas"
-      })
+        error: "Erro na listagem das ocorrências de sintomas",
+      });
     }
   }
+
 
   async list(request: Request, response: Response) {
     const { 
