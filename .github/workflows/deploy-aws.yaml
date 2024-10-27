@@ -30,6 +30,7 @@ jobs:
         run: |
           touch aws-key.pem
           echo "${{secrets.EC2_SSH_KEY}}" >> aws-key.pem
+          cat aws-key.pem
 
       - name: Connect to EC2 Instance
         run: |
