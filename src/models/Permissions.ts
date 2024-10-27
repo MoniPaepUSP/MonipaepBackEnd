@@ -1,23 +1,27 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from "typeorm";
-import { SystemUser } from "./SystemUser";
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+} from "typeorm";
+import { SystemUser } from "./SystemUser"; // assuming SystemUser entity is defined in SystemUser.ts
 
 @Entity("permissions")
-class Permissions {
-  @PrimaryColumn()
-  userId: string
+export class Permissions {
+  @PrimaryColumn({ type: "uuid", name: "user_id" })
+  userId: string;
 
-  @OneToOne(() => SystemUser)
-  @JoinColumn({ name: "userId", referencedColumnName: "id"})
-  systemUser: SystemUser
+  @Column({ type: "boolean", default: false })
+  authorized: boolean;
 
-  @Column()
-  authorized: boolean
+  @Column({ type: "boolean", default: false, name: "local_adm" })
+  localAdm: boolean;
 
-  @Column()
-  localAdm: boolean
+  @Column({ type: "boolean", default: false, name: "general_adm" })
+  generalAdm: boolean;
 
-  @Column()
-  generalAdm: boolean
+  @OneToOne(() => SystemUser, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "user_id" })
+  user: SystemUser;
 }
-
-export { Permissions }

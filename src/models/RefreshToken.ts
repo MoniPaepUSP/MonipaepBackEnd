@@ -1,35 +1,32 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from "typeorm";
-import { v4 as uuid } from 'uuid'
-import { Patient } from './Patient'
-import { SystemUser } from "./SystemUser";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { Patient } from "./Patient"; // assuming the patient entity is named Patient
+import { SystemUser } from "./SystemUser"; // assuming the system user entity is named SystemUser
 
 @Entity("refresh_token")
-class RefreshToken {
-  @PrimaryColumn()
-  readonly id: string
+export class RefreshToken {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @Column()
-  expiresIn: number
+  @Column({ type: "integer", name: "expires_in" })
+  expiresIn: number;
 
-  @Column()
-  patientId: string
+  @Column({ type: "uuid", nullable: true, name: "patient_id" })
+  patientId: string | null;
 
-  @Column()
-  systemUserId: string
+  @Column({ type: "uuid", nullable: true, name: "system_user_id" })
+  systemUserId: string | null;
 
-  @OneToOne(() => Patient)
-  @JoinColumn({ name: "patientId" })
-  patient: Patient
+  @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "patient_id" })
+  patient: Patient | null;
 
-  @OneToOne(() => SystemUser)
-  @JoinColumn({ name: "systemUserId" })
-  systemUser: SystemUser
-
-  constructor(){
-    if(!this.id){
-      this.id = uuid();
-    }
-  }
+  @ManyToOne(() => SystemUser, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "system_user_id" })
+  systemUser: SystemUser | null;
 }
-
-export { RefreshToken }

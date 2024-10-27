@@ -36,8 +36,8 @@ class AssignedHealthProtocolController {
 
     const isAlreadyAssigned = await AssignedHealthProtocolRepository.findOne({
      where: { 
-        disease_name: body.disease_name,
-        healthprotocol_id: body.healthprotocol_id
+        diseaseName: body.disease_name,
+        healthProtocolId: body.healthprotocol_id
       }
     })
 
@@ -150,8 +150,8 @@ class AssignedHealthProtocolController {
 
     const associationExists = await AssignedHealthProtocolRepository.findOne({
       where: {
-        healthprotocol_id: String(healthprotocol_id),
-        disease_name: String(disease_name)
+        healthProtocolId: String(healthprotocol_id),
+        diseaseName: String(healthprotocol_id)
       }
     })
 

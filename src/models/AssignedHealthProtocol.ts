@@ -1,22 +1,29 @@
-import { Entity, JoinColumn, OneToOne, PrimaryColumn } from "typeorm";
-import { Disease } from ".";
-import { HealthProtocol } from "./HealthProtocol";
+import {
+  Entity,
+  ManyToOne,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+  Column,
+} from "typeorm";
+import { Disease } from "./Disease"; // assuming Disease entity is defined in Disease.ts
+import { HealthProtocol } from "./HealthProtocol"; // assuming HealthProtocol entity is defined in HealthProtocol.ts
 
 @Entity("assigned_healthprotocol")
-class AssignedHealthProtocol {
-  @PrimaryColumn()
-  disease_name: string;
+export class AssignedHealthProtocol {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @OneToOne(() => Disease)
-  @JoinColumn({ name: "disease_name",  referencedColumnName: "name" })
-  disease: Disease
+  @Column({ type: "varchar", name: "disease_name" })
+  diseaseName: string;
 
-  @PrimaryColumn()
-  healthprotocol_id: string;
+  @Column({ type: "uuid", name: "healthprotocol_id" })
+  healthProtocolId: string;
 
-  @OneToOne(() => HealthProtocol)
-  @JoinColumn({ name: "healthprotocol_id", referencedColumnName: "id" })
-  healthprotocol: HealthProtocol
+  @ManyToOne(() => Disease, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "disease_name" })
+  disease: Disease;
+
+  @ManyToOne(() => HealthProtocol, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "healthprotocol_id" })
+  healthProtocol: HealthProtocol;
 }
-
-export { AssignedHealthProtocol };

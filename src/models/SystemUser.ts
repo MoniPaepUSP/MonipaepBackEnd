@@ -1,42 +1,39 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryColumn } from "typeorm";
-import { v4 as uuid } from 'uuid'
-import bcrypt from 'bcrypt'
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  BeforeInsert,
+  BeforeUpdate,
+  CreateDateColumn,
+} from "typeorm";
+import * as bcrypt from "bcrypt";
 
-@Entity("systemUser")
-class SystemUser {
-  @PrimaryColumn()
-  readonly id: string;
+@Entity("system_user")
+export class SystemUser {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @Column()
+  @Column({ type: "varchar" })
   name: string;
 
-  @PrimaryColumn()
+  @Column({ type: "varchar", unique: true, name: "cpf" })
   CPF: string;
 
-  @PrimaryColumn()
+  @Column({ type: "varchar", unique: true })
   email: string;
 
-  @Column({ select: false })
+  @Column({ type: "varchar" })
   password: string;
 
-  @Column()
+  @Column({ type: "varchar" })
   department: string;
 
-  @Column()
+  @CreateDateColumn({ type: "timestamp", name: "created_at" })
   createdAt: Date;
-
-  constructor(){
-    if(!this.id){
-      this.id = uuid();
-    }
-  }
 
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword(): Promise<void> {
-    const hash = await bcrypt.hash(this.password, 10)
-    this.password = hash
+    this.password = await bcrypt.hash(this.password, 10);
   }
 }
-
-export { SystemUser }

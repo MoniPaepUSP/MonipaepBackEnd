@@ -1,6 +1,7 @@
 import { Response } from 'express'
 // import {  } from 'typeorm'
 import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'; 
 
 import { PermissionsRepository, SystemUserRepository } from './repositories'
 
@@ -11,7 +12,8 @@ type TokenPayload = {
   roles?: string[];
 } 
 
-const secret = 'wLbITYtzyd0hOOOPVQGRPnQh84RRY3KPiybKYwhzin8TCejiBgJoos22RBrxiWU'
+dotenv.config();  // Load environment variables from .env file 
+const secret = process.env.JWT_SECRET
 
 export const sign = (payload: TokenPayload) => jwt.sign(payload, secret, { expiresIn: 60 * 60 * 24})
 export const verify = (token: string) => jwt.verify(token, secret)

@@ -1,22 +1,16 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { v4 as uuid } from 'uuid'
 
-@Entity("healthProtocols")
+@Entity("health_protocols")
 class HealthProtocol{
-  @PrimaryColumn()
-  readonly id: string;
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
   
-  @Column()
+  @Column({ type: "varchar", nullable: false })
   title: string;
 
-  @Column()
+  @Column({ type: "varchar", nullable: false })
   description: string;
-
-  constructor(){
-    if(!this.id) {
-      this.id = uuid();
-    }
-  }
 }
 
 export { HealthProtocol };

@@ -1,19 +1,10 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
-import { v4 as uuid } from 'uuid'
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity("FAQSuggestions")
-class FAQSuggestions{
-  @PrimaryColumn()
-  readonly id: string;
+@Entity("faq_suggestions")
+export class FAQSuggestions{
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column()
+  @Column({ type: "varchar", unique: true })
   question: string;
-
-  constructor(){
-    if(!this.id) {
-      this.id = uuid();
-    }
-  }
 }
-
-export { FAQSuggestions }

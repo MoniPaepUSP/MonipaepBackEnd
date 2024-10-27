@@ -1,44 +1,41 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from "typeorm";
-import {v4 as uuid} from 'uuid'
-import { Disease } from ".";
-import { Patient } from "./Patient";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { Patient } from "./Patient"; // assuming Patient entity is defined in Patient.ts
+import { Disease } from "./Disease"; // assuming Disease entity is defined in Disease.ts
 
 @Entity("disease_occurrence")
-class DiseaseOccurrence {
-  @PrimaryColumn()
-  readonly id: string
+export class DiseaseOccurrence {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @Column()
-  patient_id: string
+  @Column({ type: "uuid", name: "patient_id" })
+  patientId: string;
 
-  @Column()
-  disease_name: string
+  @Column({ type: "varchar", name: "disease_name" })
+  diseaseName: string;
 
-  @Column()
-  diagnosis: string
+  @Column({ type: "varchar", nullable: true })
+  diagnosis: string | null;
 
-  @Column()
-  date_start: Date
+  @Column({ type: "timestamp", name: "date_start", nullable: true })
+  dateStart: Date | null;
 
-  @Column()
-  date_end: Date
+  @Column({ type: "timestamp", name: "date_end", nullable: true })
+  dateEnd: Date | null;
 
-  @Column()
-  status: string
+  @Column({ type: "varchar" })
+  status: string;
 
-  @ManyToOne(() => Patient)
+  @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "patient_id" })
-  patient: Patient
+  patient: Patient;
 
-  @ManyToOne(() => Disease)
+  @ManyToOne(() => Disease, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "disease_name" })
-  Disease: Disease
-
-  constructor(){
-    if(!this.id){
-      this.id = uuid();
-    }
-  }
+  disease: Disease;
 }
-
-export { DiseaseOccurrence }

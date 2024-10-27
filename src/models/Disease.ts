@@ -1,15 +1,13 @@
 import { Column, Entity, PrimaryColumn } from "typeorm";
 
  @Entity("disease")
- class Disease {
-  @PrimaryColumn()
+ export class Disease {
+  @PrimaryColumn({ type: "varchar" })
   name: string;
 
-  @Column()
-  infected_Monitoring_Days: number;
+  @Column({ type: "integer", name: "infected_monitoring_days" })
+  infectedMonitoringDays: number;
 
-  @Column()
-  suspect_Monitoring_Days: number;
+  @Column({ type: "integer", name: "suspected_monitoring_days" })
+  suspectedMonitoringDays: number;
  }
-
- export { Disease }

@@ -1,30 +1,27 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
-import { v4 as uuid } from 'uuid'
-import { DiseaseOccurrence } from "./DiseaseOccurrence";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { DiseaseOccurrence } from "./DiseaseOccurrence"; // assuming DiseaseOccurrence entity is defined in DiseaseOccurrence.ts
 
 @Entity("patient_movement_history")
-class PatientMovementHistory {
-  @PrimaryColumn()
-  readonly id: string;
-  
-  @Column()
-  disease_occurrence_id: string
+export class PatientMovementHistory {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @Column()
-  description: string
+  @Column({ type: "uuid", name: "disease_occurrence_id" })
+  diseaseOccurrenceId: string;
 
-  @Column()
+  @Column({ type: "varchar" })
+  description: string;
+
+  @Column({ type: "date" })
   date: Date;
 
-  @ManyToOne(() => DiseaseOccurrence)
+  @ManyToOne(() => DiseaseOccurrence, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "disease_occurrence_id" })
-  diseaseOccurrence: DiseaseOccurrence
-
-  constructor(){
-    if(!this.id) {
-      this.id = uuid();
-    }
-  }
+  diseaseOccurrence: DiseaseOccurrence;
 }
-
-export { PatientMovementHistory }
