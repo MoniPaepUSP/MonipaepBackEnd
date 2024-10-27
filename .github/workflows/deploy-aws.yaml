@@ -26,14 +26,9 @@ jobs:
         run: |
           aws s3 cp --recursive ./ ${{vars.AWS_S3_BUCKET}}
 
-      - name: Saves SSH key
-        run: |
-          touch aws-key.pem
-          echo "${{secrets.EC2_SSH_KEY}}" >> aws-key.pem
-
       - name: Connect to EC2 Instance
         run: |
-          ssh -i "aws-key.pem" ${{secrets.EC2_INSTANCE_USER}}@${{secrets.EC2_PUBLIC_DNS}}
+          echo "${{ secrets.EC2_SSH_KEY }}" | ssh -o StrictHostKeyChecking=no -i /dev/stdin ${{ secrets.EC2_INSTANCE_USER }}@${{ secrets.EC2_PUBLIC_DNS }}
 
       - name: Get files from S3
         run: |
