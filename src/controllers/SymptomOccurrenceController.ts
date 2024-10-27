@@ -40,7 +40,7 @@ class SymptomOccurrenceController {
 
     const existOngoingDiseaseOccurrences = await DiseaseOccurrenceRepository.find({
       where: {
-        patient_id: body.patient_id,
+        patientId: body.patient_id,
         status: In(["Suspeito", "Infectado"]),
       }
     })
@@ -84,8 +84,6 @@ class SymptomOccurrenceController {
   async createSeveral(request: Request, response: Response){
     const body = request.body
     
-    
-
     const isValidPatient = await PatientsRepository.findOne({
       where: {
         id: body.patient_id
@@ -100,7 +98,7 @@ class SymptomOccurrenceController {
     
     const existOngoingDiseaseOccurrences = await DiseaseOccurrenceRepository.find({
       where: {
-        patient_id: body.patient_id,
+        patientId: body.patient_id,
         status: In(["Suspeito", "Infectado"]),
       }
     })
@@ -121,10 +119,10 @@ class SymptomOccurrenceController {
       for(let i  in body.symptoms){
         try {
           const symptomOccurrence = SymptomOccurrenceRepository.create({
-            patient_id: body.patient_id,
-            disease_occurrence_id: body.disease_occurrence_id,
-            registered_date: body.registered_date,
-            symptom_name: body.symptoms[i]
+            patientId: body.patient_id,
+            diseaseOccurrenceId: body.disease_occurrence_id,
+            registeredDate: body.registered_date,
+            symptomName: body.symptoms[i]
           })
 
           await SymptomOccurrenceRepository.save(symptomOccurrence)
@@ -157,11 +155,12 @@ class SymptomOccurrenceController {
         }
       }
     }
+
     //Atualizando data de última atualização do paciente
     try {
       await PatientsRepository.createQueryBuilder()
         .update(Patient)
-        .set({ lastUpdate:  body.registered_date })
+        .set({ updatedAt:  body.registered_date })
         .where("id = :id", { id: body.patient_id })
         .execute()
     } catch (error) {
@@ -206,7 +205,7 @@ class SymptomOccurrenceController {
         return {
           id: occurrence.id,
           patient_id: occurrence.patient.id,
-          registered_date: occurrence.registered_date,
+          registered_date: occurrence.registeredDate,
           patient: {
             name: occurrence.patient.name,
             email: occurrence.patient.email,
@@ -308,7 +307,7 @@ class SymptomOccurrenceController {
     const occurrencesList = await SymptomOccurrenceRepository.find({
       where: filters,
       order: {
-        registered_date: 'DESC'
+        registeredDate: 'DESC'
       }
     })
 
@@ -322,7 +321,7 @@ class SymptomOccurrenceController {
 
       const isValidOccurrence = await SymptomOccurrenceRepository.find({
         where: {
-          patient_id: String(patient_id)
+          patientId: String(patient_id)
         }
       })
 
@@ -350,7 +349,7 @@ class SymptomOccurrenceController {
     const occurrencesList = await SymptomOccurrenceRepository.find({
       where: filters,
       order: {
-        registered_date: 'DESC'
+        registeredDate: 'DESC'
       }
     })
 

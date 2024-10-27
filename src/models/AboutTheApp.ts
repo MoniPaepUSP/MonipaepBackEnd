@@ -6,11 +6,11 @@ class AboutTheApp{
   @PrimaryGeneratedColumn("uuid")
   id:string
 
-  @Column()
+  @Column({ type:"varchar", nullable: false })
   main: string
 
-  @Column()
-  secundary: string
+  @Column({ type:"varchar", nullable: false })
+  secondary: string
 }
 
 export { AboutTheApp }

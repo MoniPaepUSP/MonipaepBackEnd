@@ -1,84 +1,68 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryColumn } from "typeorm";
-import { v4 as uuid } from 'uuid'
-import bcrypt from 'bcrypt'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate } from "typeorm";
+import * as bcrypt from "bcrypt";
 
 @Entity("patients")
-class Patient{
-  @PrimaryColumn()
-  readonly id: string;
+export class Patient {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @Column()
+  @Column({ type: "varchar", nullable: false })
   name: string;
 
-  @Column({ select: false })
+  @Column({ type: "varchar", nullable: false })
   password: string;
 
-  @Column()
+  @Column({ type: "varchar", unique: true, nullable: false, name: "cpf" })
   CPF: string;
 
-  @Column()
+  @Column({ type: "varchar", unique: true, nullable: false })
   email: string;
 
-  @Column()
+  @Column({ type: "varchar", nullable: false })
   gender: string;
 
-  @Column()
+  @Column({ type: "varchar" })
   phone: string;
 
-  @Column()
-  lastGPSLocation?: string;
+  @Column({ type: "varchar", nullable: true, name: "last_gps_location" })
+  lastGPSLocation: string | null;
 
-  @Column()
+  @Column({ type: "boolean", name: "allow_sms" })
   allowSMS: boolean;
 
-  @Column()
-  workAddress?: string;
+  @Column({ type: "varchar", nullable: true, name: "work_address" })
+  workAddress: string | null;
 
-  @Column()
+  @Column({ type: "varchar", name: "home_address" })
   homeAddress: string;
 
-  @Column()
+  @Column({ type: "varchar" })
   neighborhood: string;
 
-  @Column()
-  hasHealthPlan: boolean;
-
-  @Column()
+  @Column({ type: "integer", name: "house_number" })
   houseNumber: number;
 
-  @Column()
+  @Column({ type: "boolean", name: "has_health_plan" })
+  hasHealthPlan: boolean;
+
+  @Column({ type: "date" })
   birthdate: Date;
 
-  @Column()
-  status?: string;
+  @Column({ type: "varchar", nullable: false })
+  status: string;
 
-  @Column()
-  readonly activeAccount: boolean;
+  @Column({ type: "boolean", default: true, name: "active_account" })
+  activeAccount: boolean;
 
-    @Column()
-    lastUpdate: Date;
+  @CreateDateColumn({ type: "timestamp", name: "created_at" })
+  createdAt: Date;
 
-    @Column()
-    createdAt: Date;
-    constructor(){
-        if(!this.id){
-            this.id = uuid();
-        }
-        if(!this.activeAccount){
-            this.activeAccount = true;
-        }
-        if(!this.status){
-            this.status = 'Saudável';
-        }
-    }
- 
+  @UpdateDateColumn({ type: "timestamp", name: "updated_at" })
+  updatedAt: Date;
 
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword(): Promise<void> {
-    const hash = await bcrypt.hash(this.password, 10)
-    this.password = hash
+    this.password = await bcrypt.hash(this.password, 10);
   }
 }
-
-export { Patient }

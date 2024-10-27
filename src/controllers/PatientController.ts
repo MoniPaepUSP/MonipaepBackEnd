@@ -121,6 +121,7 @@ class PatientController{
   
         return response.status(200).json({ patient, token, refreshToken })
       } catch (error) {
+        console.log(error);
         return response.status(400).json({
           error: "Erro no login"
         })

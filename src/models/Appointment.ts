@@ -1,29 +1,33 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm"
-import { Patient } from "./Patient"
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { Patient } from "./Patient"; // assuming Patient entity is defined in Patient.ts
 
 @Entity("appointments")
-class Appointment{
+export class Appointment {
   @PrimaryGeneratedColumn("uuid")
-  id:string
+  id: string;
 
-  @Column()
-  date: Date
+  @Column({ type: "timestamp" })
+  date: Date;
 
-  @Column()
-  whenRemember: Date
+  @Column({ type: "timestamp", name: "when_remember" })
+  whenRemember: Date;
 
-  @Column()
-  location:string
+  @Column({ type: "varchar" })
+  location: string;
 
-  @Column()
-  type:string
+  @Column({ type: "varchar" })
+  type: string;
 
-  @Column()
-  patient_id: string
+  @Column({ type: "uuid", name: "patient_id" })
+  patientId: string;
 
-  @ManyToOne(() => Patient)
+  @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "patient_id" })
-  patient: Patient
+  patient: Patient;
 }
-
-export { Appointment }

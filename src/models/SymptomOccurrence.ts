@@ -1,43 +1,40 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
-import { v4 as uuid } from 'uuid'
-import { DiseaseOccurrence } from "./DiseaseOccurrence";
-import { Patient } from "./Patient";
-import { Symptom } from "./Symptom";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { Patient } from "./Patient"; // assuming Patient entity is defined in Patient.ts
+import { Symptom } from "./Symptom"; // assuming Symptom entity is defined in Symptom.ts
+import { DiseaseOccurrence } from "./DiseaseOccurrence"; // assuming DiseaseOccurrence entity is defined in DiseaseOccurrence.ts
 
 @Entity("symptom_occurrence")
-class SymptomOccurrence {
-  @PrimaryColumn()
-  readonly id: string
+export class SymptomOccurrence {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @Column()
-  patient_id: string
-  
-  @Column()
-  symptom_name: string
+  @Column({ type: "uuid", name: "patient_id" })
+  patientId: string;
 
-  @Column()
-  disease_occurrence_id: string
-  
-  @Column()
-  registered_date: Date
+  @Column({ type: "varchar", name: "symptom_name" })
+  symptomName: string;
 
-  @ManyToOne(() => Patient)
+  @Column({ type: "uuid", name: "disease_occurrence_id", nullable: true })
+  diseaseOccurrenceId: string | null;
+
+  @Column({ type: "timestamp", name: "registered_date" })
+  registeredDate: Date;
+
+  @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "patient_id" })
-  patient: Patient
+  patient: Patient;
 
-  @ManyToOne(() => Symptom)
+  @ManyToOne(() => Symptom, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "symptom_name" })
-  symptom: Symptom
+  symptom: Symptom;
 
-  @ManyToOne(() => DiseaseOccurrence)
+  @ManyToOne(() => DiseaseOccurrence, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "disease_occurrence_id" })
-  disease_occurrence: DiseaseOccurrence
-
-  constructor(){
-    if(!this.id){
-      this.id = uuid();
-    }
-  }
+  diseaseOccurrence: DiseaseOccurrence | null;
 }
-
-export { SymptomOccurrence }

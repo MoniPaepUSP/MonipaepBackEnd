@@ -3,31 +3,27 @@ import { Patient } from "./Patient"
 import { USM } from "./USM"
 
 @Entity("vaccines")
-class Vaccine{
+export class Vaccine{
   @PrimaryGeneratedColumn("uuid")
-  id:string
+  id: string
 
-  @Column()
+  @Column({ type: "timestamp" })
   date: Date
 
+  @Column({ type: "varchar" })
+  type: string
 
-  @Column()
-  type:string
+  @Column({ type: "uuid", name: "patient_id" })
+  patientId: string
 
+  @Column({ type: "varchar", name: "usm_name" })
+  usmName: string
 
-  @Column()
-  patient_id: string
-
-  @ManyToOne(() => Patient)
+  @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "patient_id" })
   patient: Patient
 
-  @Column()
-  usm_name: string
-
-  @ManyToOne(() => USM)
+  @ManyToOne(() => USM, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "usm_name" })
   usm: USM
 }
-
-export { Vaccine }
