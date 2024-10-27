@@ -14,16 +14,12 @@ jobs:
     steps:
       - name: Code Checkout
         uses: actions/checkout@v3
-      - name: File upload to S3 Bucket
-        run: |
-          cat ${{ secrets.AWS_ACCESS_KEY_ID }} &&
-          cat ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: File upload to S3 Bucket
