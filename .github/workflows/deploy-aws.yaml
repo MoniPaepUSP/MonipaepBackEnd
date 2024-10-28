@@ -44,7 +44,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i aws-key.pem ${{ secrets.EC2_INSTANCE_USER }}@${{ secrets.EC2_PUBLIC_DNS }} << 'EOF'
             cd monipaep-backend
             echo $(cat .env.example) >> .env
-            ls .env
+            cat .env
           EOF
 
       - name: Run Docker Compose on EC2
