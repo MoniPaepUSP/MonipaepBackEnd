@@ -38,6 +38,13 @@ jobs:
             aws s3 cp --recursive ${{ vars.AWS_S3_BUCKET }} ./
           EOF
 
+      - name: Activate DNS
+        run: |
+          ssh -o StrictHostKeyChecking=no -i aws-key.pem ${{ secrets.EC2_INSTANCE_USER }}@${{ secrets.EC2_PUBLIC_DNS }} << 'EOF'
+            cd duckdns
+            ./duck.sh
+          EOF
+
       - name: Configure Project on EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i aws-key.pem ${{ secrets.EC2_INSTANCE_USER }}@${{ secrets.EC2_PUBLIC_DNS }} << 'EOF'
@@ -50,7 +57,9 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i aws-key.pem ${{ secrets.EC2_INSTANCE_USER }}@${{ secrets.EC2_PUBLIC_DNS }} << 'EOF'
             cd monipaep-backend
-            docker-compose up -d
+            docker-compose down
+            docker system prune --all --force
+            docker-compose build --no-cache && docker-compose up -d
           EOF
 
       - name: Run Migrations on EC2
