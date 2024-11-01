@@ -2,17 +2,17 @@ import { Request, Response } from "express";
 import { IsNull, Like, Repository } from "typeorm";
 
 import { DiseaseOccurrence, Patient, SymptomOccurrence } from "../models";
-import { 
-  DiseaseOccurrenceRepository, 
-  DiseaseRepository, 
-  PatientsRepository, 
+import {
+  DiseaseOccurrenceRepository,
+  DiseaseRepository,
+  PatientsRepository,
   PatientMovementHistoryRepository,
-  SymptomOccurrenceRepository 
+  SymptomOccurrenceRepository
 } from "../repositories";
 
 
 class DiseaseOccurrenceController {
-  
+
   // Create a new disease occurrence
   async create(request: Request, response: Response) {
     const body = request.body
@@ -25,23 +25,23 @@ class DiseaseOccurrenceController {
       }
     })
 
-    if(!patientExists) {
+    if (!patientExists) {
       return response.status(404).json({
         error: "Paciente inválido"
       })
     }
 
-    if(patientExists.status === "Óbito") {
+    if (patientExists.status === "Óbito") {
       return response.status(404).json({
         error: "Não é possível registrar um caso de doença para um paciente com o status 'Óbito'"
       })
     }
 
-    if(!body.status) {
+    if (!body.status) {
       body.status = "Suspeito"
     }
 
-    if(!body.date_start) {
+    if (!body.date_start) {
       body.date_start = new Date()
     }
 
@@ -54,7 +54,7 @@ class DiseaseOccurrenceController {
         }
       })
 
-      if(!validDisease) {
+      if (!validDisease) {
         return response.status(403).json({
           error: `A doença '${body.disease_name[i]}' não se encontra cadastrada no sistema`
         })
@@ -78,10 +78,10 @@ class DiseaseOccurrenceController {
       }
     })
 
-    for(const symptomOccurrence of notAssignedSymptomOccurrences) {
+    for (const symptomOccurrence of notAssignedSymptomOccurrences) {
       try {
         await SymptomOccurrenceRepository.createQueryBuilder()
-        .update(SymptomOccurrence)
+          .update(SymptomOccurrence)
           .set({
             diseaseOccurrenceId: createdDiseaseOccurrences[0].id
           })
@@ -93,10 +93,10 @@ class DiseaseOccurrenceController {
         })
       }
     }
-      
-    if(numberOfDiseaseOccurrences > 1) {
-      for(let i = 1; i < numberOfDiseaseOccurrences; i++) {
-        for(const symptomOccurrence of notAssignedSymptomOccurrences) {
+
+    if (numberOfDiseaseOccurrences > 1) {
+      for (let i = 1; i < numberOfDiseaseOccurrences; i++) {
+        for (const symptomOccurrence of notAssignedSymptomOccurrences) {
           try {
             const symptomOccurrenceBody = SymptomOccurrenceRepository.create({
               patientId: symptomOccurrence.patientId,
@@ -112,29 +112,29 @@ class DiseaseOccurrenceController {
           }
         }
       }
-    } 
+    }
 
     const diseaseOccurrences = await DiseaseOccurrenceRepository.find({
       where: {
         patientId: patientExists.id
       }
     })
-    
+
     let finalStatus = diseaseOccurrences[0].status
-    if(finalStatus !== "Óbito") {
-      for(let occurrence of diseaseOccurrences) {
-        if(occurrence.status === "Óbito") {
+    if (finalStatus !== "Óbito") {
+      for (let occurrence of diseaseOccurrences) {
+        if (occurrence.status === "Óbito") {
           finalStatus = "Óbito"
           break
         }
-        else if(occurrence.status === "Infectado") {
+        else if (occurrence.status === "Infectado") {
           finalStatus = "Infectado"
         }
-        else if(occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
+        else if (occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
           finalStatus = "Suspeito"
         }
-        else if(
-          (occurrence.status === "Saudável" || occurrence.status === "Curado") 
+        else if (
+          (occurrence.status === "Saudável" || occurrence.status === "Curado")
           && finalStatus !== "Infectado" && finalStatus !== "Suspeito"
         ) {
           finalStatus = "Saudável"
@@ -153,14 +153,14 @@ class DiseaseOccurrenceController {
         error: "Erro na atualização do status do paciente"
       })
     }
-    
+
     return response.status(201).json({
       success: "Ocorrência de doença criada com sucesso",
       createdDiseaseOccurrences
     })
   }
 
-  async list (request: Request, response: Response) {
+  async list(request: Request, response: Response) {
     const {
       id,
       patient_id,
@@ -173,17 +173,17 @@ class DiseaseOccurrenceController {
     let filters = {}
 
 
-    if(patient_name) {
-      const skip = page ? ((Number(page) - 1) * take) : 0 
+    if (patient_name) {
+      const skip = page ? ((Number(page) - 1) * take) : 0
       const limit = page ? take : 99999999
       try {
-        const items = await DiseaseOccurrenceRepository.createQueryBuilder("disease_occurrence")
-          .leftJoinAndSelect("disease_occurrence.patient", "patients")
+        const items = await DiseaseOccurrenceRepository.createQueryBuilder("diseaseOccurrence")
+          .leftJoinAndSelect("diseaseOccurrence.patient", "patients")
           .where("patients.name like :name", { name: `%${patient_name}%` })
           .skip(skip)
           .take(limit)
-          .orderBy('disease_occurrence.date_start', 'DESC')
-          .addOrderBy('disease_occurrence.status', 'ASC')
+          .orderBy('diseaseOccurrence.dateStart', 'DESC')
+          .addOrderBy('diseaseOccurrence.status', 'ASC')
           .getManyAndCount()
         const formattedData = items[0].map(occurrence => {
           return {
@@ -205,19 +205,19 @@ class DiseaseOccurrenceController {
       }
     }
 
-    if(id) {
+    if (id) {
       filters = { ...filters, id: String(id) }
     }
 
-    if(patient_id) {
+    if (patient_id) {
       filters = { ...filters, patient_id: String(patient_id) }
     }
 
-    if(disease_name) {
-      filters = { ...filters, disease_name: Like(`%${String(disease_name)}%`)  }
+    if (disease_name) {
+      filters = { ...filters, disease_name: Like(`%${String(disease_name)}%`) }
     }
 
-    if(status) {
+    if (status) {
       filters = { ...filters, status: Like(`%${String(status)}%`) }
     }
 
@@ -225,12 +225,12 @@ class DiseaseOccurrenceController {
       where: filters,
       relations: ["patient"],
       order: {
-        date_start: 'DESC',
+        dateStart: 'DESC',
         status: 'ASC'
       }
     }
 
-    if(page) {
+    if (page) {
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
 
@@ -245,7 +245,7 @@ class DiseaseOccurrenceController {
         }
       }
     })
-  
+
     return response.status(200).json({
       diseaseOccurrences: filteredDiseaseOccurences,
       totalDiseaseOccurrences: diseaseOccurrences[1]
@@ -261,7 +261,7 @@ class DiseaseOccurrenceController {
       where: { id },
     })
 
-    if(!diseaseOccurrenceDetails) {
+    if (!diseaseOccurrenceDetails) {
       return response.status(404).json({
         error: "Ocorrência de doença não encontrada"
       })
@@ -289,10 +289,10 @@ class DiseaseOccurrenceController {
     const body = request.body
     const { id } = request.params
 
-    
-    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({ where: {id} })
 
-    if(!isValidDiseaseOccurrence){
+    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({ where: { id } })
+
+    if (!isValidDiseaseOccurrence) {
       return response.status(404).json({
         error: "Ocorrência de doença não encontrada"
       })
@@ -300,18 +300,18 @@ class DiseaseOccurrenceController {
 
     const patient = await PatientsRepository.findOne({
       where: {
-        id: isValidDiseaseOccurrence.patientId 
+        id: isValidDiseaseOccurrence.patientId
       }
     })
 
-    if(body.disease_name) {
+    if (body.disease_name) {
       const diseaseName = await DiseaseRepository.findOne({
-        where : {
+        where: {
           name: body.disease_name
         }
       })
-  
-      if(!diseaseName){
+
+      if (!diseaseName) {
         return response.status(404).json({
           error: "Doença não encontrada"
         })
@@ -324,27 +324,27 @@ class DiseaseOccurrenceController {
         .set(body)
         .where("id = :id", { id })
         .execute()
-      if(body.status && (body.status !== patient.status)) {
+      if (body.status && (body.status !== patient.status)) {
         const diseaseOccurrences = await DiseaseOccurrenceRepository.find({
           where: {
             patientId: patient.id
           }
         })
         let finalStatus = diseaseOccurrences[0].status
-        if(finalStatus !== "Óbito") {
-          for(let occurrence of diseaseOccurrences) {
-            if(occurrence.status === "Óbito") {
+        if (finalStatus !== "Óbito") {
+          for (let occurrence of diseaseOccurrences) {
+            if (occurrence.status === "Óbito") {
               finalStatus = "Óbito"
               break
             }
-            else if(occurrence.status === "Infectado") {
+            else if (occurrence.status === "Infectado") {
               finalStatus = "Infectado"
             }
-            else if(occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
+            else if (occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
               finalStatus = "Suspeito"
             }
-            else if(
-              (occurrence.status === "Saudável" || occurrence.status === "Curado") 
+            else if (
+              (occurrence.status === "Saudável" || occurrence.status === "Curado")
               && finalStatus !== "Infectado" && finalStatus !== "Suspeito"
             ) {
               finalStatus = "Saudável"
@@ -375,11 +375,11 @@ class DiseaseOccurrenceController {
 
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
-    
 
-    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({ where: {id : id} })
 
-    if(!isValidDiseaseOccurrence){
+    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({ where: { id: id } })
+
+    if (!isValidDiseaseOccurrence) {
       return response.status(404).json({
         error: "Ocorrência de doença não encontrada"
       })
@@ -402,29 +402,29 @@ class DiseaseOccurrenceController {
           patientId: patient.id
         }
       })
-      
+
       let finalStatus = diseaseOccurrences[0]?.status ?? "Saudável"
-      if(finalStatus !== "Óbito" || diseaseOccurrences.length === 0) {
-        for(let occurrence of diseaseOccurrences) {
-          if(occurrence.status === "Óbito") {
+      if (finalStatus !== "Óbito" || diseaseOccurrences.length === 0) {
+        for (let occurrence of diseaseOccurrences) {
+          if (occurrence.status === "Óbito") {
             finalStatus = "Óbito"
             break
           }
-          else if(occurrence.status === "Infectado") {
+          else if (occurrence.status === "Infectado") {
             finalStatus = "Infectado"
           }
-          else if(occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
+          else if (occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
             finalStatus = "Suspeito"
           }
-          else if(
-            (occurrence.status === "Saudável" || occurrence.status === "Curado") 
+          else if (
+            (occurrence.status === "Saudável" || occurrence.status === "Curado")
             && finalStatus !== "Infectado" && finalStatus !== "Suspeito"
           ) {
             finalStatus = "Saudável"
           }
         }
       }
-  
+
       try {
         await PatientsRepository.createQueryBuilder()
           .update(Patient)
