@@ -1,47 +1,47 @@
 import { Request, Response } from "express";
-import {  Like } from "typeorm";
+import { Like } from "typeorm";
 import { AssignedHealthProtocol, } from "../models";
 
 
 import { AssignedHealthProtocolRepository, DiseaseRepository, HealthProtocolRepository } from "src/repositories";
 
 class AssignedHealthProtocolController {
- 
+
   async create(request: Request, response: Response) {
-    const body = request.body    
+    const body = request.body
 
     const isValidDisease = await DiseaseRepository.findOne({
-      where : {
+      where: {
         name: body.disease_name
       }
     })
 
-    if(!isValidDisease) {
+    if (!isValidDisease) {
       return response.status(400).json({
         error: "Doença não encontrada"
       })
     }
 
     const isValidHealthProtocol = await HealthProtocolRepository.findOne({
-      where : {
+      where: {
         id: body.healthprotocol_id
       }
     })
-    
-    if(!isValidHealthProtocol) {
+
+    if (!isValidHealthProtocol) {
       return response.status(400).json({
         error: "Protocolo de saúde não encontrado"
       })
     }
 
     const isAlreadyAssigned = await AssignedHealthProtocolRepository.findOne({
-     where: { 
+      where: {
         diseaseName: body.disease_name,
         healthProtocolId: body.healthprotocol_id
       }
     })
 
-    if(isAlreadyAssigned) {
+    if (isAlreadyAssigned) {
       return response.status(403).json({
         error: "Este protocolo de saúde já está atribuído à essa doença"
       })
@@ -50,7 +50,7 @@ class AssignedHealthProtocolController {
     try {
       const assignedHealthProtocolBody = AssignedHealthProtocolRepository.create(body)
       const assignedHealthProtocol = await AssignedHealthProtocolRepository.save(assignedHealthProtocolBody)
-  
+
       return response.status(201).json({
         success: "Protocolo de saúde atribuído à essa doença com sucesso",
         assigned_health_protocol: assignedHealthProtocol
@@ -63,86 +63,91 @@ class AssignedHealthProtocolController {
   }
 
   async list(request: Request, response: Response) {
-    const { 
-      disease_name, 
-      healthprotocol_id, 
+    const {
+      disease_name,
+      healthprotocol_id,
       healthprotocol_title,
-      page 
-    } = request.query
-    const take = 10
-    let filters = {}
+      page
+    } = request.query;
+    const take = 10;
+    const skip = page ? (Number(page) - 1) * take : 0;
+    let filters: any = {};
 
-
-
-    if(disease_name) {
-      filters = { ...filters, disease_name: Like(`%${String(disease_name)}%`) }
+    if (disease_name) {
+      filters = { ...filters, diseaseName: Like(`%${String(disease_name)}%`) };
     }
 
-    if(healthprotocol_id) {
-      filters = { ...filters, healthprotocol_id: String(healthprotocol_id) }
+    if (healthprotocol_id) {
+      filters = { ...filters, healthProtocol: { id: String(healthprotocol_id) } }; // Certifique-se de que o filtro corresponde ao relacionamento
     }
 
-    if(healthprotocol_title) {
-      const skip = page ? ((Number(page) - 1) * take) : 0 
-      const limit = page ? take : 99999999
+    // Caso exista `healthprotocol_title`, utilize `QueryBuilder`
+    if (healthprotocol_title) {
       try {
-        const items = await AssignedHealthProtocolRepository.createQueryBuilder("assigned_healthprotocol")
-          .leftJoinAndSelect("assigned_healthprotocol.healthprotocol", "healthProtocols")
-          .where("healthProtocols.title like :title", { title: `%${healthprotocol_title}%` })
+        const [items, totalCount] = await AssignedHealthProtocolRepository.createQueryBuilder("assignedHealthProtocol")
+          .leftJoinAndSelect("assignedHealthProtocol.healthProtocol", "healthProtocols")
+          .where("healthProtocols.title LIKE :title", { title: `%${healthprotocol_title}%` })
           .skip(skip)
-          .take(limit)
-          .getManyAndCount()
+          .take(take)
+          .getManyAndCount();
+
         return response.status(200).json({
-          assignedHealthProtocols: items[0],
-          totalAssignedHealthProtocols: items[1],
-        })
+          assignedHealthProtocols: items,
+          totalAssignedHealthProtocols: totalCount,
+        });
       } catch (error) {
+        console.error("Erro ao listar as associações:", error);
         return response.status(403).json({
-          error: "Erro na listagem das associações"
-        })
+          error: "Erro na listagem das associações",
+        });
       }
     }
 
-    let options: any = {
+    // Utilize `findAndCount` para outros filtros
+    const options: any = {
       where: filters,
-      relations: ["healthprotocol"]
+      relations: ["healthProtocol"], // Carrega o relacionamento healthProtocol
+      take,
+      skip,
+    };
+
+    try {
+      const [associationList, total] = await AssignedHealthProtocolRepository.findAndCount(options);
+      return response.status(200).json({
+        assignedHealthProtocols: associationList,
+        totalAssignedHealthProtocols: total,
+      });
+    } catch (error) {
+      console.error("Erro ao listar as associações:", error);
+      return response.status(403).json({
+        error: "Erro na listagem das associações",
+      });
     }
-
-    if(page) {
-      options = { ...options, take, skip: ((Number(page) - 1) * take) }
-    }
-
-    const associationList = await AssignedHealthProtocolRepository.findAndCount(options)
-
-    return response.status(200).json({
-      assignedHealthProtocols: associationList[0],
-      totalAssignedHealthProtocols: associationList[1],
-    })
   }
 
   async deleteOne(request: Request, response: Response) {
     const { disease_name, healthprotocol_id } = request.params
-    
-   
+
+
     const diseaseExists = await DiseaseRepository.findOne({
-      where : {
+      where: {
         name: String(disease_name)
       }
     })
 
-    if(!diseaseExists) {
+    if (!diseaseExists) {
       return response.status(404).json({
         error: "Doença não encontrada"
       })
     }
 
     const healthProtocolExists = await HealthProtocolRepository.findOne({
-      where :{ 
+      where: {
         id: String(healthprotocol_id)
       }
     })
-    
-    if(!healthProtocolExists) {
+
+    if (!healthProtocolExists) {
       return response.status(404).json({
         error: "Protocolo de saúde não encontrado"
       })
@@ -155,7 +160,7 @@ class AssignedHealthProtocolController {
       }
     })
 
-    if(!associationExists) {
+    if (!associationExists) {
       return response.status(404).json({
         error: "Protocolo de saúde não associado à essa doença"
       })
@@ -166,7 +171,7 @@ class AssignedHealthProtocolController {
         .delete()
         .from(AssignedHealthProtocol)
         .where("healthprotocol_id = :healthprotocol_id and disease_name = :disease_name", {
-          healthprotocol_id, 
+          healthprotocol_id,
           disease_name
         })
         .execute()
