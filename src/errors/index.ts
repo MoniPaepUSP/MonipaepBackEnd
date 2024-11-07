@@ -1,2 +1,1 @@
-export * from './AppError'
-export * from './PatientAlreadyExistsError'
+export * from "./PatientAlreadyExistsError";
