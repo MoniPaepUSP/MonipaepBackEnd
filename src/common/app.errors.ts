@@ -14,16 +14,33 @@ export enum HttpCode {
   GATEWAY_TIMEOUT = 504,
 }
 
+/*
+  ApiContenxt: In which context the error occurred, DISEASE_ERROR, PATIENT_ERROR, USM_ERROR, 
+  HttpCode: The returned HTTP code
+  MESSAGE: The error message
+  ExternalServiceError: If an external service was used during the request and it was the
+  guilty for the error, it will send the error object returned
+
+*/
+
 export interface HttpErrorArgs {
   apiContext: string;
   httpCode: HttpCode;
   message: string;
+  externalServiceError?: IExternalServiceError
 }
 
+export interface IExternalServiceError {
+  externalService: string;
+  externalHttpCode: HttpCode;
+  externalErrorMessage: string;
+};
+
 export class HttpError extends Error {
-  public readonly httpCode: httpCode;
+  public readonly httpCode: HttpCode;
   public readonly apiContext: string;
   public readonly message: string;
+  public readonly externalServiceError?: IExternalServiceError
 
   constructor(args: HttpErrorArgs) {
     super(args.message);
@@ -33,6 +50,7 @@ export class HttpError extends Error {
     this.httpCode = args.httpCode;
     this.apiContext = args.apiContext;
     this.message = args.message;
+    this.externalServiceError = args.externalServiceError;
 
     Error.captureStackTrace(this);
   }
