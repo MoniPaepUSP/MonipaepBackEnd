@@ -62,11 +62,10 @@
     "logger": "^0.0.1",
     "node-schedule": "^2.1.0",
     "reflect-metadata": "^0.1.13",
-    "sqlite3": "^5.0.2",
     "tsconfig-paths": "^3.9.0",
     "typeorm": "^0.3.20",
     "uuid": "^8.3.2",
     "winston": "^3.16.0",
-    "yarn": "^1.22.10"
+    "yarn": "^1.22.22"
   }
 }
