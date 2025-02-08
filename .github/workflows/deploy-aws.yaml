@@ -1,11 +1,14 @@
 name: Deploy to EC2
 on:
-  push:
-    branches:
-      - main 
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
 permissions:
-      id-token: write
-      contents: read 
+  id-token: write
+  contents: read
 jobs:
   deploy:
     runs-on: ubuntu-latest
