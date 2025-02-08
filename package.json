@@ -3,8 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "type": "module",
+  "engines": {
+    "npm": "please-use-yarn",
+    "yarn": "1.22.22",
+    "node": ">=18"
+  },
   "scripts": {
-    "dev": "ts-node-dev -r tsconfig-paths/register --transpile-only --ignore-watch node_modules  ./src/server.ts",
+    "build": "tsc",
+    "start:prod": "node dist/server.js",
+    "start:dev": "nodemon --watch src --ext ts --exec 'tsc && node dist/server.js'",
     "commit": "git add .& cz",
     "typeorm": "ts-node-dev node_modules/typeorm/cli.js",
     "test": "NODE_ENV=test jest",
@@ -61,6 +69,7 @@
     "jsonwebtoken": "^8.5.1",
     "logger": "^0.0.1",
     "node-schedule": "^2.1.0",
+    "nodemon": "^3.1.9",
     "reflect-metadata": "^0.1.13",
     "tsconfig-paths": "^3.9.0",
     "typeorm": "^0.3.20",

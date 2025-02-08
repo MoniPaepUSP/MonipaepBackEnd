@@ -1,6 +1,6 @@
 // import { AppDataSource } from "./database";
 
-import { app } from "./app";
+import app from "./app";
 // const main = async () => {
 //     await AppDataSource.initialize();
 // }

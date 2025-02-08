@@ -27,6 +27,6 @@ export default [...compat.extends(
     },
 }, {
     files: ["src/**/*.ts"],
-    ignores: ["./*", "src/__tests__/*"],
+    // ignores: ["./*", "src/__tests__/*"],
     rules: {},
 }];
