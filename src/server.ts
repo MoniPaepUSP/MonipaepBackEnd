@@ -9,5 +9,4 @@ import app from "./app";
 //     console.log("Typeorm not initialized. " + err)
 // })
 
-
 app.listen(3333, () => console.log("Server Running"))
