@@ -7,5 +7,3 @@ b=${a#*(-> }
 v=${b%%[)| ]*}
 
 export PATH="$NVM_DIR/versions/node/$v/bin:$PATH"
-
-# npx eslint $(git diff --name-only --cached | grep '\.ts$' | xargs -n 1)
