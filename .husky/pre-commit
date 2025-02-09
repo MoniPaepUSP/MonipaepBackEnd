@@ -8,5 +8,4 @@ v=${b%%[)| ]*}
 
 export PATH="$NVM_DIR/versions/node/$v/bin:$PATH"
 
-# npx lint-staged
-# npx prettier --config ./prettier.config.js ./src/ --check
+npx eslint $(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')

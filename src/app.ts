@@ -13,4 +13,4 @@ app.use(router);
 
 scheduleJob('0 1 * * *', verifyOccurrencesExpiration)
 
-export { app }
+export default app;

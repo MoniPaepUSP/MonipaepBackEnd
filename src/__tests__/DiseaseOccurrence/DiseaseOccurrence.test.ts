@@ -16,10 +16,10 @@ describe("DiseaseOccurrence", () => {
     afterAll(async () => {
         await connection.dropDatabase()
     })
-    
+
     describe("Success Cases", () => {
         it("Should create a new disease occurrence specified by disease and patient", async () => {
-            
+
             const patientsRepository = getCustomRepository(PatientsRepository)
             const patientpost = await request(app).post("/patients").send({
                 name: "Test",
@@ -46,7 +46,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test"
             })
-            
+
             const response = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -54,7 +54,7 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             expect(response.status).toBe(201)
         })
 
@@ -63,7 +63,7 @@ describe("DiseaseOccurrence", () => {
 
             expect(response.status).toBe(200)
         })
-        
+
         it("Should return the symptom occurrences filtered by a specific disease occurrence and/or symptom", async () => {
 
             const patientsRepository = getCustomRepository(PatientsRepository)
@@ -92,7 +92,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test2"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -100,14 +100,14 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             const response = await request(app).get(
                 `/diseaseoccurrence?patient_id=${patient.id}&disease_name=${disease.name}`
                 )
-            
+
 
             expect(response.status).toBe(200)
-            
+
         })
 
         it("Should return a symptom occurrence specified", async () => {
@@ -138,7 +138,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test3"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -146,13 +146,13 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             const response = await request(app).get(
                 `/diseaseoccurrence/${postDiseaseOccurrence.body.id}`
             )
 
             expect(response.status).toBe(200)
-            
+
         })
 
         it("Should alter a symptom occurrence specified", async () => {
@@ -183,7 +183,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test4"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -191,7 +191,7 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             const response = await request(app).put(
                 `/diseaseoccurrence/${postDiseaseOccurrence.body.id}`
             ).send({
@@ -199,7 +199,7 @@ describe("DiseaseOccurrence", () => {
             })
 
             expect(response.status).toBe(200)
-            
+
         })
 
         it("Should delete a symptom occurrence specified", async () => {
@@ -230,7 +230,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test5"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -238,13 +238,13 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             const response = await request(app).delete(
                 `/diseaseoccurrence/${postDiseaseOccurrence.body.id}`
             )
 
             expect(response.status).toBe(200)
-            
+
         })
     })
     describe("Failure Cases", () => {
@@ -276,7 +276,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test6"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: "invalidPatientId",
@@ -284,7 +284,7 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             expect(postDiseaseOccurrence.status).toBe(404)
         })
 
@@ -316,7 +316,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test7"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: "invalidDisease",
                 patient_id: `${patient.id}`,
@@ -324,7 +324,7 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             expect(postDiseaseOccurrence.status).toBe(404)
         })
 
@@ -356,7 +356,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test8"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -366,7 +366,7 @@ describe("DiseaseOccurrence", () => {
             })
 
             const response = await request(app).get(`/diseaseoccurrence?disease_name=invalidDiseaseTest`)
-            
+
             expect(response.status).toBe(404)
         })
 
@@ -398,7 +398,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test9"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -406,9 +406,9 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             const response = await request(app).get(`/diseaseoccurrence?patient_id=invalidPatientTest`)
-            
+
             expect(response.status).toBe(404)
         })
 
@@ -440,7 +440,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test11"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -448,13 +448,13 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             const response = await request(app).put(
                 `/diseaseoccurrence/invalidDiseaseOccurrenceTest`
             ).send({
                 status: "Curado"
             })
-            
+
             expect(response.status).toBe(404)
         })
 
@@ -486,7 +486,7 @@ describe("DiseaseOccurrence", () => {
             const disease = await diseaseRepository.findOne({
                 name: "DiseaseName-Test12"
             })
-            
+
             const postDiseaseOccurrence = await request(app).post("/diseaseoccurrence").send({
                 disease_name: `${disease.name}`,
                 patient_id: `${patient.id}`,
@@ -494,15 +494,15 @@ describe("DiseaseOccurrence", () => {
                 status: "status",
                 date_start: "19-04-2021"
             })
-            
+
             const response = await request(app).delete(
                 `/diseaseoccurrence/invalidDiseaseOccurrenceTest`
             )
-            
+
             expect(response.status).toBe(404)
         })
-        
+
     })
-        
+
 
 })
