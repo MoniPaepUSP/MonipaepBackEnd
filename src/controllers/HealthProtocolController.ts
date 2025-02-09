@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Like } from 'typeorm';
 import { HealthProtocol } from '../models';
 import { HealthProtocolRepository } from '../repositories/HealthProtocolRepository';
+import logger from '../common/loggerConfig';
 
 class HealthProtocolController {
 
@@ -30,6 +31,7 @@ class HealthProtocolController {
         health_protocol: healthProtocol
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro no registro do protocolo de saúde'
       })
@@ -65,7 +67,7 @@ class HealthProtocolController {
       filters = { title: Like (`%${String (title)}%`) }
     } 
 
-    let options: any = {
+    let options: object = {
       where: filters,
       order: {
         title: 'ASC',
@@ -121,6 +123,7 @@ class HealthProtocolController {
         success: 'Protocolo de saúde alterado com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na atualização do protocolo de saúde'
       })
@@ -149,6 +152,7 @@ class HealthProtocolController {
         success: 'Protocolo de saúde deletado com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na deleção do protocolo de saúde'
       })

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 // import { getCustomRepository } from "typeorm";
 import { Permissions } from '../models';
-
+import logger from '../common/loggerConfig';
 import { PermissionsRepository, SystemUserRepository } from '../repositories';
 
 class PermissionsController {
@@ -46,6 +46,7 @@ class PermissionsController {
         success: 'Permissões do usuário criadas com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na criação das permissões do usuário'
       })
@@ -58,7 +59,7 @@ class PermissionsController {
     let filters = {}
     
     
-    let options: any = {
+    let options: object = {
       where: filters,
       relations: ['systemUser'],
       order: {
@@ -103,6 +104,7 @@ class PermissionsController {
           totalSystemUsers: items[1],
         })
       } catch (error) {
+        logger.error(error);
         return response.status (403).json ({
           error: 'Erro na listagem de permissões'
         })
@@ -117,9 +119,9 @@ class PermissionsController {
     })
   }
 
-  async alterOne(request, response: Response) {
+  async alterOne(request: Request, response: Response) {
     const body = request.body
-    const tokenPayload = request.tokenPayload
+    const tokenPayload = body.tokenPayload
     const { id } = request.params
 
 
@@ -141,7 +143,7 @@ class PermissionsController {
           userId: tokenPayload.id
         }
       })
-      if(!tokenUser.generalAdm) {
+      if(!tokenUser?.generalAdm) {
         return response.status (404).json ({
           error: 'Usuário sem permissão para tal alteração'
         })
@@ -158,6 +160,7 @@ class PermissionsController {
         success: 'Permissões atualizadas com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na atualização de permissões'
       })
@@ -190,6 +193,7 @@ class PermissionsController {
         message: 'Permissões deletadas com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na deleção das permissões'
       })

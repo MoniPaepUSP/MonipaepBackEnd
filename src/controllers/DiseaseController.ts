@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Like } from 'typeorm';
 import { Disease } from '../models';
 import { DiseaseRepository } from '../repositories';
+import logger from '../common/loggerConfig';
 
 class DiseaseController {
   
@@ -31,6 +32,7 @@ class DiseaseController {
         success: 'Doença registrada com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (400).json ({
         error: 'Erro no registro da doença'
       })
@@ -49,7 +51,7 @@ class DiseaseController {
       filters = { name: Like (`%${String (name)}%`) }
     }
 
-    let options: any = {
+    let options: object = {
       where: filters,
       order: {
         name: 'ASC'
@@ -99,6 +101,7 @@ class DiseaseController {
         success: 'Doença atualizada com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na atualização da doença'
       })
@@ -134,6 +137,7 @@ class DiseaseController {
         success: 'Doença deletada com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na deleção da doença'
       })

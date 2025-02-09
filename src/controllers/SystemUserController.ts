@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Request, Response } from 'express';
 import * as jwt from '../jwt'
 
 import bcrypt from 'bcrypt'
 import { RefreshToken, SystemUser } from '../models';
-import { refreshTokenExpiresIn } from 'src/refreshTokenExpiration';
+import { refreshTokenExpiresIn } from '../refreshTokenExpiration';
 
-import { SystemUserRepository, PermissionsRepository, RefreshTokenRepository } from 'src/repositories';
+import { SystemUserRepository, PermissionsRepository, RefreshTokenRepository } from '../repositories';
+import logger from 'src/common/loggerConfig';
 class SystemUserController {
 
 
@@ -36,20 +38,21 @@ class SystemUserController {
 
     try {
       const user = SystemUserRepository.create (body)
-      const userSaved: any = await SystemUserRepository.save (user)
+      const userSaved: SystemUser[] = await SystemUserRepository.save (user)
       const permissions = PermissionsRepository.create ({
-        userId: userSaved.id,
+        userId: userSaved[0].id,
         localAdm: false,
         generalAdm: false,
         authorized: false
       })
       await PermissionsRepository.save (permissions)
     
-      userSaved.password = undefined      
+      userSaved[0].password = ''      
       return response.status (201).json ({
         success: 'Usuário criado com sucesso.'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na criação do usuário.'
       })
@@ -62,7 +65,7 @@ class SystemUserController {
     let hash
     
     try {
-      [, hash] = request.headers.authorization.split (' ')
+      [, hash] = request!.headers!.authorization!.split (' ')
     } catch (error) {
       return response.status (401).json ({
         error: 'Credenciais necessárias.'
@@ -131,7 +134,7 @@ class SystemUserController {
 
       const refreshToken = await RefreshTokenRepository.save (refreshTokenBody)
 
-      userExists.password = undefined
+      userExists.password = ''
       const permissions: string[] = []
       const roles: string[] = ['system.user']
 
@@ -205,10 +208,10 @@ class SystemUserController {
     return response.status (200).json (users)
   }
 
-  async getOneWithToken(request, response: Response) {
+  async getOneWithToken(request: Request, response: Response) {
     // this.initializeRepositories();
 
-    const { id, type } = request.tokenPayload
+    const { id, type } = request.body.tokenPayload
 
     if(type !== 'system_user') {
       return response.status (401).json ({
@@ -241,7 +244,7 @@ class SystemUserController {
     }
 
 
-    user.password = undefined
+    user.password = ''
     const permissions: string[] = []
     const roles: string[] = ['system.user']
 
@@ -268,10 +271,10 @@ class SystemUserController {
     })
   }
 
-  async updatePassword(request, response: Response) {
+  async updatePassword(request: Request, response: Response) {
     // this.initializeRepositories();
 
-    const tokenPayload = request.tokenPayload
+    const tokenPayload = request.body.tokenPayload;
     const { current_password, new_password } = request.body
     const { id } = request.params
 

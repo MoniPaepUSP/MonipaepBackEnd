@@ -7,8 +7,9 @@ import { Patient, RefreshToken } from '../models';
 import { RefreshTokenRepository, PatientsRepository } from '../repositories';
 import { refreshTokenExpiresIn } from '../refreshTokenExpiration';
 import { PatientAlreadyExistsError } from '../errors/patient.errors';
-import { HttpError } from 'src/common/app.errors';
-import { GeneralInternalError } from 'src/errors/unknown.errors';
+import { HttpError } from '../common/app.errors';
+import { GeneralInternalError } from '../errors/unknown.errors';
+import logger from '../common/loggerConfig';
 
 class PatientController {
   
@@ -33,8 +34,8 @@ class PatientController {
 
     try {
       const patientBody = PatientsRepository.create (body)
-      const patient: any = await PatientsRepository.save (patientBody)
-      const patientId = patient.id
+      const patient: Patient[] = await PatientsRepository.save (patientBody)
+      const patientId = patient[0].id
       
 
       const refreshTokenBody = RefreshTokenRepository.create ({
@@ -45,11 +46,11 @@ class PatientController {
       const refreshToken = await RefreshTokenRepository.save (refreshTokenBody)
 
       const token = jwt.sign ({
-        id: patient.id,
+        id: patient[0].id,
         type: 'patient'
       })
 
-      patient.password = undefined
+      patient[0].password = ''
       return response.status (201).json ({ 
         success: 'Paciente criado com sucesso',
         patient, 
@@ -87,7 +88,7 @@ class PatientController {
       })
     }
     
-    const patientExists: any = await PatientsRepository.findOne ({
+    const patientExists: Patient | null = await PatientsRepository.findOne ({
       where: { CPF }, 
       select: ['id', 'CPF', 'password']
     })
@@ -131,8 +132,8 @@ class PatientController {
         const refreshToken = await RefreshTokenRepository.save (refreshTokenBody)
         const patient = await PatientsRepository.findOne ({ where: { CPF } })
 
-        refreshToken.patientId = undefined
-        patient.password = undefined
+        refreshToken.patientId = ''
+        patient!.password = ''
   
         return response.status (200).json ({ patient, token, refreshToken })
       } catch (error) {
@@ -203,7 +204,7 @@ class PatientController {
       filters = { ...filters, neighborhood: Like (`%${String (neighborhood)}%`) }
     }
 
-    let options: any = {
+    let options: object = {
       where: filters,
       order: {
         createdAt: 'DESC'
@@ -222,8 +223,8 @@ class PatientController {
     })
   } 
 
-  async getOneWithToken(request, response: Response) {
-    const { id, type } = request.tokenPayload
+  async getOneWithToken(request: Request, response: Response) {
+    const { id, type } = request.body.tokenPayload;
 
     if(type !== 'patient') {
       return response.status (401).json ({
@@ -271,6 +272,7 @@ class PatientController {
         success: 'Paciente atualizado com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na atualização do paciente'
       })
@@ -299,6 +301,7 @@ class PatientController {
         success: 'Paciente deletado com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na deleção do paciente'
       })
@@ -327,6 +330,7 @@ class PatientController {
         success: 'Conta desativada com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na desativação da conta'
       })

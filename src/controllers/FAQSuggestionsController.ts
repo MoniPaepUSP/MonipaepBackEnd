@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 // import { Repository, getCustomRepository } from "typeorm"
 import { FAQSuggestions } from '../models'
-
+import logger from '../common/loggerConfig';
 import { FAQSuggestionsRepository } from '../repositories'
 
 class FAQSuggestionsController {
@@ -25,13 +25,14 @@ class FAQSuggestionsController {
 
     try {
       const faqBody = FAQSuggestionsRepository.create (body)
-      const faq: any = await FAQSuggestionsRepository.save (faqBody)
+      const faq: FAQSuggestions[] = await FAQSuggestionsRepository.save (faqBody)
   
       return response.status (201).json ({
         success: 'Sugestão de questão registrada com sucesso',
         faq
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro no registro da sugestão de questão'
       })
@@ -101,6 +102,7 @@ class FAQSuggestionsController {
         message: 'Sugestão de questão deletada com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na deleção da sugestão de questão'
       })

@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { Like, Repository } from 'typeorm'
+import { Like } from 'typeorm'
 import { AboutTheApp } from '../models';
 
-import { AboutTheAppRepository } from 'src/repositories';
+import { AboutTheAppRepository } from '../repositories';
+import logger from '../common/loggerConfig';
 
 class AboutTheAppController {
 
@@ -10,9 +11,9 @@ class AboutTheAppController {
 
   async create(request: Request, response: Response) {
     const body = request.body
-    
+
     // const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
-    
+
 
     const AboutTheAppAlreadyExists = await AboutTheAppRepository.findOne ({
       where : {
@@ -28,13 +29,14 @@ class AboutTheAppController {
 
     try {
       const AboutTheAppBody = AboutTheAppRepository.create (body)
-      const about: any = await AboutTheAppRepository.save (AboutTheAppBody)
-  
+      const about: AboutTheApp[] = await AboutTheAppRepository.save (AboutTheAppBody)
+
       return response.status (201).json ({
         success: 'Informação registrada com sucesso',
         about
       })
     } catch (error) {
+      logger.error (error);
       return response.status (403).json ({
         error: 'Erro no registro da informação'
       })
@@ -70,7 +72,7 @@ class AboutTheAppController {
         main: 'ASC'
       }
     })
-  
+
     return response.status (200).json ({
       AboutTheApps: mainsList[0],
       totalAboutTheApps: mainsList[1],
@@ -100,6 +102,7 @@ class AboutTheAppController {
         success: 'Informação atualizada com sucesso',
       })
     } catch (error) {
+      logger.error (error);
       return response.status (403).json ({
         error: 'Erro na alteração da Informação'
       })
@@ -117,7 +120,7 @@ class AboutTheAppController {
         error: 'Informação não encontrada'
       })
     }
-    
+
     try {
       await AboutTheAppRepository.createQueryBuilder ()
         .delete ()
@@ -128,6 +131,7 @@ class AboutTheAppController {
         success: 'Informação deletada com sucesso'
       })
     } catch (error) {
+      logger.error (error);
       return response.status (403).json ({
         error: 'Erro na deleção da Informação'
       })

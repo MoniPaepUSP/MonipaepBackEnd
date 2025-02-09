@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
 import { Like } from 'typeorm';
 import { AssignedHealthProtocol, } from '../models';
-
-
-import { AssignedHealthProtocolRepository, DiseaseRepository, HealthProtocolRepository } from 'src/repositories';
+import { AssignedHealthProtocolRepository, DiseaseRepository, HealthProtocolRepository } from '../repositories';
+import logger from '../common/loggerConfig';
 
 class AssignedHealthProtocolController {
 
@@ -56,6 +55,7 @@ class AssignedHealthProtocolController {
         assigned_health_protocol: assignedHealthProtocol
       })
     } catch (error) {
+      logger.error (error);
       return response.status (403).json ({
         error: 'Erro na atribuição do protocolo de saúde à essa doença'
       })
@@ -71,7 +71,7 @@ class AssignedHealthProtocolController {
     } = request.query;
     const take = 10;
     const skip = page ? (Number (page) - 1) * take : 0;
-    let filters: any = {};
+    let filters: object = {};
 
     if (disease_name) {
       filters = { ...filters, diseaseName: Like (`%${String (disease_name)}%`) };
@@ -104,7 +104,7 @@ class AssignedHealthProtocolController {
     }
 
     // Utilize `findAndCount` para outros filtros
-    const options: any = {
+    const options: object = {
       where: filters,
       relations: ['healthProtocol'], // Carrega o relacionamento healthProtocol
       take,
@@ -179,6 +179,7 @@ class AssignedHealthProtocolController {
         success: 'Associação deletada com sucesso'
       })
     } catch (error) {
+      logger.error (error);
       return response.status (403).json ({
         error: 'Erro na deleção da associação'
       })

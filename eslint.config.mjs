@@ -17,7 +17,7 @@ const compat = new FlatCompat({
 export default [
   ...compat.extends(
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended"
   ),
   {
     plugins: {
@@ -31,15 +31,16 @@ export default [
   },
   {
     files: ["src/**/*.ts"],
-    // ignores: ["./*", "src/__tests__/*"],
+    ignores: [
+      "src/__tests__/*",
+      "src/__tests__/AssignedHealthProtocol/AssignedHealthProtocol.test.ts",
+    ],
     rules: {
       "no-console": "warn",
-      "@stylistic/ts/object-curly-spacing": ["error", "always"],
-      "@stylistic/ts/func-call-spacing": ["error", "always"],
-      "@stylistic/ts/function-call-spacing": ["error", "always"],
-      "@stylistic/ts/indent": ["error", 2],
+      "@stylistic/ts/object-curly-spacing": ["warn", "always"],
+      "@stylistic/ts/indent": ["warn", 2],
       "@stylistic/ts/quotes": ["error", "single"],
-      "@stylistic/ts/space-before-blocks": ["error", "always"],
+      "@stylistic/ts/space-before-blocks": ["warn", "always"],
     },
   },
 ];

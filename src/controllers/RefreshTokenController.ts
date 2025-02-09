@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 // import { getCustomRepository } from "typeorm";
 import dayjs from 'dayjs'
 import * as jwt from '../jwt'
-
+import logger from '../common/loggerConfig';
 import { RefreshToken } from '../models';
 import { PermissionsRepository, RefreshTokenRepository, SystemUserRepository } from '../repositories';
 import { refreshTokenExpiresIn } from '../refreshTokenExpiration';
@@ -38,6 +38,7 @@ class RefreshTokenController {
           .where ('id = :id', { id: refreshTokenExists.id })
           .execute ();
       } catch (error) {
+        logger.error(error);
         return response.status (401).json ({
           error: 'Erro na deleção do refresh token',
           code: 'refresh.token.deletion'
@@ -152,6 +153,7 @@ class RefreshTokenController {
         })
       }
     } catch (error) {
+      logger.error(error);
       return response.status (401).json ({
         error: 'Erro na criação do refresh token',
         code: 'refresh.token.creation'

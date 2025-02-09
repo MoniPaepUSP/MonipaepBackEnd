@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { IsNull, Like, Repository } from 'typeorm';
+import { IsNull, Like } from 'typeorm';
 
 import { DiseaseOccurrence, Patient, SymptomOccurrence } from '../models';
 import {
@@ -9,7 +9,7 @@ import {
   PatientMovementHistoryRepository,
   SymptomOccurrenceRepository
 } from '../repositories';
-
+import logger from '../common/loggerConfig';
 
 class DiseaseOccurrenceController {
 
@@ -83,11 +83,12 @@ class DiseaseOccurrenceController {
         await SymptomOccurrenceRepository.createQueryBuilder ()
           .update (SymptomOccurrence)
           .set ({
-            diseaseOccurrenceId: createdDiseaseOccurrences[0].id
+            diseaseOccurrenceId: createdDiseaseOccurrences[0][0].id
           })
           .where ('id = :id', { id: symptomOccurrence.id })
           .execute ()
       } catch (error) {
+        logger.error(error);
         return response.status (403).json ({
           error: 'Erro na atualização do sintoma'
         })
@@ -102,10 +103,11 @@ class DiseaseOccurrenceController {
               patientId: symptomOccurrence.patientId,
               symptomName: symptomOccurrence.symptomName,
               registeredDate: symptomOccurrence.registeredDate,
-              diseaseOccurrenceId: createdDiseaseOccurrences[i].id
+              diseaseOccurrenceId: createdDiseaseOccurrences[i][i].id
             })
             await SymptomOccurrenceRepository.save (symptomOccurrenceBody)
           } catch (error) {
+            logger.error(error);
             return response.status (403).json ({
               error: 'Erro na atualização do sintoma.'
             })
@@ -149,6 +151,7 @@ class DiseaseOccurrenceController {
         .where ('id = :id', { id: patientExists.id })
         .execute ()
     } catch (error) {
+      logger.error(error);
       return response.status (404).json ({
         error: 'Erro na atualização do status do paciente'
       })
@@ -199,6 +202,7 @@ class DiseaseOccurrenceController {
           totalDiseaseOccurrences: items[1],
         })
       } catch (error) {
+        logger.error(error);
         return response.status (404).json ({
           error: 'Erro na listagem de ocorrências de doenças'
         })
@@ -221,7 +225,7 @@ class DiseaseOccurrenceController {
       filters = { ...filters, status: Like (`%${String (status)}%`) }
     }
 
-    let options: any = {
+    let options: object = {
       where: filters,
       relations: ['patient'],
       order: {
@@ -324,10 +328,10 @@ class DiseaseOccurrenceController {
         .set (body)
         .where ('id = :id', { id })
         .execute ()
-      if (body.status && (body.status !== patient.status)) {
+      if (body.status && (body.status !== patient?.status)) {
         const diseaseOccurrences = await DiseaseOccurrenceRepository.find ({
           where: {
-            patientId: patient.id
+            patientId: patient?.id
           }
         })
         let finalStatus = diseaseOccurrences[0].status
@@ -355,9 +359,10 @@ class DiseaseOccurrenceController {
           await PatientsRepository.createQueryBuilder ()
             .update (Patient)
             .set ({ status: finalStatus })
-            .where ('id = :id', { id: patient.id })
+            .where ('id = :id', { id: patient?.id })
             .execute ()
         } catch (error) {
+          logger.error(error);
           return response.status (404).json ({
             error: 'Erro na atualização do status do paciente'
           })
@@ -367,6 +372,7 @@ class DiseaseOccurrenceController {
         success: 'Ocorrência de doença atualizada'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (404).json ({
         error: 'Erro na atualização da ocorrência de doença'
       })
@@ -399,7 +405,7 @@ class DiseaseOccurrenceController {
         .execute ()
       const diseaseOccurrences = await DiseaseOccurrenceRepository.find ({
         where: {
-          patientId: patient.id
+          patientId: patient?.id
         }
       })
 
@@ -429,9 +435,10 @@ class DiseaseOccurrenceController {
         await PatientsRepository.createQueryBuilder ()
           .update (Patient)
           .set ({ status: finalStatus })
-          .where ('id = :id', { id: patient.id })
+          .where ('id = :id', { id: patient?.id })
           .execute ()
       } catch (error) {
+        logger.error(error);
         return response.status (404).json ({
           error: 'Erro na atualização do status do paciente'
         })
@@ -441,6 +448,7 @@ class DiseaseOccurrenceController {
         success: 'Ocorrência de doença deletada'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (404).json ({
         error: 'Erro na deleção da ocorrência de doença'
       })

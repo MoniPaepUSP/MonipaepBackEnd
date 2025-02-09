@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { Like, Repository } from 'typeorm';
+import { Like } from 'typeorm';
 import { Symptom } from '../models';
 import { SymptomRepository } from '../repositories/SymptomRepository';
+import logger from '../common/loggerConfig';
 
 class SymptomController {
   
@@ -30,6 +31,7 @@ class SymptomController {
         success: 'Sintoma registrado com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na criação do sintoma'
       })
@@ -45,7 +47,7 @@ class SymptomController {
       filters = { symptom: Like (`%${String (symptom)}%`) }
     } 
 
-    let options: any = {
+    let options: object = {
       where: filters,
       order: {
         symptom: 'ASC'
@@ -87,6 +89,7 @@ class SymptomController {
         success: 'Sintoma atualizado com sucesso',
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na atualização do sintoma'
       })
@@ -114,6 +117,7 @@ class SymptomController {
         success: 'Sintoma deletado com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na deleção do sintoma'
       })

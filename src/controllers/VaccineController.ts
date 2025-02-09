@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Patient, USM, Vaccine } from '../models';
+import { Vaccine } from '../models';
 // import { Repository } from "typeorm";
 // import { AppDataSource } from "src/database";
 import { PatientsRepository, USMRepository, VaccinesRepository } from '../repositories';
@@ -42,7 +42,7 @@ class VaccineController {
       return response.status (201).json (vaccine)
     } catch (error) {
       return response.status (403).json ({
-        error: error.message
+        error: error instanceof Error ? error.message : 'Error'
       })
     }
   }
@@ -97,9 +97,9 @@ class VaccineController {
         .execute ();
       return response.status (200).json (body)
     } catch (error) {
-      return response.status (403).json ({
-        error: error.message
-      })
+      return response.status(403).json({
+        error: error instanceof Error ? error.message : 'Error',
+      });
     }
   }
 
@@ -129,9 +129,9 @@ class VaccineController {
         message: 'Vaccine deleted'
       })
     } catch (error) {
-      return response.status (403).json ({
-        error: error.message
-      })
+      return response.status(403).json({
+        error: error instanceof Error ? error.message : 'Error',
+      });
     }
   }
 }

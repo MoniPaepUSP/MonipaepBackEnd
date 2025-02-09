@@ -19,7 +19,7 @@ export const verifyOccurrencesExpiration = async () => {
     const currentDate = (new Date ('2024-10-27T12:00:00.000-03:00')).getTime () // For testing purposes
   
     // Calculate the expiration date based on the disease monitoring days
-    const occurrenceStartDate = occurrence.dateStart.getTime ()
+    const occurrenceStartDate = occurrence.dateStart!.getTime ()
     let expirationDate = occurrenceStartDate
     if(occurrence.status === 'Suspeito') {
       expirationDate += occurrence.disease.suspectedMonitoringDays * dayInMs

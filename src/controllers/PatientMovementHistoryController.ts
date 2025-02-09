@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 // import { getCustomRepository } from "typeorm";
 import { PatientMovementHistory } from '../models';
+import logger from '../common/loggerConfig';
 
 import { DiseaseOccurrenceRepository, PatientMovementHistoryRepository } from '../repositories';
 class PatientMovementHistoryController {
@@ -32,6 +33,7 @@ class PatientMovementHistoryController {
         patientMovementHistory
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro no registro do histórico de movimentação'
       })
@@ -102,6 +104,7 @@ class PatientMovementHistoryController {
         success: 'Histórico de movimentação alterado com sucesso',
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na atualização do histórico de movimentação'
       })
@@ -130,6 +133,7 @@ class PatientMovementHistoryController {
         success: 'Histórico de movimentação deletado com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na deleção do histórico de movimentação'
       })

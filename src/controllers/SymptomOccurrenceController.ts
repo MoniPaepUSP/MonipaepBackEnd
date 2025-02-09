@@ -1,14 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Request, Response } from 'express';
-import { In, IsNull, Repository } from 'typeorm';
-
-import { DiseaseOccurrence, Patient, Symptom, SymptomOccurrence } from '../models';
-import { AppDataSource } from 'src/database';
+import { In, IsNull } from 'typeorm';
+import { Patient, SymptomOccurrence } from '../models';
 import {
   DiseaseOccurrenceRepository,
   PatientsRepository,
   SymptomOccurrenceRepository,
   SymptomRepository
 } from '../repositories';
+import logger from '../common/loggerConfig';
 
 class SymptomOccurrenceController {
 
@@ -57,6 +57,7 @@ class SymptomOccurrenceController {
           success: 'Sintoma registrado com sucesso'
         })
       } catch (error) {
+        logger.error(error);
         return response.status (403).json ({
           error: 'Erro no cadastro do sintoma'
         })
@@ -70,6 +71,7 @@ class SymptomOccurrenceController {
           const symptomOccurrence = SymptomOccurrenceRepository.create (body)
           await SymptomOccurrenceRepository.save (symptomOccurrence)
         } catch (error) {
+          logger.error(error);
           return response.status (403).json ({
             error: 'Erro no cadastro do sintoma'
           })

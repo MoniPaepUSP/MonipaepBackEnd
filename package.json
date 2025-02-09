@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "server.js",
   "license": "GPL-3.0-only",
-  "type": "module",
   "engines": {
     "npm": "please-use-yarn",
     "yarn": "1.22.22",
@@ -12,7 +11,7 @@
   "scripts": {
     "build": "tsc --pretty",
     "start:prod": "tsc && node dist/server.js",
-    "start:dev": "nodemon --watch src --ext ts --exec 'tsc --pretty && node dist/monipaep/server.js'",
+    "start:dev": "nodemon --watch src --ext ts --exec 'tsc --pretty && node dist/server.js'",
     "commit": "git add .& cz",
     "typeorm": "ts-node-dev node_modules/typeorm/cli.js",
     "test": "NODE_ENV=test jest",

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { Like, Repository } from 'typeorm'
+import { Like } from 'typeorm'
 import { FAQ } from '../models';
+import logger from '../common/loggerConfig';
 
 import { FAQRepository } from '../repositories/FAQRepository';
 
@@ -25,13 +26,14 @@ class FAQController {
 
     try {
       const faqBody = FAQRepository.create (body)
-      const faq: any = await FAQRepository.save (faqBody)
+      const faq: FAQ[] = await FAQRepository.save (faqBody)
   
       return response.status (201).json ({
         success: 'Questão registrada com sucesso',
         faq
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro no registro da questão'
       })
@@ -99,6 +101,7 @@ class FAQController {
         success: 'Questão atualizada com sucesso',
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na alteração da questão'
       })
@@ -127,6 +130,7 @@ class FAQController {
         success: 'Questão deletada com sucesso'
       })
     } catch (error) {
+      logger.error(error);
       return response.status (403).json ({
         error: 'Erro na deleção da questão'
       })
