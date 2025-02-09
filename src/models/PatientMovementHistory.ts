@@ -4,24 +4,24 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-} from "typeorm";
-import { DiseaseOccurrence } from "./DiseaseOccurrence"; // assuming DiseaseOccurrence entity is defined in DiseaseOccurrence.ts
+} from 'typeorm';
+import { DiseaseOccurrence } from './DiseaseOccurrence'; // assuming DiseaseOccurrence entity is defined in DiseaseOccurrence.ts
 
-@Entity("patient_movement_history")
+@Entity ('patient_movement_history')
 export class PatientMovementHistory {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn ('uuid')
   id: string;
 
-  @Column({ type: "uuid", name: "disease_occurrence_id" })
+  @Column ({ type: 'uuid', name: 'disease_occurrence_id' })
   diseaseOccurrenceId: string;
 
-  @Column({ type: "varchar" })
+  @Column ({ type: 'varchar' })
   description: string;
 
-  @Column({ type: "date" })
+  @Column ({ type: 'date' })
   date: Date;
 
-  @ManyToOne(() => DiseaseOccurrence, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinColumn({ name: "disease_occurrence_id" })
+  @ManyToOne (() => DiseaseOccurrence, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @JoinColumn ({ name: 'disease_occurrence_id' })
   diseaseOccurrence: DiseaseOccurrence;
 }

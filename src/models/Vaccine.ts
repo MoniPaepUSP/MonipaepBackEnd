@@ -1,29 +1,29 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm"
-import { Patient } from "./Patient"
-import { USM } from "./USM"
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Patient } from './Patient'
+import { USM } from './USM'
 
-@Entity("vaccines")
-export class Vaccine{
-  @PrimaryGeneratedColumn("uuid")
+@Entity ('vaccines')
+export class Vaccine {
+  @PrimaryGeneratedColumn ('uuid')
   id: string
 
-  @Column({ type: "timestamp" })
+  @Column ({ type: 'timestamp' })
   date: Date
 
-  @Column({ type: "varchar" })
+  @Column ({ type: 'varchar' })
   type: string
 
-  @Column({ type: "uuid", name: "patient_id" })
+  @Column ({ type: 'uuid', name: 'patient_id' })
   patientId: string
 
-  @Column({ type: "varchar", name: "usm_name" })
+  @Column ({ type: 'varchar', name: 'usm_name' })
   usmName: string
 
-  @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinColumn({ name: "patient_id" })
+  @ManyToOne (() => Patient, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @JoinColumn ({ name: 'patient_id' })
   patient: Patient
 
-  @ManyToOne(() => USM, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinColumn({ name: "usm_name" })
+  @ManyToOne (() => USM, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  @JoinColumn ({ name: 'usm_name' })
   usm: USM
 }
