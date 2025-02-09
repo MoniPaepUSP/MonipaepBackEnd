@@ -22,8 +22,8 @@ const {
 
 // development
 let host = 'localhost';
-let user = 'postgres';
-let password = 'postgreslabesmonipaep';
+let user = 'pgdefault_user';
+let password = '2706';
 let database = 'monipaep';
 
 // production
@@ -52,7 +52,7 @@ export const AppDataSource = new DataSource({
   host: `${host}`,
   port: 5432,
   username: `${user}`,
-  password: `${password}`,
+  password: `${password}`,  
   database: `${database}`,
   logging: true,
   migrations: ['./src/database/migrations/**.ts'],

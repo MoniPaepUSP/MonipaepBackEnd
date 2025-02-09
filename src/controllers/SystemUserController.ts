@@ -7,7 +7,7 @@ import { RefreshToken, SystemUser } from '../models';
 import { refreshTokenExpiresIn } from '../refreshTokenExpiration';
 
 import { SystemUserRepository, PermissionsRepository, RefreshTokenRepository } from '../repositories';
-import logger from 'src/common/loggerConfig';
+import logger from '../common/loggerConfig';
 class SystemUserController {
 
 

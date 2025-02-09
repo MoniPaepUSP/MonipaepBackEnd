@@ -1,7 +1,7 @@
 {
   "name": "monipaep-backend",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "index.js",
   "license": "GPL-3.0-only",
   "engines": {
     "npm": "please-use-yarn",
@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc --pretty",
     "start:prod": "tsc && node dist/server.js",
-    "start:dev": "nodemon --watch src --ext ts --exec 'tsc --pretty && node dist/server.js'",
+    "start:dev": "nodemon src/server.ts",
     "commit": "git add .& cz",
     "typeorm": "ts-node-dev node_modules/typeorm/cli.js",
     "test": "NODE_ENV=test jest",

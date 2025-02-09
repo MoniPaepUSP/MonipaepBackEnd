@@ -3,11 +3,11 @@
     "module": "CommonJS",
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "ES6",
     "noImplicitAny": true,
     "moduleResolution": "node",
     "sourceMap": true,
-    "rootDir": "./src",
+    "rootDir": "src",
     "outDir": "dist",
     "baseUrl": ".",
     "strict": true,
@@ -18,6 +18,6 @@
     "checkJs": false,
     "allowJs": true,
   },
-  "include": ["./src"],
+  "include": ["./src/**/*"],
   "exclude": ["src/__tests__", "./jest.config.ts"]
 }
