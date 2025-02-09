@@ -8,5 +8,5 @@ v=${b%%[)| ]*}
 
 export PATH="$NVM_DIR/versions/node/$v/bin:$PATH"
 
-# npx lint-staged
+npx lint-staged
 # npx prettier --config 'prettier.config.js' --check $(git diff --name-only --diff-filter d | grep '\.js$' | xargs)
