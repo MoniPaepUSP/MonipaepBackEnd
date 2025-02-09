@@ -1,21 +1,22 @@
-# Use a specific version of Node.js
-FROM node:20.11
+# BUILD STAGE
+FROM node:20.18-bookworm as BUILD
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy only the package.json and yarn.lock to leverage Docker layer caching
-COPY ./package.json ./yarn.lock ./
+COPY package.json yarn.lock ./
 
-# Install dependencies inside the Docker container
 RUN yarn cache clean --all
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
-# Copy the rest of the application code (except for ignored files like node_modules)
 COPY . .
+RUN npm run build
 
-# Expose the application port
+# RUN STAGE
+FROM node:20.18-alpine as RUN
+
+COPY --from=BUILD ./dist ./
+COPY --from=BUILD ./package.json ./
+
 EXPOSE 3333
 
-# Start the app (using yarn dev for development)
-CMD [ "yarn", "dev" ]
+CMD [ "yarn", "start:prod" ]
