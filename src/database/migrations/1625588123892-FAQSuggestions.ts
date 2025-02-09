@@ -1,19 +1,19 @@
-import {MigrationInterface, QueryRunner, Table} from "typeorm";
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class FAQSuggestions1625588123892 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.createTable(
-      new Table({
-        name: "FAQSuggestions",
+    await queryRunner.createTable (
+      new Table ({
+        name: 'FAQSuggestions',
         columns: [
           {
-            name: "id",
-            type: "uuid",
+            name: 'id',
+            type: 'uuid',
             isPrimary: true
           },
           {
-            name: "question",
-            type: "varchar",
+            name: 'question',
+            type: 'varchar',
             isUnique: true
           }
         ]
@@ -22,6 +22,6 @@ export class FAQSuggestions1625588123892 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable("FAQSuggestions")
+    await queryRunner.dropTable ('FAQSuggestions')
   }
 }

@@ -6,11 +6,11 @@ import { verifyOccurrencesExpiration } from './scheduledJobs';
 import 'reflect-metadata'
 import 'express-async-errors'
 
-const app = express();
-app.use(cors())
-app.use(express.json())
-app.use(router);
+const app = express ();
+app.use (cors ())
+app.use (express.json ())
+app.use (router);
 
-scheduleJob('0 1 * * *', verifyOccurrencesExpiration)
+scheduleJob ('0 1 * * *', verifyOccurrencesExpiration)
 
 export default app;

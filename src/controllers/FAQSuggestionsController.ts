@@ -1,39 +1,39 @@
-import { Request, Response } from "express"
+import { Request, Response } from 'express'
 // import { Repository, getCustomRepository } from "typeorm"
-import { FAQSuggestions } from "../models"
+import { FAQSuggestions } from '../models'
 
-import { FAQSuggestionsRepository } from "../repositories"
+import { FAQSuggestionsRepository } from '../repositories'
 
 class FAQSuggestionsController {
 
 
-  async create(request: Request, response: Response){
+  async create(request: Request, response: Response) {
     const body = request.body
     
 
-    const faqSuggestedExists = await FAQSuggestionsRepository.findOne({
+    const faqSuggestedExists = await FAQSuggestionsRepository.findOne ({
       where: {
         question: body.question
       }
     })
 
-    if(faqSuggestedExists){
-      return response.status(403).json({
-        error: "Essa sugestão de questão já foi registrada"
+    if(faqSuggestedExists) {
+      return response.status (403).json ({
+        error: 'Essa sugestão de questão já foi registrada'
       })
     }
 
     try {
-      const faqBody = FAQSuggestionsRepository.create(body)
-      const faq: any = await FAQSuggestionsRepository.save(faqBody)
+      const faqBody = FAQSuggestionsRepository.create (body)
+      const faq: any = await FAQSuggestionsRepository.save (faqBody)
   
-      return response.status(201).json({
-        success: "Sugestão de questão registrada com sucesso",
+      return response.status (201).json ({
+        success: 'Sugestão de questão registrada com sucesso',
         faq
       })
     } catch (error) {
-      return response.status(403).json({
-        error: "Erro no registro da sugestão de questão"
+      return response.status (403).json ({
+        error: 'Erro no registro da sugestão de questão'
       })
     }
   }
@@ -44,65 +44,65 @@ class FAQSuggestionsController {
     let filters = {}
 
     if(id) {
-      filters = { ...filters, id: String(id) }
+      filters = { ...filters, id: String (id) }
 
-      const questionExists = await FAQSuggestionsRepository.findOne({
+      const questionExists = await FAQSuggestionsRepository.findOne ({
         where : {
-          id: String(id)
+          id: String (id)
         }
       })
 
       if(!questionExists) {
-        return response.status(404).json({
-          error: "Sugestão de questão não encontrada"
+        return response.status (404).json ({
+          error: 'Sugestão de questão não encontrada'
         })
       }
     }
 
     if(question) {
-      filters = { ...filters, question: String(question) }
+      filters = { ...filters, question: String (question) }
 
-      const questionExists = await FAQSuggestionsRepository.findOne({
+      const questionExists = await FAQSuggestionsRepository.findOne ({
         where: {
-          question: String(question)
+          question: String (question)
         }
       })
 
       if(!questionExists) {
-        return response.status(404).json({
-          error: "Sugestão de questão não encontrada"
+        return response.status (404).json ({
+          error: 'Sugestão de questão não encontrada'
         })
       }
     }
-    const questionsList = await FAQSuggestionsRepository.find(filters)
+    const questionsList = await FAQSuggestionsRepository.find (filters)
 
-    return response.status(200).json(questionsList)
+    return response.status (200).json (questionsList)
   }
 
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
 
-    const questionExists = await FAQSuggestionsRepository.findOne({ where: {id} })
+    const questionExists = await FAQSuggestionsRepository.findOne ({ where: { id } })
 
     if(!questionExists) {
-      return response.status(404).json({
-        error: "Sugestão de questão não encontrada"
+      return response.status (404).json ({
+        error: 'Sugestão de questão não encontrada'
       })
     }
     
     try {
-      await FAQSuggestionsRepository.createQueryBuilder()
-        .delete()
-        .from(FAQSuggestions)
-        .where("id = :id", { id })
-        .execute()
-      return response.status(200).json({
-        message: "Sugestão de questão deletada com sucesso"
+      await FAQSuggestionsRepository.createQueryBuilder ()
+        .delete ()
+        .from (FAQSuggestions)
+        .where ('id = :id', { id })
+        .execute ()
+      return response.status (200).json ({
+        message: 'Sugestão de questão deletada com sucesso'
       })
     } catch (error) {
-      return response.status(403).json({
-        error: "Erro na deleção da sugestão de questão"
+      return response.status (403).json ({
+        error: 'Erro na deleção da sugestão de questão'
       })
     }
   }

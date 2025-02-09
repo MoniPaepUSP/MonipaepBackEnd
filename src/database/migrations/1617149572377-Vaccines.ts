@@ -1,49 +1,49 @@
-import {MigrationInterface, QueryRunner, Table} from "typeorm";
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class Vaccines1617149572377 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.createTable(
-      new Table({
-        name: "vaccines",
+    await queryRunner.createTable (
+      new Table ({
+        name: 'vaccines',
         columns: [
           {
-            name: "id",
-            type: "uuid",
+            name: 'id',
+            type: 'uuid',
             isPrimary: true
           },
           {
-            name: "date",
-            type: "timestamp",
+            name: 'date',
+            type: 'timestamp',
           },
           {
-            name: "type",
-            type: "varchar"
+            name: 'type',
+            type: 'varchar'
           },
           {
-            name: "patient_id",
-            type: "uuid"
+            name: 'patient_id',
+            type: 'uuid'
           },
           {
-            name: "usm_name",
-            type: "varchar"
+            name: 'usm_name',
+            type: 'varchar'
           }
         ],
         foreignKeys: [
           {
-            name: "FKPatient",
-            referencedTableName: "patients",
-            referencedColumnNames: ["id"],
-            columnNames:["patient_id"],
-            onUpdate: "CASCADE",
-            onDelete: "CASCADE"
+            name: 'FKPatient',
+            referencedTableName: 'patients',
+            referencedColumnNames: ['id'],
+            columnNames:['patient_id'],
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE'
           },
           {
-            name: "FKUSM",
-            referencedTableName: "usm",
-            referencedColumnNames: ["name"],
-            columnNames: ["usm_name"],
-            onUpdate: "CASCADE",
-            onDelete: "CASCADE"
+            name: 'FKUSM',
+            referencedTableName: 'usm',
+            referencedColumnNames: ['name'],
+            columnNames: ['usm_name'],
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE'
           }
         ]
       })
@@ -51,6 +51,6 @@ export class Vaccines1617149572377 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable("vaccines")
+    await queryRunner.dropTable ('vaccines')
   }
 }

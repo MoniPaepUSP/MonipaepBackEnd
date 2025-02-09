@@ -1,11 +1,11 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@Entity("symptom")
+@Entity ('symptom')
 class Symptom {
-  @PrimaryColumn()
+  @PrimaryColumn ()
   symptom: string
 
-  @Column()
+  @Column ()
   description: string
 }
 

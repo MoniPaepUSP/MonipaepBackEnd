@@ -1,5 +1,5 @@
-import { Repository } from "typeorm";
-import { SystemUser } from "../models/SystemUser";
-import { AppDataSource } from "src/database";
+import { Repository } from 'typeorm';
+import { SystemUser } from '../models/SystemUser';
+import { AppDataSource } from 'src/database';
 
-export const SystemUserRepository : Repository<SystemUser> = AppDataSource.getRepository(SystemUser);
+export const SystemUserRepository : Repository<SystemUser> = AppDataSource.getRepository (SystemUser);

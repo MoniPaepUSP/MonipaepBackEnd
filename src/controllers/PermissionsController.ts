@@ -1,37 +1,37 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 // import { getCustomRepository } from "typeorm";
-import { Permissions } from "../models";
+import { Permissions } from '../models';
 
-import { PermissionsRepository, SystemUserRepository } from "../repositories";
+import { PermissionsRepository, SystemUserRepository } from '../repositories';
 
 class PermissionsController {
   
 
-  async create(request: Request, response: Response){
+  async create(request: Request, response: Response) {
     const body = request.body
 
 
-    const userExists = await SystemUserRepository.findOne({
+    const userExists = await SystemUserRepository.findOne ({
       where : {
         id: body.userId
       }
     })
 
     if(!userExists) {
-      return response.status(406).json({
-        error: "Usuário não encontrado"
+      return response.status (406).json ({
+        error: 'Usuário não encontrado'
       })
     }
 
-    const permissionExists = await PermissionsRepository.findOne({
+    const permissionExists = await PermissionsRepository.findOne ({
       where: {
         userId: body.userId
       }
     })
 
     if(permissionExists) {
-      return response.status(403).json({
-        error: "Permissões já foram atribuídas à esse usuário"
+      return response.status (403).json ({
+        error: 'Permissões já foram atribuídas à esse usuário'
       })
     }
 
@@ -39,15 +39,15 @@ class PermissionsController {
       body.localAdm = false
       body.generalAdm = false
       body.authorized = false
-      const permissions = PermissionsRepository.create(body)
-      await PermissionsRepository.save(permissions)
+      const permissions = PermissionsRepository.create (body)
+      await PermissionsRepository.save (permissions)
 
-      return response.status(201).json({
-        success: "Permissões do usuário criadas com sucesso"
+      return response.status (201).json ({
+        success: 'Permissões do usuário criadas com sucesso'
       })
     } catch (error) {
-      return response.status(403).json({
-        error: "Erro na criação das permissões do usuário"
+      return response.status (403).json ({
+        error: 'Erro na criação das permissões do usuário'
       })
     }
   }
@@ -60,7 +60,7 @@ class PermissionsController {
     
     let options: any = {
       where: filters,
-      relations: ["systemUser"],
+      relations: ['systemUser'],
       order: {
         authorized: 'ASC',
         localAdm: 'ASC',
@@ -69,129 +69,129 @@ class PermissionsController {
     }
 
     if(page) {
-      options = { ...options, take, skip: ((Number(page) - 1) * take) }
+      options = { ...options, take, skip: ((Number (page) - 1) * take) }
     }
 
     if(id) {
-      filters = { ...filters, userId: String(id) }
+      filters = { ...filters, userId: String (id) }
 
-      const userIsValid = await PermissionsRepository.findOne({
+      const userIsValid = await PermissionsRepository.findOne ({
         where: {
-          userId: String(id)
+          userId: String (id)
         }
       })
 
       if(!userIsValid) {
-        return response.status(403).json({
-          error: "Usuário não encontrado"
+        return response.status (403).json ({
+          error: 'Usuário não encontrado'
         })
       }
     }
 
     if(name) {
-      const skip = page ? ((Number(page) - 1) * take) : 0 
+      const skip = page ? ((Number (page) - 1) * take) : 0 
       const limit = page ? take : 99999999
       try {
-        const items = await PermissionsRepository.createQueryBuilder("permissions")
-          .leftJoinAndSelect("permissions.systemUser", "systemUser")
-          .where("systemUser.name like :name", { name: `%${name}%` })
-          .skip(skip)
-          .take(limit)
-          .getManyAndCount()
-        return response.status(200).json({
+        const items = await PermissionsRepository.createQueryBuilder ('permissions')
+          .leftJoinAndSelect ('permissions.systemUser', 'systemUser')
+          .where ('systemUser.name like :name', { name: `%${name}%` })
+          .skip (skip)
+          .take (limit)
+          .getManyAndCount ()
+        return response.status (200).json ({
           systemUsers: items[0],
           totalSystemUsers: items[1],
         })
       } catch (error) {
-        return response.status(403).json({
-          error: "Erro na listagem de permissões"
+        return response.status (403).json ({
+          error: 'Erro na listagem de permissões'
         })
       }
     }
 
-    const permissionsList = await PermissionsRepository.findAndCount(options)
+    const permissionsList = await PermissionsRepository.findAndCount (options)
 
-    return response.status(200).json({
+    return response.status (200).json ({
       systemUsers: permissionsList[0],
       totalSystemUsers: permissionsList[1],
     })
   }
 
-  async alterOne(request, response: Response){
+  async alterOne(request, response: Response) {
     const body = request.body
     const tokenPayload = request.tokenPayload
     const { id } = request.params
 
 
-    const userExists = await PermissionsRepository.findOne({
+    const userExists = await PermissionsRepository.findOne ({
       where: {
         userId: id
       }
     })
     
-    if(!userExists){
-      return response.status(404).json({
-        error: "Usuário não encontrado"
+    if(!userExists) {
+      return response.status (404).json ({
+        error: 'Usuário não encontrado'
       })
     }
 
     if(body.generalAdm !== undefined) {
-      const tokenUser = await PermissionsRepository.findOne({
+      const tokenUser = await PermissionsRepository.findOne ({
         where: {
           userId: tokenPayload.id
         }
       })
       if(!tokenUser.generalAdm) {
-        return response.status(404).json({
-          error: "Usuário sem permissão para tal alteração"
+        return response.status (404).json ({
+          error: 'Usuário sem permissão para tal alteração'
         })
       }
     }
 
     try {
-      await PermissionsRepository.createQueryBuilder()
-        .update(Permissions)
-        .set(body)
-        .where("userId = :id", { id })
-        .execute();
-      return response.status(200).json({
-        success: "Permissões atualizadas com sucesso"
+      await PermissionsRepository.createQueryBuilder ()
+        .update (Permissions)
+        .set (body)
+        .where ('userId = :id', { id })
+        .execute ();
+      return response.status (200).json ({
+        success: 'Permissões atualizadas com sucesso'
       })
     } catch (error) {
-      return response.status(403).json({
-        error: "Erro na atualização de permissões"
+      return response.status (403).json ({
+        error: 'Erro na atualização de permissões'
       })
     }
   }
 
-  async deleteOne(request: Request, response: Response){
+  async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
 
-    const userExists = await PermissionsRepository.findOne({
+    const userExists = await PermissionsRepository.findOne ({
       where: {
         userId: id
       }
     })
     
-    if(!userExists){
-      return response.status(404).json({
-        error: "Usuário não encontrado"
+    if(!userExists) {
+      return response.status (404).json ({
+        error: 'Usuário não encontrado'
       })
     }
 
     try {
-      await PermissionsRepository.createQueryBuilder()
-        .delete()
-        .from(Permissions)
-        .where("userId = :id", { id })
-        .execute();
-      return response.status(200).json({
-        message: "Permissões deletadas com sucesso"
+      await PermissionsRepository.createQueryBuilder ()
+        .delete ()
+        .from (Permissions)
+        .where ('userId = :id', { id })
+        .execute ();
+      return response.status (200).json ({
+        message: 'Permissões deletadas com sucesso'
       })
     } catch (error) {
-      return response.status(403).json({
-        error: "Erro na deleção das permissões"
+      return response.status (403).json ({
+        error: 'Erro na deleção das permissões'
       })
     }
   }

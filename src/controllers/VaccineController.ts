@@ -1,139 +1,139 @@
-import { Request, Response } from "express";
-import { Patient, USM, Vaccine } from "../models";
+import { Request, Response } from 'express';
+import { Patient, USM, Vaccine } from '../models';
 // import { Repository } from "typeorm";
 // import { AppDataSource } from "src/database";
-import { PatientsRepository, USMRepository, VaccinesRepository } from "../repositories";
+import { PatientsRepository, USMRepository, VaccinesRepository } from '../repositories';
 
-class VaccineController{
+class VaccineController {
   
-  async create(request: Request, response:Response){
+  async create(request: Request, response:Response) {
     const body = request.body
 
   
 
-    const patientExists = await PatientsRepository.findOne({
+    const patientExists = await PatientsRepository.findOne ({
       where: {
         id: body.patient_id
       }
     })
 
-    const usmExists = await USMRepository.findOne({
+    const usmExists = await USMRepository.findOne ({
       where: {
         name: body.usm_name
       }
     })
 
-    if(!usmExists){
-      return response.status(404).json({
-        error: "Invalid USM name"
+    if(!usmExists) {
+      return response.status (404).json ({
+        error: 'Invalid USM name'
       })
     }
 
-    if(!patientExists){
-      return response.status(404).json({
-        error: "Invalid patient id"
+    if(!patientExists) {
+      return response.status (404).json ({
+        error: 'Invalid patient id'
       })
     }
 
     try {
-      const vaccine = VaccinesRepository.create(body)
-      await VaccinesRepository.save(vaccine)
+      const vaccine = VaccinesRepository.create (body)
+      await VaccinesRepository.save (vaccine)
 
-      return response.status(201).json(vaccine)
+      return response.status (201).json (vaccine)
     } catch (error) {
-      return response.status(403).json({
+      return response.status (403).json ({
         error: error.message
       })
     }
   }
 
-  async list(request: Request, response: Response){
+  async list(request: Request, response: Response) {
 
-    const vaccineList = await VaccinesRepository.find()
+    const vaccineList = await VaccinesRepository.find ()
 
-    return response.json(vaccineList)
+    return response.json (vaccineList)
   }
 
-  async getOne(request: Request, response: Response){
-    const {vaccine_id} = request.params
+  async getOne(request: Request, response: Response) {
+    const { vaccine_id } = request.params
 
 
-    const vaccine = await VaccinesRepository.findOne({
+    const vaccine = await VaccinesRepository.findOne ({
       where: {
         id: vaccine_id
       }
     })
     
-    if(!vaccine){
-      return response.status(404).json({
-        error: "Vaccine not found"
+    if(!vaccine) {
+      return response.status (404).json ({
+        error: 'Vaccine not found'
       })
     }
 
-    return response.status(302).json(vaccine)
+    return response.status (302).json (vaccine)
   }
 
-  async alterOne(request: Request, response: Response){
+  async alterOne(request: Request, response: Response) {
     const body = request.body
-    const {vaccine_id} = request.params
+    const { vaccine_id } = request.params
 
 
-    const vaccine = await VaccinesRepository.findOne({
+    const vaccine = await VaccinesRepository.findOne ({
       where: {
         id: vaccine_id
       }
     })
     
-    if(!vaccine){
-      return response.status(404).json({
-        error: "Vaccine not found"
+    if(!vaccine) {
+      return response.status (404).json ({
+        error: 'Vaccine not found'
       })
     }
     try {
-      await VaccinesRepository.createQueryBuilder()
-        .update(Vaccine)
-        .set(body)
-        .where("id = :id", { id: vaccine_id })
-        .execute();
-      return response.status(200).json(body)
+      await VaccinesRepository.createQueryBuilder ()
+        .update (Vaccine)
+        .set (body)
+        .where ('id = :id', { id: vaccine_id })
+        .execute ();
+      return response.status (200).json (body)
     } catch (error) {
-      return response.status(403).json({
+      return response.status (403).json ({
         error: error.message
       })
     }
   }
 
-  async deleteOne(request: Request, response: Response){
-    const {vaccine_id} = request.params
+  async deleteOne(request: Request, response: Response) {
+    const { vaccine_id } = request.params
 
 
-    const vaccine = await VaccinesRepository.findOne({
+    const vaccine = await VaccinesRepository.findOne ({
       where: {
         id: vaccine_id
       }
     })
     
-    if(!vaccine){
-      return response.status(404).json({
-        error: "Vaccine not found"
+    if(!vaccine) {
+      return response.status (404).json ({
+        error: 'Vaccine not found'
       })
     }
 
     try {
-      await VaccinesRepository.createQueryBuilder()
-        .delete()
-        .from(Vaccine)
-        .where("id = :id", { id: vaccine_id })
-        .execute();
-      return response.status(200).json({
-        message: "Vaccine deleted"
+      await VaccinesRepository.createQueryBuilder ()
+        .delete ()
+        .from (Vaccine)
+        .where ('id = :id', { id: vaccine_id })
+        .execute ();
+      return response.status (200).json ({
+        message: 'Vaccine deleted'
       })
     } catch (error) {
-      return response.status(403).json({
+      return response.status (403).json ({
         error: error.message
       })
     }
   }
 }
 
-export { VaccineController}
+export { VaccineController }
