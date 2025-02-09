@@ -8,4 +8,4 @@ v=${b%%[)| ]*}
 
 export PATH="$NVM_DIR/versions/node/$v/bin:$PATH"
 
-npx eslint $(git diff --name-only --diff-filter d | grep '\.ts$' | xargs -n 1)
+npx eslint $(git diff --name-only --cached | grep '\.ts$' | xargs -n 1)
