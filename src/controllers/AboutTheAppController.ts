@@ -1,42 +1,44 @@
-import { Request, Response } from "express";
-import {  Like, Repository } from 'typeorm'
-import { AboutTheApp } from "../models";
+import { Request, Response } from 'express';
+import { Like } from 'typeorm'
+import { AboutTheApp } from '../models';
 
-import { AboutTheAppRepository } from "src/repositories";
+import { AboutTheAppRepository } from '../repositories';
+import logger from '../common/loggerConfig';
 
-class AboutTheAppController{
+class AboutTheAppController {
 
 
 
-  async create(request: Request, response: Response){
+  async create(request: Request, response: Response) {
     const body = request.body
-    
-    // const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
-    
 
-    const AboutTheAppAlreadyExists = await AboutTheAppRepository.findOne({
+    // const AboutTheAppRepository = getCustomRepository(AboutTheAppsRepository)
+
+
+    const AboutTheAppAlreadyExists = await AboutTheAppRepository.findOne ({
       where : {
         main: body.main
       }
     })
 
-    if(AboutTheAppAlreadyExists){
-      return response.status(403).json({
-        error: "Essa informação já foi registrada"
+    if(AboutTheAppAlreadyExists) {
+      return response.status (403).json ({
+        error: 'Essa informação já foi registrada'
       })
     }
 
     try {
-      const AboutTheAppBody = AboutTheAppRepository.create(body)
-      const about: any = await AboutTheAppRepository.save(AboutTheAppBody)
-  
-      return response.status(201).json({
-        success: "Informação registrada com sucesso",
+      const AboutTheAppBody = AboutTheAppRepository.create (body)
+      const about: AboutTheApp[] = await AboutTheAppRepository.save (AboutTheAppBody)
+
+      return response.status (201).json ({
+        success: 'Informação registrada com sucesso',
         about
       })
     } catch (error) {
-      return response.status(403).json({
-        error: "Erro no registro da informação"
+      logger.error (error);
+      return response.status (403).json ({
+        error: 'Erro no registro da informação'
       })
     }
   }
@@ -47,31 +49,31 @@ class AboutTheAppController{
     let filters = {}
 
     if(id) {
-      const mainExists = await AboutTheAppRepository.findOne({
-        where: {id: String(id)}
+      const mainExists = await AboutTheAppRepository.findOne ({
+        where: { id: String (id) }
       })
 
       if(!mainExists) {
-        return response.status(404).json({
-          error: "Informação não encontrada"
+        return response.status (404).json ({
+          error: 'Informação não encontrada'
         })
       }
 
-      filters = { ...filters, id: String(id) }
+      filters = { ...filters, id: String (id) }
     }
 
     if(main) {
-      filters = { ...filters, main: Like(`%${String(main)}%`) }
+      filters = { ...filters, main: Like (`%${String (main)}%`) }
     }
 
-    const mainsList = await AboutTheAppRepository.findAndCount({
+    const mainsList = await AboutTheAppRepository.findAndCount ({
       where: filters,
       order: {
-        main: "ASC"
+        main: 'ASC'
       }
     })
-  
-    return response.status(200).json({
+
+    return response.status (200).json ({
       AboutTheApps: mainsList[0],
       totalAboutTheApps: mainsList[1],
     })
@@ -82,26 +84,27 @@ class AboutTheAppController{
     const { id } = request.params
 
 
-    const mainExists = await AboutTheAppRepository.findOne({where: { id : id} })
+    const mainExists = await AboutTheAppRepository.findOne ({ where: { id : id } })
 
     if(!mainExists) {
-      return response.status(404).json({
-        error: "Informação não encontrada"
+      return response.status (404).json ({
+        error: 'Informação não encontrada'
       })
     }
 
     try {
-      await AboutTheAppRepository.createQueryBuilder()
-        .update(AboutTheApp)
-        .set(body)
-        .where("id = :id", { id })
-        .execute()
-      return response.status(200).json({
-        success: "Informação atualizada com sucesso",
+      await AboutTheAppRepository.createQueryBuilder ()
+        .update (AboutTheApp)
+        .set (body)
+        .where ('id = :id', { id })
+        .execute ()
+      return response.status (200).json ({
+        success: 'Informação atualizada com sucesso',
       })
     } catch (error) {
-      return response.status(403).json({
-        error: "Erro na alteração da Informação"
+      logger.error (error);
+      return response.status (403).json ({
+        error: 'Erro na alteração da Informação'
       })
     }
   }
@@ -110,26 +113,27 @@ class AboutTheAppController{
     const { id } = request.params
 
 
-    const questionExists = await AboutTheAppRepository.findOne({ where: {id : id} })
+    const questionExists = await AboutTheAppRepository.findOne ({ where: { id : id } })
 
     if(!questionExists) {
-      return response.status(404).json({
-        error: "Informação não encontrada"
+      return response.status (404).json ({
+        error: 'Informação não encontrada'
       })
     }
-    
+
     try {
-      await AboutTheAppRepository.createQueryBuilder()
-        .delete()
-        .from(AboutTheApp)
-        .where("id = :id", { id })
-        .execute()
-      return response.status(200).json({
-        success: "Informação deletada com sucesso"
+      await AboutTheAppRepository.createQueryBuilder ()
+        .delete ()
+        .from (AboutTheApp)
+        .where ('id = :id', { id })
+        .execute ()
+      return response.status (200).json ({
+        success: 'Informação deletada com sucesso'
       })
     } catch (error) {
-      return response.status(403).json({
-        error: "Erro na deleção da Informação"
+      logger.error (error);
+      return response.status (403).json ({
+        error: 'Erro na deleção da Informação'
       })
     }
   }

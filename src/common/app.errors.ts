@@ -43,15 +43,15 @@ export class HttpError extends Error {
   public readonly externalServiceError?: IExternalServiceError
 
   constructor(args: HttpErrorArgs) {
-    super(args.message);
+    super (args.message);
 
-    Object.setPrototypeOf(this, new.target.prototype);
+    Object.setPrototypeOf (this, new.target.prototype);
 
     this.httpCode = args.httpCode;
     this.apiContext = args.apiContext;
     this.message = args.message;
     this.externalServiceError = args.externalServiceError;
 
-    Error.captureStackTrace(this);
+    Error.captureStackTrace (this);
   }
 }
