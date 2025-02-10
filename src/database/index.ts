@@ -36,8 +36,13 @@ if(ENVIRONMENT == 'PRODUCTION') {
   console.log(user);
   console.log(password);
   console.log(database);
+  console.log('Production: DEVELOPMENT');
+  console.log('Variables:');
+  console.log(host);
+  console.log(user);
+  console.log(password);
+  console.log(database);
 }
-
 
 // initializing database with typeorm
 export const AppDataSource = new DataSource({

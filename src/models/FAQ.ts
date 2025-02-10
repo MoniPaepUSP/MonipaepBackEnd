@@ -1,13 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity("faq")
+@Entity ('faq')
 export class FAQ {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn ('uuid')
   id: string;
 
-  @Column({ type: "varchar", unique: true })
+  @Column ({ type: 'varchar', unique: true })
   question: string;
 
-  @Column({ type: "varchar" })
+  @Column ({ type: 'varchar' })
   answer: string;
 }

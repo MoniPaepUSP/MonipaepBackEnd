@@ -1,15 +1,15 @@
-import { Request, Response } from "express";
-import { IsNull, Like, Repository } from "typeorm";
+import { Request, Response } from 'express';
+import { IsNull, Like } from 'typeorm';
 
-import { DiseaseOccurrence, Patient, SymptomOccurrence } from "../models";
+import { DiseaseOccurrence, Patient, SymptomOccurrence } from '../models';
 import {
   DiseaseOccurrenceRepository,
   DiseaseRepository,
   PatientsRepository,
   PatientMovementHistoryRepository,
   SymptomOccurrenceRepository
-} from "../repositories";
-
+} from '../repositories';
+import logger from '../common/loggerConfig';
 
 class DiseaseOccurrenceController {
 
@@ -19,77 +19,78 @@ class DiseaseOccurrenceController {
 
     // console.log(body)
 
-    const patientExists = await PatientsRepository.findOne({
+    const patientExists = await PatientsRepository.findOne ({
       where: {
         id: body.patient_id
       }
     })
 
     if (!patientExists) {
-      return response.status(404).json({
-        error: "Paciente inválido"
+      return response.status (404).json ({
+        error: 'Paciente inválido'
       })
     }
 
-    if (patientExists.status === "Óbito") {
-      return response.status(404).json({
-        error: "Não é possível registrar um caso de doença para um paciente com o status 'Óbito'"
+    if (patientExists.status === 'Óbito') {
+      return response.status (404).json ({
+        error: 'Não é possível registrar um caso de doença para um paciente com o status \'Óbito\''
       })
     }
 
     if (!body.status) {
-      body.status = "Suspeito"
+      body.status = 'Suspeito'
     }
 
     if (!body.date_start) {
-      body.date_start = new Date()
+      body.date_start = new Date ()
     }
 
-    let createdDiseaseOccurrences = []
+    const createdDiseaseOccurrences = []
 
-    for (let i in body.disease_name) {
-      const validDisease = await DiseaseRepository.findOne({
+    for (const i in body.disease_name) {
+      const validDisease = await DiseaseRepository.findOne ({
         where: {
           name: body.disease_name[i]
         }
       })
 
       if (!validDisease) {
-        return response.status(403).json({
+        return response.status (403).json ({
           error: `A doença '${body.disease_name[i]}' não se encontra cadastrada no sistema`
         })
       }
 
-      const diseaseOccurrenceBody = DiseaseOccurrenceRepository.create({
+      const diseaseOccurrenceBody = DiseaseOccurrenceRepository.create ({
         ...body,
         disease_name: body.disease_name[i]
       })
 
-      const diseaseOccurrence = await DiseaseOccurrenceRepository.save(diseaseOccurrenceBody)
-      createdDiseaseOccurrences.push(diseaseOccurrence)
+      const diseaseOccurrence = await DiseaseOccurrenceRepository.save (diseaseOccurrenceBody)
+      createdDiseaseOccurrences.push (diseaseOccurrence)
     }
 
     const numberOfDiseaseOccurrences = createdDiseaseOccurrences.length
 
-    const notAssignedSymptomOccurrences = await SymptomOccurrenceRepository.find({
+    const notAssignedSymptomOccurrences = await SymptomOccurrenceRepository.find ({
       where: {
         patientId: body.patient_id,
-        diseaseOccurrenceId: IsNull()
+        diseaseOccurrenceId: IsNull ()
       }
     })
 
     for (const symptomOccurrence of notAssignedSymptomOccurrences) {
       try {
-        await SymptomOccurrenceRepository.createQueryBuilder()
-          .update(SymptomOccurrence)
-          .set({
-            diseaseOccurrenceId: createdDiseaseOccurrences[0].id
+        await SymptomOccurrenceRepository.createQueryBuilder ()
+          .update (SymptomOccurrence)
+          .set ({
+            diseaseOccurrenceId: createdDiseaseOccurrences[0][0].id
           })
-          .where("id = :id", { id: symptomOccurrence.id })
-          .execute()
+          .where ('id = :id', { id: symptomOccurrence.id })
+          .execute ()
       } catch (error) {
-        return response.status(403).json({
-          error: "Erro na atualização do sintoma"
+        logger.error(error);
+        return response.status (403).json ({
+          error: 'Erro na atualização do sintoma'
         })
       }
     }
@@ -98,64 +99,66 @@ class DiseaseOccurrenceController {
       for (let i = 1; i < numberOfDiseaseOccurrences; i++) {
         for (const symptomOccurrence of notAssignedSymptomOccurrences) {
           try {
-            const symptomOccurrenceBody = SymptomOccurrenceRepository.create({
+            const symptomOccurrenceBody = SymptomOccurrenceRepository.create ({
               patientId: symptomOccurrence.patientId,
               symptomName: symptomOccurrence.symptomName,
               registeredDate: symptomOccurrence.registeredDate,
-              diseaseOccurrenceId: createdDiseaseOccurrences[i].id
+              diseaseOccurrenceId: createdDiseaseOccurrences[i][i].id
             })
-            await SymptomOccurrenceRepository.save(symptomOccurrenceBody)
+            await SymptomOccurrenceRepository.save (symptomOccurrenceBody)
           } catch (error) {
-            return response.status(403).json({
-              error: "Erro na atualização do sintoma."
+            logger.error(error);
+            return response.status (403).json ({
+              error: 'Erro na atualização do sintoma.'
             })
           }
         }
       }
     }
 
-    const diseaseOccurrences = await DiseaseOccurrenceRepository.find({
+    const diseaseOccurrences = await DiseaseOccurrenceRepository.find ({
       where: {
         patientId: patientExists.id
       }
     })
 
     let finalStatus = diseaseOccurrences[0].status
-    if (finalStatus !== "Óbito") {
-      for (let occurrence of diseaseOccurrences) {
-        if (occurrence.status === "Óbito") {
-          finalStatus = "Óbito"
+    if (finalStatus !== 'Óbito') {
+      for (const occurrence of diseaseOccurrences) {
+        if (occurrence.status === 'Óbito') {
+          finalStatus = 'Óbito'
           break
         }
-        else if (occurrence.status === "Infectado") {
-          finalStatus = "Infectado"
+        else if (occurrence.status === 'Infectado') {
+          finalStatus = 'Infectado'
         }
-        else if (occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
-          finalStatus = "Suspeito"
+        else if (occurrence.status === 'Suspeito' && finalStatus !== 'Infectado') {
+          finalStatus = 'Suspeito'
         }
         else if (
-          (occurrence.status === "Saudável" || occurrence.status === "Curado")
-          && finalStatus !== "Infectado" && finalStatus !== "Suspeito"
+          (occurrence.status === 'Saudável' || occurrence.status === 'Curado')
+          && finalStatus !== 'Infectado' && finalStatus !== 'Suspeito'
         ) {
-          finalStatus = "Saudável"
+          finalStatus = 'Saudável'
         }
       }
     }
 
     try {
-      await PatientsRepository.createQueryBuilder()
-        .update(Patient)
-        .set({ status: finalStatus })
-        .where("id = :id", { id: patientExists.id })
-        .execute()
+      await PatientsRepository.createQueryBuilder ()
+        .update (Patient)
+        .set ({ status: finalStatus })
+        .where ('id = :id', { id: patientExists.id })
+        .execute ()
     } catch (error) {
-      return response.status(404).json({
-        error: "Erro na atualização do status do paciente"
+      logger.error(error);
+      return response.status (404).json ({
+        error: 'Erro na atualização do status do paciente'
       })
     }
 
-    return response.status(201).json({
-      success: "Ocorrência de doença criada com sucesso",
+    return response.status (201).json ({
+      success: 'Ocorrência de doença criada com sucesso',
       createdDiseaseOccurrences
     })
   }
@@ -174,18 +177,18 @@ class DiseaseOccurrenceController {
 
 
     if (patient_name) {
-      const skip = page ? ((Number(page) - 1) * take) : 0
+      const skip = page ? ((Number (page) - 1) * take) : 0
       const limit = page ? take : 99999999
       try {
-        const items = await DiseaseOccurrenceRepository.createQueryBuilder("diseaseOccurrence")
-          .leftJoinAndSelect("diseaseOccurrence.patient", "patients")
-          .where("patients.name like :name", { name: `%${patient_name}%` })
-          .skip(skip)
-          .take(limit)
-          .orderBy('diseaseOccurrence.dateStart', 'DESC')
-          .addOrderBy('diseaseOccurrence.status', 'ASC')
-          .getManyAndCount()
-        const formattedData = items[0].map(occurrence => {
+        const items = await DiseaseOccurrenceRepository.createQueryBuilder ('diseaseOccurrence')
+          .leftJoinAndSelect ('diseaseOccurrence.patient', 'patients')
+          .where ('patients.name like :name', { name: `%${patient_name}%` })
+          .skip (skip)
+          .take (limit)
+          .orderBy ('diseaseOccurrence.dateStart', 'DESC')
+          .addOrderBy ('diseaseOccurrence.status', 'ASC')
+          .getManyAndCount ()
+        const formattedData = items[0].map (occurrence => {
           return {
             ...occurrence,
             patient: {
@@ -194,36 +197,37 @@ class DiseaseOccurrenceController {
             }
           }
         })
-        return response.status(200).json({
+        return response.status (200).json ({
           diseaseOccurrences: formattedData,
           totalDiseaseOccurrences: items[1],
         })
       } catch (error) {
-        return response.status(404).json({
-          error: "Erro na listagem de ocorrências de doenças"
+        logger.error(error);
+        return response.status (404).json ({
+          error: 'Erro na listagem de ocorrências de doenças'
         })
       }
     }
 
     if (id) {
-      filters = { ...filters, id: String(id) }
+      filters = { ...filters, id: String (id) }
     }
 
     if (patient_id) {
-      filters = { ...filters, patient_id: String(patient_id) }
+      filters = { ...filters, patient_id: String (patient_id) }
     }
 
     if (disease_name) {
-      filters = { ...filters, disease_name: Like(`%${String(disease_name)}%`) }
+      filters = { ...filters, disease_name: Like (`%${String (disease_name)}%`) }
     }
 
     if (status) {
-      filters = { ...filters, status: Like(`%${String(status)}%`) }
+      filters = { ...filters, status: Like (`%${String (status)}%`) }
     }
 
-    let options: any = {
+    let options: object = {
       where: filters,
-      relations: ["patient"],
+      relations: ['patient'],
       order: {
         dateStart: 'DESC',
         status: 'ASC'
@@ -231,12 +235,12 @@ class DiseaseOccurrenceController {
     }
 
     if (page) {
-      options = { ...options, take, skip: ((Number(page) - 1) * take) }
+      options = { ...options, take, skip: ((Number (page) - 1) * take) }
     }
 
-    const diseaseOccurrences = await DiseaseOccurrenceRepository.findAndCount(options)
+    const diseaseOccurrences = await DiseaseOccurrenceRepository.findAndCount (options)
 
-    const filteredDiseaseOccurences = diseaseOccurrences[0].map(occurrence => {
+    const filteredDiseaseOccurences = diseaseOccurrences[0].map (occurrence => {
       return {
         ...occurrence,
         patient: {
@@ -246,7 +250,7 @@ class DiseaseOccurrenceController {
       }
     })
 
-    return response.status(200).json({
+    return response.status (200).json ({
       diseaseOccurrences: filteredDiseaseOccurences,
       totalDiseaseOccurrences: diseaseOccurrences[1]
     })
@@ -257,28 +261,28 @@ class DiseaseOccurrenceController {
 
 
 
-    const diseaseOccurrenceDetails = await DiseaseOccurrenceRepository.findOne({
+    const diseaseOccurrenceDetails = await DiseaseOccurrenceRepository.findOne ({
       where: { id },
     })
 
     if (!diseaseOccurrenceDetails) {
-      return response.status(404).json({
-        error: "Ocorrência de doença não encontrada"
+      return response.status (404).json ({
+        error: 'Ocorrência de doença não encontrada'
       })
     }
 
-    const movementHistory = await PatientMovementHistoryRepository.find({
+    const movementHistory = await PatientMovementHistoryRepository.find ({
       where: { diseaseOccurrenceId: id },
     })
 
-    const symptomOccurrencesList = await SymptomOccurrenceRepository.find({
+    const symptomOccurrencesList = await SymptomOccurrenceRepository.find ({
       where: { diseaseOccurrenceId: id },
       order: {
         registeredDate: 'DESC'
       }
     })
 
-    return response.status(200).json({
+    return response.status (200).json ({
       occurrenceDetails: diseaseOccurrenceDetails,
       symptomsList: symptomOccurrencesList,
       movementHistory
@@ -290,85 +294,87 @@ class DiseaseOccurrenceController {
     const { id } = request.params
 
 
-    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({ where: { id } })
+    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne ({ where: { id } })
 
     if (!isValidDiseaseOccurrence) {
-      return response.status(404).json({
-        error: "Ocorrência de doença não encontrada"
+      return response.status (404).json ({
+        error: 'Ocorrência de doença não encontrada'
       })
     }
 
-    const patient = await PatientsRepository.findOne({
+    const patient = await PatientsRepository.findOne ({
       where: {
         id: isValidDiseaseOccurrence.patientId
       }
     })
 
     if (body.disease_name) {
-      const diseaseName = await DiseaseRepository.findOne({
+      const diseaseName = await DiseaseRepository.findOne ({
         where: {
           name: body.disease_name
         }
       })
 
       if (!diseaseName) {
-        return response.status(404).json({
-          error: "Doença não encontrada"
+        return response.status (404).json ({
+          error: 'Doença não encontrada'
         })
       }
     }
 
     try {
-      await DiseaseOccurrenceRepository.createQueryBuilder()
-        .update(DiseaseOccurrence)
-        .set(body)
-        .where("id = :id", { id })
-        .execute()
-      if (body.status && (body.status !== patient.status)) {
-        const diseaseOccurrences = await DiseaseOccurrenceRepository.find({
+      await DiseaseOccurrenceRepository.createQueryBuilder ()
+        .update (DiseaseOccurrence)
+        .set (body)
+        .where ('id = :id', { id })
+        .execute ()
+      if (body.status && (body.status !== patient?.status)) {
+        const diseaseOccurrences = await DiseaseOccurrenceRepository.find ({
           where: {
-            patientId: patient.id
+            patientId: patient?.id
           }
         })
         let finalStatus = diseaseOccurrences[0].status
-        if (finalStatus !== "Óbito") {
-          for (let occurrence of diseaseOccurrences) {
-            if (occurrence.status === "Óbito") {
-              finalStatus = "Óbito"
+        if (finalStatus !== 'Óbito') {
+          for (const occurrence of diseaseOccurrences) {
+            if (occurrence.status === 'Óbito') {
+              finalStatus = 'Óbito'
               break
             }
-            else if (occurrence.status === "Infectado") {
-              finalStatus = "Infectado"
+            else if (occurrence.status === 'Infectado') {
+              finalStatus = 'Infectado'
             }
-            else if (occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
-              finalStatus = "Suspeito"
+            else if (occurrence.status === 'Suspeito' && finalStatus !== 'Infectado') {
+              finalStatus = 'Suspeito'
             }
             else if (
-              (occurrence.status === "Saudável" || occurrence.status === "Curado")
-              && finalStatus !== "Infectado" && finalStatus !== "Suspeito"
+              (occurrence.status === 'Saudável' || occurrence.status === 'Curado')
+              && finalStatus !== 'Infectado' && finalStatus !== 'Suspeito'
             ) {
-              finalStatus = "Saudável"
+              finalStatus = 'Saudável'
             }
           }
         }
         try {
-          await PatientsRepository.createQueryBuilder()
-            .update(Patient)
-            .set({ status: finalStatus })
-            .where("id = :id", { id: patient.id })
-            .execute()
+          await PatientsRepository.createQueryBuilder ()
+            .update (Patient)
+            .set ({ status: finalStatus })
+            .where ('id = :id', { id: patient?.id })
+            .execute ()
         } catch (error) {
-          return response.status(404).json({
-            error: "Erro na atualização do status do paciente"
+          logger.error(error);
+          return response.status (404).json ({
+            error: 'Erro na atualização do status do paciente'
           })
         }
       }
-      return response.status(200).json({
-        success: "Ocorrência de doença atualizada"
+      return response.status (200).json ({
+        success: 'Ocorrência de doença atualizada'
       })
     } catch (error) {
-      return response.status(404).json({
-        error: "Erro na atualização da ocorrência de doença"
+      logger.error(error);
+      return response.status (404).json ({
+        error: 'Erro na atualização da ocorrência de doença'
       })
     }
   }
@@ -377,72 +383,74 @@ class DiseaseOccurrenceController {
     const { id } = request.params
 
 
-    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({ where: { id: id } })
+    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne ({ where: { id: id } })
 
     if (!isValidDiseaseOccurrence) {
-      return response.status(404).json({
-        error: "Ocorrência de doença não encontrada"
+      return response.status (404).json ({
+        error: 'Ocorrência de doença não encontrada'
       })
     }
 
-    const patient = await PatientsRepository.findOne({
+    const patient = await PatientsRepository.findOne ({
       where: {
         id: isValidDiseaseOccurrence.patientId
       }
     })
 
     try {
-      await DiseaseOccurrenceRepository.createQueryBuilder()
-        .delete()
-        .from(DiseaseOccurrence)
-        .where("id = :id", { id })
-        .execute()
-      const diseaseOccurrences = await DiseaseOccurrenceRepository.find({
+      await DiseaseOccurrenceRepository.createQueryBuilder ()
+        .delete ()
+        .from (DiseaseOccurrence)
+        .where ('id = :id', { id })
+        .execute ()
+      const diseaseOccurrences = await DiseaseOccurrenceRepository.find ({
         where: {
-          patientId: patient.id
+          patientId: patient?.id
         }
       })
 
-      let finalStatus = diseaseOccurrences[0]?.status ?? "Saudável"
-      if (finalStatus !== "Óbito" || diseaseOccurrences.length === 0) {
-        for (let occurrence of diseaseOccurrences) {
-          if (occurrence.status === "Óbito") {
-            finalStatus = "Óbito"
+      let finalStatus = diseaseOccurrences[0]?.status ?? 'Saudável'
+      if (finalStatus !== 'Óbito' || diseaseOccurrences.length === 0) {
+        for (const occurrence of diseaseOccurrences) {
+          if (occurrence.status === 'Óbito') {
+            finalStatus = 'Óbito'
             break
           }
-          else if (occurrence.status === "Infectado") {
-            finalStatus = "Infectado"
+          else if (occurrence.status === 'Infectado') {
+            finalStatus = 'Infectado'
           }
-          else if (occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
-            finalStatus = "Suspeito"
+          else if (occurrence.status === 'Suspeito' && finalStatus !== 'Infectado') {
+            finalStatus = 'Suspeito'
           }
           else if (
-            (occurrence.status === "Saudável" || occurrence.status === "Curado")
-            && finalStatus !== "Infectado" && finalStatus !== "Suspeito"
+            (occurrence.status === 'Saudável' || occurrence.status === 'Curado')
+            && finalStatus !== 'Infectado' && finalStatus !== 'Suspeito'
           ) {
-            finalStatus = "Saudável"
+            finalStatus = 'Saudável'
           }
         }
       }
 
       try {
-        await PatientsRepository.createQueryBuilder()
-          .update(Patient)
-          .set({ status: finalStatus })
-          .where("id = :id", { id: patient.id })
-          .execute()
+        await PatientsRepository.createQueryBuilder ()
+          .update (Patient)
+          .set ({ status: finalStatus })
+          .where ('id = :id', { id: patient?.id })
+          .execute ()
       } catch (error) {
-        return response.status(404).json({
-          error: "Erro na atualização do status do paciente"
+        logger.error(error);
+        return response.status (404).json ({
+          error: 'Erro na atualização do status do paciente'
         })
       }
 
-      return response.status(200).json({
-        success: "Ocorrência de doença deletada"
+      return response.status (200).json ({
+        success: 'Ocorrência de doença deletada'
       })
     } catch (error) {
-      return response.status(404).json({
-        error: "Erro na deleção da ocorrência de doença"
+      logger.error(error);
+      return response.status (404).json ({
+        error: 'Erro na deleção da ocorrência de doença'
       })
     }
   }
