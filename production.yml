@@ -1,0 +1,11 @@
+services:
+  monipaep-backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: always
+    env_file: .env
+    ports:
+      - 443:3333
+    # Only works in Linux
+    network_mode: "host"

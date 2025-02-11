@@ -9,8 +9,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsc --pretty",
-    "start:prod": "tsc && node dist/server.js",
+    "build": "tsc",
+    "start:prod": "node dist/server.js",
     "start:dev": "nodemon src/server.ts",
     "commit": "git add .& cz",
     "typeorm": "ts-node-dev node_modules/typeorm/cli.js",
