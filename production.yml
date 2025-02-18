@@ -5,7 +5,4 @@ services:
       dockerfile: ./Dockerfile
     restart: always
     env_file: .env
-    ports:
-      - 443:3333
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: "host"
