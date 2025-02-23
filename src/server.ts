@@ -8,7 +8,6 @@ import { ServerEnvironments } from './types/config.types';
 
 const isDev = serverConfig.NODE_ENV === ServerEnvironments.DEVELOPMENT;
 
-
 if (isDev) {
   http.createServer(app).listen(serverConfig.HTTP_SERVER_PORT, () => {
     logger.info('Server running on http://localhost:81');
@@ -21,8 +20,8 @@ if (isDev) {
   }).listen(serverConfig.HTTP_SERVER_PORT);
 
   const options = {
-    key: fs.readFileSync('/etc/ssl/certs/privkey.pem'),
-    cert: fs.readFileSync('/etc/ssl/certs/fullchain.pem'),
+    key: fs.readFileSync('/etc/ssl/certs/privkey1.pem'),
+    cert: fs.readFileSync('/etc/ssl/certs/fullchain1.pem'),
   };
 
   https.createServer(options, app).listen(serverConfig.HTTPS_SERVER_PORT, () => {

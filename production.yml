@@ -6,5 +6,5 @@ services:
     restart: always
     env_file: .env
     volumes:
-      - /etc/letsencrypt/live/monipaep.icmc.usp.br:/etc/ssl/certs:ro
+      - /etc/letsencrypt/archive/monipaep.icmc.usp.br:/etc/ssl/certs:ro
     network_mode: "host"
