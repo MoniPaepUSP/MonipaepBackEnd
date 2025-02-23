@@ -14,7 +14,7 @@ if (isDev) {
   });
 } else {
   http.createServer((req, res) => {
-    logger.info('Access on port 81, redirecting to HTTPS');
+    logger.info('Access on port 80, redirecting to HTTPS');
     res.writeHead(301, { 'Location': 'https://' + req.headers['host'] + req.url });
     res.end();
   }).listen(serverConfig.HTTP_SERVER_PORT);

@@ -6,7 +6,7 @@ dotenv.config ();
 export const serverConfig = {
   NODE_ENV: ( process.env.NODE_ENV ?? 'development') as ServerEnvironments,
   HTTPS_SERVER_PORT: process.env.PORT ?? '443',
-  HTTP_SERVER_PORT: '81'
+  HTTP_SERVER_PORT: '80'
 };
 
 export const dbConfig = {
