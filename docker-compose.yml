@@ -18,6 +18,7 @@ services:
     volumes:
       - .:/app/
       - /app/node_modules
+      # - /etc/letsencrypt/live/monipaep.icmc.usp.br:/etc/ssl/certs:ro
 
   postgres:
     image: postgres:11
