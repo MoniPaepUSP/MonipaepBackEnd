@@ -1,10 +1,9 @@
 /* eslint-disable no-unsafe-optional-chaining */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'; 
 
 import { PermissionsRepository, SystemUserRepository } from './repositories'
+import { jwtSecret } from './config';
 
 type TokenPayload = {
   id: string;
@@ -13,11 +12,10 @@ type TokenPayload = {
   roles?: string[];
 } 
 
-dotenv.config ();  // Load environment variables from .env file 
-const secret = process.env.JWT_SECRET
+const secret = jwtSecret
 
-export const sign = (payload: TokenPayload) => jwt.sign (payload, 'asd', { expiresIn: 60 * 60 * 24 })
-export const verify = (token: string) => jwt.verify (token, 'asd')
+export const sign = (payload: TokenPayload) => jwt.sign (payload, secret, { expiresIn: 60 * 60 * 24 })
+export const verify = (token: string) => jwt.verify (token, secret)
 
 export const authMiddleware = async (request: Request, response: Response, next: NextFunction) => {
   let token
