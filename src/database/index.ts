@@ -4,8 +4,8 @@
 //     return createConnection()
 // }
 
-import {DataSource} from 'typeorm';
-import  fs from 'fs';
+import { DataSource } from 'typeorm';
+import fs from 'fs';
 
 const {
     POSTGRES_HOST: HOST,
@@ -17,7 +17,7 @@ const {
     POSTGRES_DB: DB,
     POSTGRES_DB_FILE: DB_FILE,
 
-    ENVIRONMENT_TYPE : ENVIRONMENT
+    ENVIRONMENT_TYPE: ENVIRONMENT
 } = process.env; // reading from environment all usefull variables
 
 // development
@@ -27,14 +27,31 @@ let password = "postgreslabesmonipaep"
 let database = "monipaep"
 
 // production
-if(ENVIRONMENT == "PRODUCTION") {
+if (ENVIRONMENT == "PRODUCTION") {
     console.log("Entering production mode")
-    
+
+    if (!HOST && !HOST_FILE) {
+        console.error("HOST or HOST_FILE is required");
+        process.exit(1);
+    }
+    if (!USER && !USER_FILE) {
+        console.error("USER or USER_FILE is required");
+        process.exit(1);
+    }
+    if (!PASSWORD && !PASSWORD_FILE) {
+        console.error("PASSWORD or PASSWORD_FILE is required");
+        process.exit(1);
+    }
+    if (!DB && !DB_FILE) {
+        console.error("DB or DB_FILE is required");
+        process.exit(1);
+    }
+
     // reading docker secrets in case it runs on production mode
-    host = HOST_FILE ? fs.readFileSync(HOST_FILE).toString() : HOST;
-    user = USER_FILE ? fs.readFileSync(USER_FILE).toString() : USER;
-    password = PASSWORD_FILE ? fs.readFileSync(PASSWORD_FILE, 'utf8').toString() : PASSWORD;
-    database = DB_FILE ? fs.readFileSync(DB_FILE).toString() : DB;
+    host = HOST_FILE ? fs.readFileSync(HOST_FILE).toString() : HOST!;
+    user = USER_FILE ? fs.readFileSync(USER_FILE).toString() : USER!;
+    password = PASSWORD_FILE ? fs.readFileSync(PASSWORD_FILE, 'utf8').toString() : PASSWORD!;
+    database = DB_FILE ? fs.readFileSync(DB_FILE).toString() : DB!;
 } else {
     console.log("Production: DEVELOPMENT");
     console.log("Variables:");
@@ -53,7 +70,7 @@ export const AppDataSource = new DataSource({
     "username": `${user}`,
     "password": `${password}`,
     "database": `${database}`,
-    "logging": true,
+    "logging": false,
     "migrations": ["./src/database/migrations/**.ts"],
     "entities": ["./src/models/**.{ts,js}"],
     // "cli":{
@@ -70,8 +87,6 @@ AppDataSource.initialize()
         // console.log(user);
         // console.log(password);
         // console.log(database);
-        
-        
     })
     .catch((err) => {
         console.error("Error on data source typeorm intialization ", err);

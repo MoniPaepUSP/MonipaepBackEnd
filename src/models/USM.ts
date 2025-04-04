@@ -11,6 +11,12 @@ export class USM {
   @Column({ type: "varchar" })
   neighborhood: string;
 
+  @Column({ type: "varchar" })
+  city: string;
+
+  @Column({ type: "varchar" })
+  state: string;
+
   @Column({ type: "double precision" })
   latitude: number;
 

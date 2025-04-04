@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import {  Like } from 'typeorm';
+import { Like } from 'typeorm';
 import bcrypt from 'bcrypt'
 
 import * as jwt from "../jwt"
@@ -10,20 +10,20 @@ import { PatientAlreadyExistsError } from "../errors/patient.errors";
 import { HttpError } from "src/common/app.errors";
 import { GeneralInternalError } from "src/errors/unknown.errors";
 
-class PatientController{
-  
-  async create(request: Request, response: Response){
-    const body = request.body;
-    
+class PatientController {
 
-    const patientAlreadyExists = await PatientsRepository.findOne({ 
+  async create(request: Request, response: Response) {
+    const body = request.body;
+
+
+    const patientAlreadyExists = await PatientsRepository.findOne({
       where: [
-        { CPF: body.CPF }, 
+        { cpf: body.cpf },
         { email: body.email }
-      ] 
+      ]
     })
 
-    if(patientAlreadyExists){
+    if (patientAlreadyExists) {
       throw new PatientAlreadyExistsError();
     }
 
@@ -35,7 +35,7 @@ class PatientController{
       const patientBody = PatientsRepository.create(body)
       const patient: any = await PatientsRepository.save(patientBody)
       const patientId = patient.id
-      
+
 
       const refreshTokenBody = RefreshTokenRepository.create({
         patientId,
@@ -45,16 +45,16 @@ class PatientController{
       const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
 
       const token = jwt.sign({
-          id: patient.id,
-          type: 'patient'
+        id: patient.id,
+        type: 'patient'
       })
 
       patient.password = undefined
-      return response.status(201).json({ 
+      return response.status(201).json({
         success: "Paciente criado com sucesso",
-        patient, 
-        token, 
-        refreshToken 
+        patient,
+        token,
+        refreshToken
       })
     } catch (error) {
       if (error instanceof HttpError) {
@@ -77,19 +77,19 @@ class PatientController{
     }
   }
 
-  async loginPost(request: Request, response: Response){
-    const { CPF, password } = request.body
+  async loginPost(request: Request, response: Response) {
+    const { cpf, password } = request.body
 
-    
-    if(!password) {
+
+    if (!password) {
       return response.status(401).json({
         error: "Senha não informada"
       })
     }
-    
+
     const patientExists: any = await PatientsRepository.findOne({
-      where: { CPF }, 
-      select: ['id', 'CPF', 'password']
+      where: { cpf },
+      select: ['id', 'cpf', 'password']
     })
 
     if (!patientExists) {
@@ -98,10 +98,10 @@ class PatientController{
       })
     }
 
-    
+
     const validPassword = await bcrypt.compare(password, patientExists.password)
 
-    if(validPassword) {
+    if (validPassword) {
       try {
         const patientId = patientExists.id
 
@@ -109,31 +109,36 @@ class PatientController{
           id: patientId,
           type: 'patient'
         })
-  
-  
+
+
         const refreshTokenExists = await RefreshTokenRepository.findOne({
-          where: {patientId : patientId}
+          where: { patientId: patientId }
         })
-        
-        if(refreshTokenExists) {
+
+        if (refreshTokenExists) {
           await RefreshTokenRepository.createQueryBuilder()
-          .delete()
-          .from(RefreshToken)
-          .where("patientId = :id", { id: patientId })
-          .execute()
+            .delete()
+            .from(RefreshToken)
+            .where("patientId = :id", { id: patientId })
+            .execute()
         }
-  
+
         const refreshTokenBody = RefreshTokenRepository.create({
           patientId,
           expiresIn: refreshTokenExpiresIn()
         })
-  
-        const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
-        const patient = await PatientsRepository.findOne({where: {CPF}})
 
-        refreshToken.patientId = undefined
-        patient.password = undefined
-  
+        const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
+        const patient = await PatientsRepository.findOne({ where: { cpf } })
+        if (!patient) {
+          return response.status(404).json({
+            error: "Paciente não encontrado"
+          })
+        }
+
+        refreshToken.patientId = null
+        patient.password = ''
+
         return response.status(200).json({ patient, token, refreshToken })
       } catch (error) {
         console.log(error);
@@ -148,59 +153,59 @@ class PatientController{
     }
   }
 
-  async list(request: Request, response: Response){
-    const { 
-      id, 
+  async list(request: Request, response: Response) {
+    const {
+      id,
       name,
       cpf,
       gender,
       neighborhood,
-      status, 
-      active, 
+      status,
+      active,
       page } = request.query
     let filters = {}
 
 
-    if(id) {
+    if (id) {
       filters = { ...filters, id: String(id) }
 
       const patient = await PatientsRepository.findOne({
-        where: {id: String(id)}
+        where: { id: String(id) }
       })
-    
-      if(!patient){
+
+      if (!patient) {
         return response.status(404).json({
           error: "Paciente não encontrado"
         })
       }
     }
 
-    if(status) {
-      filters = { ...filters, status: Like(`%${String(status).toUpperCase()}%`)}
+    if (status) {
+      filters = { ...filters, status: Like(`%${String(status).toUpperCase()}%`) }
     }
 
-    if(active) {     
-      if(active === "true") {
+    if (active) {
+      if (active === "true") {
         filters = { ...filters, activeAccount: true }
       } else {
         filters = { ...filters, activeAccount: false }
       }
-    }   
-
-    if(name) {
-      filters = { ...filters, name: Like(`%${String(name)}%`)}
     }
 
-    if(cpf) {
-      filters = { ...filters, CPF: Like(`%${String(cpf)}%`)}
+    if (name) {
+      filters = { ...filters, name: Like(`%${String(name)}%`) }
     }
 
-    if(gender) {
-      filters = { ...filters, gender: Like(`%${String(gender)}%`)}
+    if (cpf) {
+      filters = { ...filters, CPF: Like(`%${String(cpf)}%`) }
     }
 
-    if(neighborhood) {
-      filters = { ...filters, neighborhood: Like(`%${String(neighborhood)}%`)}
+    if (gender) {
+      filters = { ...filters, gender: Like(`%${String(gender)}%`) }
+    }
+
+    if (neighborhood) {
+      filters = { ...filters, neighborhood: Like(`%${String(neighborhood)}%`) }
     }
 
     let options: any = {
@@ -210,53 +215,51 @@ class PatientController{
       },
     }
 
-    if(page) {
+    if (page) {
       const take = 10
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
-    
+
     const patientsList = await PatientsRepository.findAndCount(options)
     return response.json({
       patients: patientsList[0],
       totalPatients: patientsList[1]
     })
-  } 
+  }
 
-  async getOneWithToken(request, response: Response) {
+  async getOneWithToken(request: any, response: Response) {
     const { id, type } = request.tokenPayload
 
-    if(type !== 'patient') {
+    if (type !== 'patient') {
       return response.status(401).json({
         error: "Token inválido para essa requisição"
       })
     }
-    
-    const user = await PatientsRepository.findOne({ where:{id:id} })
 
-    if(!user) {
+    const user = await PatientsRepository.findOne({ where: { id: id } })
+
+    if (!user) {
       return response.status(401).json({
         error: "Paciente inválido"
       })
     }
-    
+
     return response.status(200).json(user)
   }
 
-  async alterOne(request: Request, response: Response){
+  async alterOne(request: Request, response: Response) {
     const body = request.body
     const { id } = request.params
 
+    const patient = await PatientsRepository.findOne({ where: { id: id } })
 
-    
-    const patient = await PatientsRepository.findOne({ where: {id : id} })
-      
-    if(!patient){
+    if (!patient) {
       return response.status(404).json({
         error: "Paciente não encontrado"
       })
     }
 
-    if(body.password){
+    if (body.password) {
       const hash = await bcrypt.hash(body.password, 10)
       body.password = hash
     }
@@ -277,13 +280,13 @@ class PatientController{
     }
   }
 
-  async deleteOne(request: Request, response: Response){
+  async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
 
-    const patient = await PatientsRepository.findOne({ where: {id: id} })
-    
-    if(!patient){
+    const patient = await PatientsRepository.findOne({ where: { id: id } })
+
+    if (!patient) {
       return response.status(404).json({
         error: "Paciente não encontrado"
       })
@@ -305,13 +308,12 @@ class PatientController{
     }
   }
 
-  async deactivateAccount(request: Request, response: Response){
+  async deactivateAccount(request: Request, response: Response) {
     const { id } = request.params
 
+    const patient = await PatientsRepository.findOne({ where: { id: id } })
 
-    const patient = await PatientsRepository.findOne({ where: {id : id} })
-    
-    if(!patient){
+    if (!patient) {
       return response.status(404).json({
         error: "Paciente não encontrado"
       })

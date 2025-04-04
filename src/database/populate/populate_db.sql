@@ -5,13 +5,13 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 TRUNCATE TABLE usm, patients, system_user, permissions, symptom, disease, health_protocols, assigned_healthprotocol, appointments, vaccines  RESTART IDENTITY CASCADE;
 
 -- Insert some example data into the usm table
-INSERT INTO usm (name, address, neighborhood, latitude, longitude)
+INSERT INTO usm (name, address, neighborhood, city, state, latitude, longitude)
 VALUES 
-('Hospital Unimed São Carlos', 'R. Dona Alexandrina, 1683', 'Centro', -22.0109, -47.8901),
-('UBS Santa Paula São Carlos', 'R. Luís Saia, 44', 'Jardim Santa Paula', -22.0027, -47.9014),
-('Santa Casa São Carlos', 'R. Paulino Botelho de Abreu Sampaio, 573', 'Jardim Pureza', -22.0111, -47.9014),
-('UBS Vila Isabel', 'R. Vicente de Carvalho, 566', 'Vila Izabel', -22.0322, -47.8866),
-('UBS São José', 'Av. Araraquara, 422', 'Vila Brasilia', -22.0006, -47.8796);
+('Hospital Unimed São Carlos', 'R. Dona Alexandrina, 1683', 'Centro', 'São Carlos', 'SP', -22.0109, -47.8901),
+('UBS Santa Paula São Carlos', 'R. Luís Saia, 44', 'Jardim Santa Paula', 'São Carlos', 'SP', -22.0027, -47.9014),
+('Santa Casa São Carlos', 'R. Paulino Botelho de Abreu Sampaio, 573', 'Jardim Pureza', 'São Carlos', 'SP', -22.0111, -47.9014),
+('UBS Vila Isabel', 'R. Vicente de Carvalho, 566', 'Vila Izabel', 'São Carlos', 'SP', -22.0322, -47.8866),
+('UBS São José', 'Av. Araraquara, 422', 'Vila Brasilia', 'São Carlos', 'SP', -22.0006, -47.8796);
 
 -- Insert one user into the patients table
 -- password: Password@123
@@ -134,3 +134,9 @@ VALUES
   (gen_random_uuid(), '2024-11-20 11:20:00', 'Vacina contra Hepatite B', '5b88a57f-55d0-44cb-9bb0-504d82d368c5', 'Santa Casa São Carlos'),
   (gen_random_uuid(), '2024-11-25 08:30:00', 'Vacina contra Raiva', '5b88a57f-55d0-44cb-9bb0-504d82d368c5', 'Santa Casa São Carlos');
 
+INSERT INTO faq (question, answer)
+VALUES
+  ('Quais são os sintomas da dengue?', 'Os sintomas incluem febre, dor de cabeça, dor atrás dos olhos, dores musculares e articulares, náuseas e erupção cutânea.'),
+  ('Como posso prevenir a dengue?', 'Use repelente, elimine água parada e use roupas de manga longa.'),
+  ('Qual é o tratamento para a dengue?', 'O tratamento é sintomático, com hidratação e medicamentos para dor e febre.'),
+  ('Quando devo procurar um médico?', 'Se você tiver sintomas graves ou persistentes, procure um médico imediatamente.');

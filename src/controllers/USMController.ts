@@ -1,21 +1,21 @@
 import { Request, Response } from "express";
-import {  Like, Repository } from "typeorm";
+import { Like, Repository } from "typeorm";
 import { USM } from "../models";
 // import { AppDataSource } from "src/database";
 import { USMRepository } from "../repositories";
-class USMController{
+import { getMedicalUnits } from "src/lib/getMedicalUnits";
+class USMController {
 
-  async create(request: Request, response: Response){
+  async create(request: Request, response: Response) {
     const body = request.body
 
-
-    const usmAlreadyExists =  await USMRepository.findOne({
-      where : {
+    const usmAlreadyExists = await USMRepository.findOne({
+      where: {
         name: body.name
       }
     })
 
-    if(usmAlreadyExists){
+    if (usmAlreadyExists) {
       return response.status(400).json({
         error: "Unidade de saúde já registrada"
       })
@@ -24,7 +24,7 @@ class USMController{
     try {
       const usm = USMRepository.create(body)
       await USMRepository.save(usm)
-      
+
       return response.status(201).json({
         success: "Unidade de saúde cadastrada com sucesso"
       })
@@ -35,11 +35,11 @@ class USMController{
     }
   }
 
-  async list(request: Request, response: Response){
+  async list(request: Request, response: Response) {
     const { name, page } = request.query
     let filters = {}
 
-    if(name) {
+    if (name) {
       filters = { ...filters, name: Like(`%${String(name)}%`) }
     }
 
@@ -50,7 +50,7 @@ class USMController{
       },
     }
 
-    if(page) {
+    if (page) {
       const take = 10
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
@@ -63,14 +63,14 @@ class USMController{
     })
   }
 
-  async alterOne(request: Request, response: Response){
+  async alterOne(request: Request, response: Response) {
     const body = request.body
     const { name } = request.params
 
 
-    const isValidUsm = await USMRepository.findOne({ where: { name : name} })
-    
-    if(!isValidUsm){
+    const isValidUsm = await USMRepository.findOne({ where: { name: name } })
+
+    if (!isValidUsm) {
       return response.status(404).json({
         error: "Unidade de saúde não encontrada"
       })
@@ -92,18 +92,18 @@ class USMController{
     }
   }
 
-  async deleteOne(request: Request, response: Response){
+  async deleteOne(request: Request, response: Response) {
     const { name } = request.params
 
 
-    const isValidUsm = await USMRepository.findOne({ where: {name : name} })
-    
-    if(!isValidUsm){
+    const isValidUsm = await USMRepository.findOne({ where: { name: name } })
+
+    if (!isValidUsm) {
       return response.status(404).json({
         error: "Unidade de saúde não encontrada"
       })
     }
-    
+
     try {
       await USMRepository.createQueryBuilder()
         .delete()
@@ -116,6 +116,19 @@ class USMController{
     } catch (error) {
       return response.status(403).json({
         error: "Erro na deleção da unidade de saúde"
+      })
+    }
+  }
+
+  async getGooglePlaces(request: Request, response: Response) {
+    const { state, city, neighborhood, nextPageTokenUBS, nextPageTokenUPA } = request.body;
+
+    try {
+      const medicalUnits = await getMedicalUnits({ state, city, neighborhood, nextPageTokenUBS, nextPageTokenUPA });
+      return response.status(200).json(medicalUnits)
+    } catch (error) {
+      return response.status(403).json({
+        error: "Erro na busca de unidades de saúde"
       })
     }
   }

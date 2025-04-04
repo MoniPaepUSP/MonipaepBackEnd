@@ -40,7 +40,7 @@ class VaccineController{
       await VaccinesRepository.save(vaccine)
 
       return response.status(201).json(vaccine)
-    } catch (error) {
+    } catch (error: any) {
       return response.status(403).json({
         error: error.message
       })
@@ -96,7 +96,7 @@ class VaccineController{
         .where("id = :id", { id: vaccine_id })
         .execute();
       return response.status(200).json(body)
-    } catch (error) {
+    } catch (error: any) {
       return response.status(403).json({
         error: error.message
       })
@@ -128,7 +128,7 @@ class VaccineController{
       return response.status(200).json({
         message: "Vaccine deleted"
       })
-    } catch (error) {
+    } catch (error: any) {
       return response.status(403).json({
         error: error.message
       })

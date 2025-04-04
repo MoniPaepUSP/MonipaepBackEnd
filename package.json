@@ -12,6 +12,7 @@
     "migration:revert": "npx typeorm-ts-node-commonjs migration:revert -d ./src/database/index.ts",
     "migration:generate": "npx typeorm-ts-node-commonjs migration:generate ./src/database/migrations/UpdateSchema -d ./src/database/index.ts",
     "migration:create": "typeorm migration:create ./src/database/migrations/UpdateSchema",
+    "populate": "psql -h localhost -U postgres -d monipaep -f ./src/database/populate/populate_db.sql",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -61,11 +62,13 @@
     "jsonwebtoken": "^8.5.1",
     "logger": "^0.0.1",
     "node-schedule": "^2.1.0",
+    "openai": "^4.85.4",
     "reflect-metadata": "^0.1.13",
     "tsconfig-paths": "^3.9.0",
     "typeorm": "^0.3.20",
     "uuid": "^8.3.2",
     "winston": "^3.16.0",
-    "yarn": "^1.22.22"
+    "yarn": "^1.22.22",
+    "zod": "^3.24.2"
   }
 }

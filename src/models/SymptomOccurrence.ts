@@ -4,10 +4,10 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToOne,
 } from "typeorm";
-import { Patient } from "./Patient"; // assuming Patient entity is defined in Patient.ts
-import { Symptom } from "./Symptom"; // assuming Symptom entity is defined in Symptom.ts
-import { DiseaseOccurrence } from "./DiseaseOccurrence"; // assuming DiseaseOccurrence entity is defined in DiseaseOccurrence.ts
+import { Patient } from "./Patient";
+import { DiseaseOccurrence } from "./DiseaseOccurrence";
 
 @Entity("symptom_occurrence")
 export class SymptomOccurrence {
@@ -17,8 +17,11 @@ export class SymptomOccurrence {
   @Column({ type: "uuid", name: "patient_id" })
   patientId: string;
 
-  @Column({ type: "varchar", name: "symptom_name" })
-  symptomName: string;
+  @Column({ type: "text", name: "symptoms", nullable: true })
+  symptoms: string | undefined;
+
+  @Column({ type: "text", name: "remarks", nullable: true })
+  remarks: string | undefined;
 
   @Column({ type: "uuid", name: "disease_occurrence_id", nullable: true })
   diseaseOccurrenceId: string | null;
@@ -29,10 +32,6 @@ export class SymptomOccurrence {
   @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "patient_id" })
   patient: Patient;
-
-  @ManyToOne(() => Symptom, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinColumn({ name: "symptom_name" })
-  symptom: Symptom;
 
   @ManyToOne(() => DiseaseOccurrence, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "disease_occurrence_id" })

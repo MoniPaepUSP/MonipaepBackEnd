@@ -5,11 +5,8 @@ import { DiseaseRepository } from "../repositories";
 
 class DiseaseController{
   
-
   async create(request: Request, response: Response){
     const body = request.body
-
-
 
     const diseaseAlreadyExists = await DiseaseRepository.findOne({
       where: {
@@ -41,10 +38,6 @@ class DiseaseController{
     const { name, page } = request.query
     let filters = {}
 
-    // const diseaseRepository = getCustomRepository(DiseaseRepository)
-    // const diseaseRepository = AppDataSource.getRepository(Disease);
-
-
     if(name) {
       filters = { name: Like(`%${String(name)}%`) }
     }
@@ -72,9 +65,6 @@ class DiseaseController{
   async alterOne(request: Request, response: Response){
     const body = request.body
     const { name } = request.params
-
-    // const diseaseRepository = getCustomRepository(DiseaseRepository)
-    // const diseaseRepository = 
 
     const isValidDisease = await DiseaseRepository.findOne(
       {

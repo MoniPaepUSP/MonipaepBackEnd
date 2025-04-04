@@ -61,8 +61,15 @@ class SystemUserController {
 
     let hash
     
+    const authorizationHeader = request.headers.authorization;
+    if (!authorizationHeader) {
+      return response.status(401).json({
+        error: "Credenciais necessárias."
+      });
+    }
+
     try {
-      [, hash] = request.headers.authorization.split(' ')
+      [, hash] = authorizationHeader.split(' ')
     } catch (error) {
       return response.status(401).json({
         error: "Credenciais necessárias."
@@ -131,7 +138,7 @@ class SystemUserController {
 
       const refreshToken = await RefreshTokenRepository.save(refreshTokenBody)
 
-      userExists.password = undefined
+      userExists.password = ''
       const permissions: string[] = []
       const roles: string[] = ['system.user']
 
@@ -205,7 +212,7 @@ class SystemUserController {
     return response.status(200).json(users)
   }
 
-  async getOneWithToken(request, response: Response) {
+  async getOneWithToken(request: any, response: Response) {
     // this.initializeRepositories();
 
     const { id, type } = request.tokenPayload
@@ -241,7 +248,7 @@ class SystemUserController {
     }
 
 
-    user.password = undefined
+    user.password = ''
     const permissions: string[] = []
     const roles: string[] = ['system.user']
 
@@ -268,7 +275,7 @@ class SystemUserController {
     })
   }
 
-  async updatePassword(request, response: Response) {
+  async updatePassword(request: any, response: Response) {
     // this.initializeRepositories();
 
     const tokenPayload = request.tokenPayload

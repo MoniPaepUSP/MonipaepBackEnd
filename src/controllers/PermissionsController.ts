@@ -117,7 +117,7 @@ class PermissionsController {
     })
   }
 
-  async alterOne(request, response: Response){
+  async alterOne(request: any, response: Response){
     const body = request.body
     const tokenPayload = request.tokenPayload
     const { id } = request.params
@@ -141,7 +141,7 @@ class PermissionsController {
           userId: tokenPayload.id
         }
       })
-      if(!tokenUser.generalAdm) {
+      if(!tokenUser || !tokenUser.generalAdm) {
         return response.status(404).json({
           error: "Usuário sem permissão para tal alteração"
         })

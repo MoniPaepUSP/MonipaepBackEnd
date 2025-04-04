@@ -13,7 +13,7 @@ export class Patient {
   password: string;
 
   @Column({ type: "varchar", unique: true, nullable: false, name: "cpf" })
-  CPF: string;
+  cpf: string;
 
   @Column({ type: "varchar", unique: true, nullable: false })
   email: string;
@@ -28,7 +28,7 @@ export class Patient {
   lastGPSLocation: string | null;
 
   @Column({ type: "boolean", name: "allow_sms" })
-  allowSMS: boolean;
+  allowSms: boolean;
 
   @Column({ type: "varchar", nullable: true, name: "work_address" })
   workAddress: string | null;

@@ -1,10 +1,14 @@
 import { Router } from "express";
-import { 
-  DiseaseController, 
-  FAQSuggestionsController, 
-  HealthProtocolController, 
-  USMController, 
-  VaccineController
+import {
+  DiseaseController,
+  FAQSuggestionsController,
+  HealthProtocolController,
+  USMController,
+  VaccineController,
+  OpenAiController,
+  ComorbidityController,
+  RiskGroupController,
+  ChatMessageController
 } from "./controllers";
 import { AboutTheAppController } from "./controllers/AboutTheAppController";
 import { AppointmentController } from "./controllers/AppointmentController";
@@ -37,6 +41,10 @@ const permissionsController = new PermissionsController()
 const faqSuggestionsController = new FAQSuggestionsController()
 const refreshTokenController = new RefreshTokenController()
 const aboutController = new AboutTheAppController
+const openaiController = new OpenAiController()
+const chatMessageController = new ChatMessageController()
+const comorbidityController = new ComorbidityController()
+const riskGroupController = new RiskGroupController()
 //const appointmentController = new AppointmentController()
 //const vaccineController = new VaccineController()
 
@@ -51,7 +59,7 @@ router.delete("/permissions/:id", jwt.authMiddleware, jwt.localAdminMiddleware, 
 
 // SystemUser Routes
 router.post("/systemuser/signup", systemUserController.create) //geral *login ira verificar se esta autorizado
-router.get("/systemuser/login", systemUserController.login)//geral
+router.post("/systemuser/login", systemUserController.login)//geral
 router.get("/systemuser", jwt.authMiddleware, jwt.systemUserMiddleware, systemUserController.list)//funcionario autenticado*
 router.get("/systemuser/me", jwt.authMiddleware, jwt.systemUserMiddleware, systemUserController.getOneWithToken)//funcionario autenticado
 router.put("/systemuser/:id", jwt.authMiddleware, jwt.systemUserMiddleware, systemUserController.alterOne)//funcionario autenticado*
@@ -72,6 +80,7 @@ router.post("/usm", jwt.authMiddleware, jwt.adminMiddleware, usmController.creat
 router.get("/usm", usmController.list)//geral sem autenticacao
 router.put("/usm/:name", jwt.authMiddleware, jwt.adminMiddleware, usmController.alterOne)//adm e adm local
 router.delete("/usm/:name", jwt.authMiddleware, jwt.adminMiddleware, usmController.deleteOne)//adm e adm local
+router.get("/usm/google/places", jwt.authMiddleware, usmController.getGooglePlaces)//geral sem autenticacao
 
 // Disease Routes
 router.post("/disease", jwt.authMiddleware, jwt.localAdminMiddleware, diseaseController.create)//adm e adm locais
@@ -100,10 +109,9 @@ router.delete("/diseaseoccurrence/:id", jwt.authMiddleware, jwt.systemUserMiddle
 
 // SymptomOccurrence Routes
 router.post("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.create)//geral autenticado*
-router.post("/symptomoccurrenceSeveral",jwt.authMiddleware, symptomOccurrenceController.createSeveral)//geral autenticado*
 router.get("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.list)//geral autenticado
-router.post("/symptomoccurrence/listOcurrences", jwt.authMiddleware, symptomOccurrenceController.listOccurences)//geral autenticado
 router.get("/symptomoccurrence/unassigned", jwt.authMiddleware, symptomOccurrenceController.getUnassignedOccurrences)//geral autenticado
+router.get("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.findOne)//geral autenticado*
 router.put("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.alterOne)//geral autenticado*
 router.delete("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.deleteOne)//geral autenticado*
 
@@ -134,6 +142,22 @@ router.post("/about", jwt.authMiddleware, jwt.systemUserMiddleware, aboutControl
 router.get("/about", aboutController.list)//geral
 router.put("/about/:id", jwt.authMiddleware, jwt.systemUserMiddleware, aboutController.alterOne)//usuario de sistema autenticado
 router.delete("/about/:id", jwt.authMiddleware, jwt.systemUserMiddleware, aboutController.deleteOne)//usuario de sistema autenticado
+
+// Comorbidity Routes
+router.post("/comorbidity", jwt.authMiddleware, jwt.localAdminMiddleware, comorbidityController.create)//adm e adm locais
+router.get("/comorbidity", comorbidityController.list)//geral sem autenticacao
+router.put("/comorbidity/:name", jwt.authMiddleware, jwt.localAdminMiddleware, comorbidityController.update)///adm e adm locais
+router.delete("/comorbidity/:name", jwt.authMiddleware, jwt.localAdminMiddleware, comorbidityController.delete)//adm e adm locais
+
+// RiskGroup Routes
+router.post("/riskgroup", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.create)//adm e adm locais
+router.get("/riskgroup", riskGroupController.list)//geral sem autenticacao
+router.put("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.update)///adm e adm locais
+router.delete("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.delete)//adm e adm locais
+
+// Chat Routes
+router.post("/chat", jwt.authMiddleware, openaiController.chat) // geral autenticado*
+router.get("/chat/:occurrence_id", jwt.authMiddleware, chatMessageController.getMessagesFromOccurrence) // geral autenticado*
 
 // Appointments Routes - TBD
 // router.post("/appointments", appointmentController.create)//funcionarios USM
