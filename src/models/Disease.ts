@@ -17,11 +17,8 @@ export class Disease {
   @Column({ type: "integer", name: "suspected_monitoring_days" })
   suspectedMonitoringDays: number;
 
-  @Column({ type: "uuid", name: "risk_groups_id" })
-  riskGroupsId: string;
-
-  @OneToOne(() => RiskGroups, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinColumn({ name: "risk_groups_id" }) // Required for the owning side
+  @OneToOne(() => RiskGroups, (riskGroup) => riskGroup.disease, { cascade: true, onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "risk_groups_id" }) // Disease owns the relation
   riskGroups: RiskGroups;
 
   @ManyToMany(() => Symptom, (symptom) => symptom.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
@@ -49,7 +46,7 @@ export class Disease {
   shockSigns: Symptom[];
 
   @OneToMany(() => HealthProtocol, (protocol) => protocol.disease, {
-    cascade: true,
+    cascade: true, onDelete: "CASCADE", onUpdate: "CASCADE"
   })
   healthProtocols: HealthProtocol[];
 }

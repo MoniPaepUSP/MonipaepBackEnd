@@ -7,7 +7,7 @@ class HealthProtocol {
   id: string;
 
   @Column()
-  severity: "mild" | "moderate" | "severe";
+  severity: "leve" | "moderado" | "grave" | "muito grave";
 
   @Column({ type: "text" })
   instructions: string;

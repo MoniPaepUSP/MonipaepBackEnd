@@ -9,6 +9,12 @@ export interface Place {
     latitude: number,
     longitude: number
   },
+  addressComponents: {
+    longText: string,
+    shortText: string,
+    types: string[],
+    languageCode: string,
+  }[],
   regularOpeningHours: {
     openNow: boolean,
     periods: {
@@ -41,7 +47,7 @@ export async function getMedicalUnits({ state, city, neighborhood, nextPageToken
   const headers = {
     'Content-Type': 'application/json',
     'X-Goog-Api-Key': `${process.env.GOOGLE_MAPS_API_KEY}`,
-    'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.id,places.location,places.regularOpeningHours,nextPageToken'
+    'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.id,places.location,places.regularOpeningHours,nextPageToken,places.addressComponents'
   }
 
   const requestUPA = {

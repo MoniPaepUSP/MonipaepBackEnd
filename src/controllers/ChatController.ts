@@ -1,9 +1,11 @@
-import { Response } from "express";
-import { ChatMessage, Patient } from "../models";
+import { Request, Response } from "express";
+import { ChatMessage, Patient, Symptom } from "../models";
 import {
   PatientsRepository,
   SymptomOccurrenceRepository,
   ChatMessageRepository,
+  SymptomRepository,
+  DiseaseRepository,
 } from "../repositories";
 import { openai } from "src/openai";
 import { z } from "zod";
@@ -33,7 +35,81 @@ interface Evaluation {
   remarks?: string;
 }
 
-class OpenAiController {
+class ChatController {
+
+  async evalue(request: any, response: Response) {
+    const { id } = request.tokenPayload;
+    const { symptomIds }: { symptomIds: string[] } = request.body;
+
+    // Get the patient
+    const patient: Patient | null = await PatientsRepository.findOne({
+      where: { id },
+      relations: ['comorbidities', 'specialConditions']
+    });
+    if (!patient) {
+      return response.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    // Get all the diseases and its data
+    const diseases = await DiseaseRepository.find({
+      order: {
+        name: "ASC"
+      },
+      relations: [
+        "riskGroups",
+        "riskGroups.comorbidities",
+        "riskGroups.specialConditions",
+        "symptoms",
+        "alarmSigns",
+        "shockSigns",
+        "healthProtocols"],
+    });
+
+    const probableDiseases = diseases
+      .map(disease => {
+        const symptomMatch = disease.symptoms.filter(symptom => symptomIds.includes(symptom.id));
+        const alarmSignMatch = disease.alarmSigns.filter(alarmSign => symptomIds.includes(alarmSign.id));
+        const shockSignMatch = disease.shockSigns.filter(shockSign => symptomIds.includes(shockSign.id));
+
+        const isInComorbidityGroup = disease.riskGroups.comorbidities.some(
+          comorbidity => patient.comorbidities.includes(comorbidity)
+        );
+        const isInSpecialConditionGroup = disease.riskGroups.specialConditions.some(
+          specialCondition => patient.specialConditions.includes(specialCondition)
+        );
+        const isInRiskGroup = isInComorbidityGroup || isInSpecialConditionGroup;
+
+        // Severity
+        let severity: "leve" | "moderado" | "grave" | "muito grave" = "leve";
+        if (shockSignMatch.length > 0) {
+          severity = "muito grave";
+        } else if (alarmSignMatch.length > 0) {
+          severity = "grave";
+        } else if (symptomMatch.length > 0 && isInRiskGroup) {
+          severity = "moderado";
+        } else if (symptomMatch.length > 0) {
+          severity = "leve";
+        }
+
+        // Suspicion score
+        const totalDiseaseIndicators = disease.symptoms.length + disease.alarmSigns.length + disease.shockSigns.length;
+        const matchedIndicators = symptomMatch.length + alarmSignMatch.length * 1.5 + shockSignMatch.length * 2;
+        const baseScore = totalDiseaseIndicators === 0 ? 0 : matchedIndicators / totalDiseaseIndicators;
+        const suspicionScore = Math.min(baseScore + (isInRiskGroup ? 0.2 : 0), 1);
+
+        console.log(disease.name, suspicionScore);
+
+        return {
+          disease,
+          severity,
+          suspicionScore
+        };
+      })
+      .filter(d => d.suspicionScore > 0.2);
+
+    return response.status(200).json({ probableDiseases });
+  }
+
   async chat(request: any, response: Response) {
     const { id } = request.tokenPayload;
 
@@ -271,4 +347,4 @@ Seu objetivo é analisar os fatos clinicamente relevantes a partir da conversa c
   }
 }
 
-export { OpenAiController };
+export { ChatController };

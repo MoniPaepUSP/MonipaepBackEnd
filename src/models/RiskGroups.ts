@@ -1,11 +1,15 @@
-import { Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Comorbidity } from "./Comorbidity";
 import { SpecialCondition } from "./SpecialCondition";
+import { Disease } from "./Disease";
 
 @Entity("risk_groups")
 class RiskGroups {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @OneToOne(() => Disease, (disease) => disease.riskGroups)
+  disease: Disease;
 
   // Each risk group will contain some or none comorbitites
   @ManyToMany(() => Comorbidity, (comorbidity) => comorbidity.riskGroups, { onDelete: "CASCADE", onUpdate: "CASCADE" })

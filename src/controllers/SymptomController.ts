@@ -5,13 +5,12 @@ import { SymptomRepository } from "../repositories";
 
 class SymptomController {
 
-
   async create(request: Request, response: Response) {
     const body = request.body
 
     const symptomAlreadyExists = await SymptomRepository.findOne({
       where: {
-        name: body.symptom
+        name: body.name
       }
     })
 
@@ -36,18 +35,18 @@ class SymptomController {
   }
 
   async list(request: Request, response: Response) {
-    const { symptom, page } = request.query
+    const { name, page } = request.query
     let filters = {}
 
 
-    if (symptom) {
-      filters = { symptom: Like(`%${String(symptom)}%`) }
+    if (name) {
+      filters = { symptom: Like(`%${String(name)}%`) }
     }
 
     let options: any = {
       where: filters,
       order: {
-        symptom: 'ASC'
+        name: 'ASC'
       },
     }
 
@@ -58,11 +57,11 @@ class SymptomController {
 
     const symptomsList = await SymptomRepository.findAndCount(options)
 
-    return response.status(200).json(symptomsList)
+    return response.status(200).json({ symptomsList: symptomsList[0] })
   }
 
   async alterOne(request: Request, response: Response) {
-    const body = request.body
+    const { name, description } = request.body
     const { id } = request.params
 
     const isValidSymptom = await SymptomRepository.findOne({ where: { id } })
@@ -76,7 +75,7 @@ class SymptomController {
     try {
       await SymptomRepository.createQueryBuilder()
         .update(Symptom)
-        .set(body)
+        .set({ name, description })
         .where("id = :id", { id })
         .execute()
       return response.status(200).json({

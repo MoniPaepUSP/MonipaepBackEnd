@@ -2,7 +2,7 @@ import { Entity, PrimaryColumn, Column, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity("usm")
 export class USM {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryColumn("uuid")
   id: string;
 
   @Column({ type: "varchar" })
@@ -20,8 +20,8 @@ export class USM {
   @Column({ type: "varchar", nullable: true })
   street: string | null;
 
-  @Column({ type: "integer", nullable: true })
-  number: number | null;
+  @Column({ type: "varchar", nullable: true })
+  number: string | null;
 
   @Column({ type: "text", name: "formatted_address" })
   formattedAddress: string;

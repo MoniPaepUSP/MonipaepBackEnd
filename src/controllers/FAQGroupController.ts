@@ -1,48 +1,33 @@
 import { Request, Response } from "express";
 import { Like } from 'typeorm'
-import { FAQ } from "../models";
+import { FAQGroup } from "../models";
 
-import { FAQRepository } from "../repositories/FAQRepository";
 import { FAQGroupRepository } from "src/repositories";
 
-class FAQController {
+class FAQGroupController {
 
   async create(request: Request, response: Response) {
-    const { question, answer, faqGroupId } = request.body;
+    const { name } = request.body;
 
-    const faqAlreadyExists = await FAQRepository.findOne({
+    const faqAlreadyExists = await FAQGroupRepository.findOne({
       where: {
-        question
+        name
       }
     })
 
     if (faqAlreadyExists) {
       return response.status(403).json({
-        error: "Essa questão já foi registrada"
-      })
-    }
-
-    const faqGroupExists = await FAQGroupRepository.findOne({
-      where: {
-        id: faqGroupId
-      }
-    })
-
-    if (!faqGroupExists) {
-      return response.status(403).json({
-        error: "O grupo ao qual se quer relacionar a pergunta não existe"
+        error: "Esse nome de grupo já foi registrado"
       })
     }
 
     try {
-      const faqBody = FAQRepository.create({
-        question, answer, faqGroupId
-      })
-      const faq: any = await FAQRepository.save(faqBody)
+      const faqGroupBody = FAQGroupRepository.create({ name });
+      const faqGroup: any = await FAQGroupRepository.save(faqGroupBody)
 
       return response.status(201).json({
         success: "Questão registrada com sucesso",
-        faq
+        faqGroup
       })
     } catch (error) {
       return response.status(403).json({
@@ -52,24 +37,39 @@ class FAQController {
   }
 
   async list(request: Request, response: Response) {
-    const { name } = request.query
+    const { name, id } = request.query
 
     let filters = {};
+
+    if (id) {
+      const groupExists = await FAQGroupRepository.findOne({
+        where: { id: String(id) }
+      })
+
+      if (!groupExists) {
+        return response.status(404).json({
+          error: "Questão não encontrada"
+        })
+      }
+
+      filters = { ...filters, id: String(id) }
+    }
 
     if (name) {
       filters = { ...filters, name: Like(`%${String(name)}%`) }
     }
 
-    const questionList = await FAQRepository.findAndCount({
+    const groupList = await FAQGroupRepository.findAndCount({
       where: filters,
       order: {
-        question: "ASC"
+        name: "ASC"
       },
+      relations: ["faqs"],
     })
 
     return response.status(200).json({
-      questions: questionList[0],
-      totalQuestions: questionList[1],
+      groups: groupList[0],
+      totalGroups: groupList[1],
     })
   }
 
@@ -77,17 +77,17 @@ class FAQController {
     const body = request.body
     const { id } = request.params
 
-    const questionExists = await FAQRepository.findOne({ where: { id } })
+    const groupExists = await FAQGroupRepository.findOne({ where: { id } })
 
-    if (!questionExists) {
+    if (!groupExists) {
       return response.status(404).json({
         error: "Questão não encontrada"
       })
     }
 
     try {
-      await FAQRepository.createQueryBuilder()
-        .update(FAQ)
+      await FAQGroupRepository.createQueryBuilder()
+        .update(FAQGroup)
         .set(body)
         .where("id = :id", { id })
         .execute()
@@ -104,7 +104,7 @@ class FAQController {
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
-    const questionExists = await FAQRepository.findOne({ where: { id } })
+    const questionExists = await FAQGroupRepository.findOne({ where: { id } })
 
     if (!questionExists) {
       return response.status(404).json({
@@ -113,9 +113,9 @@ class FAQController {
     }
 
     try {
-      await FAQRepository.createQueryBuilder()
+      await FAQGroupRepository.createQueryBuilder()
         .delete()
-        .from(FAQ)
+        .from(FAQGroup)
         .where("id = :id", { id })
         .execute()
       return response.status(200).json({
@@ -129,4 +129,4 @@ class FAQController {
   }
 }
 
-export { FAQController };
+export { FAQGroupController };

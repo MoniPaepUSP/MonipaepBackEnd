@@ -5,7 +5,7 @@ import {
   HealthProtocolController,
   USMController,
   VaccineController,
-  OpenAiController,
+  ChatController,
   ComorbidityController,
   RiskGroupController,
   ChatMessageController,
@@ -19,7 +19,8 @@ import {
   SymptomController,
   SymptomOccurrenceController,
   SystemUserController,
-  SpecialConditionController
+  SpecialConditionController,
+  FAQGroupController
 } from "./controllers";
 import * as jwt from "./jwt"
 
@@ -37,9 +38,10 @@ const patientMovementHistoryController = new PatientMovementHistoryController()
 const systemUserController = new SystemUserController()
 const permissionsController = new PermissionsController()
 const faqSuggestionsController = new FAQSuggestionsController()
+const faqGroupController = new FAQGroupController()
 const refreshTokenController = new RefreshTokenController()
 const aboutController = new AboutTheAppController
-const openaiController = new OpenAiController()
+const chatController = new ChatController()
 const chatMessageController = new ChatMessageController()
 const comorbidityController = new ComorbidityController()
 const riskGroupController = new RiskGroupController()
@@ -75,15 +77,16 @@ router.delete("/patients/:id", jwt.authMiddleware, jwt.adminMiddleware, patientC
 // USM Routes
 router.post("/usm", jwt.authMiddleware, jwt.adminMiddleware, usmController.create)//adm e adm local
 router.get("/usm", usmController.list)//geral sem autenticacao
-router.put("/usm/:name", jwt.authMiddleware, jwt.adminMiddleware, usmController.alterOne)//adm e adm local
-router.delete("/usm/:name", jwt.authMiddleware, jwt.adminMiddleware, usmController.deleteOne)//adm e adm local
+router.put("/usm/:id", jwt.authMiddleware, jwt.adminMiddleware, usmController.alterOne)//adm e adm local
+router.delete("/usm/:id", jwt.authMiddleware, jwt.adminMiddleware, usmController.deleteOne)//adm e adm local
 router.get("/usm/google/places", jwt.authMiddleware, usmController.getGooglePlaces)//geral sem autenticacao
 
 // Disease Routes
 router.post("/disease", jwt.authMiddleware, jwt.localAdminMiddleware, diseaseController.create)//adm e adm locais
+router.post("/disease/gpt", jwt.authMiddleware, diseaseController.generateWithGPT)
 router.get("/disease", diseaseController.list)//geral sem autenticacao
-router.put("/disease/:name", jwt.authMiddleware, jwt.localAdminMiddleware, diseaseController.alterOne)///adm e adm locais
-router.delete("/disease/:name", jwt.authMiddleware, jwt.localAdminMiddleware, diseaseController.deleteOne)//adm e adm locais
+router.put("/disease/:id", jwt.authMiddleware, jwt.localAdminMiddleware, diseaseController.alterOne)///adm e adm locais
+router.delete("/disease/:id", jwt.authMiddleware, jwt.localAdminMiddleware, diseaseController.deleteOne)//adm e adm locais
 
 // Health Protocol Routes
 router.post("/healthprotocol", jwt.authMiddleware, jwt.usmUserMiddleware, healthProtocolController.create)//usuarios do USM*
@@ -118,6 +121,12 @@ router.get("/patientmovementhistory", jwt.authMiddleware, patientMovementHistory
 router.put("/patientmovementhistory/:id", jwt.authMiddleware, patientMovementHistoryController.alterOne) //geral autenticado*
 router.delete("/patientmovementhistory/:id", jwt.authMiddleware, patientMovementHistoryController.deleteOne) //geral autenticado*
 
+// FAQ Group Routes
+router.post("/faqgroup", jwt.authMiddleware, jwt.systemUserMiddleware, faqGroupController.create)//usuario de sistema autenticado
+router.get("/faqgroup", faqGroupController.list)//geral
+router.put("/faqgroup/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqGroupController.alterOne)//usuario de sistema autenticado
+router.delete("/faqgroup/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqGroupController.deleteOne)//usuario de sistema autenticado
+
 // FAQ Routes
 router.post("/faq", jwt.authMiddleware, jwt.systemUserMiddleware, faqController.create)//usuario de sistema autenticado
 router.get("/faq", faqController.list)//geral
@@ -125,9 +134,9 @@ router.put("/faq/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqControll
 router.delete("/faq/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqController.deleteOne)//usuario de sistema autenticado
 
 // FAQ Suggestions Routes
-router.post("/faqsuggestions", faqSuggestionsController.create)
-router.get("/faqsuggestions", faqSuggestionsController.list)
-router.delete("/faqsuggestions/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqSuggestionsController.deleteOne)
+router.post("/faqsuggestion", faqSuggestionsController.create)
+router.get("/faqsuggestion", faqSuggestionsController.list)
+router.delete("/faqsuggestion/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqSuggestionsController.deleteOne)
 
 // About The App Routes
 router.post("/about", jwt.authMiddleware, jwt.systemUserMiddleware, aboutController.create)//usuario de sistema autenticado
@@ -154,7 +163,8 @@ router.delete("/specialcondition/:id", jwt.authMiddleware, jwt.localAdminMiddlew
 // router.delete("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.delete)//adm e adm locais
 
 // Chat Routes
-router.post("/chat", jwt.authMiddleware, openaiController.chat) // geral autenticado*
+router.post("/chat", jwt.authMiddleware, chatController.chat) // geral autenticado*
+router.post("/chat/evalue", jwt.authMiddleware, chatController.evalue)
 router.get("/chat/:occurrence_id", jwt.authMiddleware, chatMessageController.getMessagesFromOccurrence) // geral autenticado*
 
 export { router }
