@@ -7,14 +7,14 @@ Implementação da base de dados para o aplicativo MonipaEp e seu sistema web de
 
 ![](https://github.com/vinicius-claus/IC-MoniPaEp-Backend/blob/production/bd.png)
 
-  
-
 ## Como executar
 
 ### Requisitos
 
+Ter instalado:
 - `Docker`
 - `Yarn`
+- `psql`
 
 ### Passos
 
@@ -24,20 +24,23 @@ Implementação da base de dados para o aplicativo MonipaEp e seu sistema web de
   ```
 - Renomeie `.env.example` para `.env`.
 
-#### Na primeira vez
-- Rode o banco de dados: `docker compose up -d`
-- Rode as migrations que existem no projeto: `npm run migration:run`
-- Insira os dados de exemplo: `psql -h localhost -U postgres -d monipaep -f populate_db.sql` (insira a senha)
-- Feche o container do banco de dados: `docker compose down`
-
-#### Nas vezes que for rodar:
-- Rode o docker compose dentro da raiz do projeto:
-  ```
-  sudo docker-compose up # caso queira deixar em segundo plano, usar -d
-  ```
+#### Para rodar em desenvolvimento
+- Rode o projeto com: `docker compose up -d` (`-d` para rodar em segundo plano)
+- (Na primeira vez) rode as migrations que existem no projeto: `npm run migration:run`
+- (Na primeira vez) Insira os dados de exemplo: `npm run populate` (insira a senha)
+- Caso queira terminar, rode: `docker compose down`
   
+#### Para rodar em produção
 
-  
+Ajeite os dados e siga os passos:
+- Rode o projeto com: `docker compose up -d`
+- Rode as migrations com: `docker compose exec app npm run migration:run`
+- Insira os dados de exemplo com `docker compose exec -T postgres psql -U postgres -d monipaep < ./src/database/populate/populate_db.sql`
+- Caso queira terminar, rode: `docker compose down`
+
+#### Para rodar migrations:
+- `npm run migration:generate` (desenvolvimento)
+- `docker compose exec app npm run migration:generate` (produção)
 
 <!-- ## 💬 Funcionalidades até o momento
 
