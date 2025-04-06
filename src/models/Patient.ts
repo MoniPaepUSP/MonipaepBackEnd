@@ -1,7 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate, ManyToMany, JoinTable } from "typeorm";
 import * as bcrypt from "bcrypt";
+import { Comorbidity } from "./Comorbidity";
+import { SpecialCondition } from "./SpecialCondition";
 
-@Entity("patients")
+@Entity("patient")
 export class Patient {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -49,7 +51,7 @@ export class Patient {
   birthdate: Date;
 
   @Column({ type: "varchar", nullable: false })
-  status: string;
+  status: "Óbito" | "Infectado" | "Suspeito" | "Saudável";
 
   @Column({ type: "boolean", default: true, name: "active_account" })
   activeAccount: boolean;
@@ -59,6 +61,22 @@ export class Patient {
 
   @UpdateDateColumn({ type: "timestamp", name: "updated_at" })
   updatedAt: Date;
+
+  @ManyToMany(() => Comorbidity, (comorbidity) => comorbidity.patients, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinTable({
+    name: "patient_comorbidities",
+    joinColumn: { name: "patient_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "comorbidity_id", referencedColumnName: "id" }
+  })
+  comorbidities: Comorbidity[];
+
+  @ManyToMany(() => SpecialCondition, (specialCondition) => specialCondition.patients, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinTable({
+    name: "patient_special_conditions",
+    joinColumn: { name: "patient_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "special_condition_id", referencedColumnName: "id" }
+  })
+  specialConditions: SpecialCondition[];
 
   @BeforeInsert()
   @BeforeUpdate()

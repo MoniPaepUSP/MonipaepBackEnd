@@ -13,12 +13,12 @@ export class ChatMessage {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  // Associate the message with a specific conversation.
+  // Associate the message with a specific conversation or symptom occurrence
   @Column({ type: "uuid", name: "symptom_occurrence_id" })
   symptomOccurrenceId: string;
 
   // Role can be 'user' or 'assistant'
-  @Column({ type: "varchar", length: 20 })
+  @Column({ type: "varchar"})
   role: "user" | "assistant";
 
   // The message content
@@ -28,6 +28,7 @@ export class ChatMessage {
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
+  // Many to One relation with the symptom Occurrence
   @ManyToOne(() => SymptomOccurrence, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "symptom_occurrence_id" })
   symptomOccurrence: SymptomOccurrence;

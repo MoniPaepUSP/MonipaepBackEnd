@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne } from "typeorm";
+import { FAQGroup } from "./FAQGroup";
 
 @Entity("faq")
 export class FAQ {
@@ -10,4 +11,11 @@ export class FAQ {
 
   @Column({ type: "varchar" })
   answer: string;
+
+  @Column({ type: "uuid", name: "faq_group_id" })
+  faqGroupId: string;
+
+  @ManyToOne(() => FAQGroup, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "faq_group_id" })
+  faqGroup: FAQGroup;
 }

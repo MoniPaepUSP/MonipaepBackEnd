@@ -1,32 +1,31 @@
 import { Request, Response } from "express"
 // import { Repository, getCustomRepository } from "typeorm"
-import { FAQSuggestions } from "../models"
-
-import { FAQSuggestionsRepository } from "../repositories"
+import { FAQSuggestion } from "../models"
+import { FAQSuggestionRepository } from "../repositories"
 
 class FAQSuggestionsController {
 
 
-  async create(request: Request, response: Response){
+  async create(request: Request, response: Response) {
     const body = request.body
-    
 
-    const faqSuggestedExists = await FAQSuggestionsRepository.findOne({
+
+    const faqSuggestedExists = await FAQSuggestionRepository.findOne({
       where: {
         question: body.question
       }
     })
 
-    if(faqSuggestedExists){
+    if (faqSuggestedExists) {
       return response.status(403).json({
         error: "Essa sugestão de questão já foi registrada"
       })
     }
 
     try {
-      const faqBody = FAQSuggestionsRepository.create(body)
-      const faq: any = await FAQSuggestionsRepository.save(faqBody)
-  
+      const faqBody = FAQSuggestionRepository.create(body)
+      const faq: any = await FAQSuggestionRepository.save(faqBody)
+
       return response.status(201).json({
         success: "Sugestão de questão registrada com sucesso",
         faq
@@ -37,44 +36,44 @@ class FAQSuggestionsController {
       })
     }
   }
-  
+
   async list(request: Request, response: Response) {
     const { question, id } = request.query
 
     let filters = {}
 
-    if(id) {
+    if (id) {
       filters = { ...filters, id: String(id) }
 
-      const questionExists = await FAQSuggestionsRepository.findOne({
-        where : {
+      const questionExists = await FAQSuggestionRepository.findOne({
+        where: {
           id: String(id)
         }
       })
 
-      if(!questionExists) {
+      if (!questionExists) {
         return response.status(404).json({
           error: "Sugestão de questão não encontrada"
         })
       }
     }
 
-    if(question) {
+    if (question) {
       filters = { ...filters, question: String(question) }
 
-      const questionExists = await FAQSuggestionsRepository.findOne({
+      const questionExists = await FAQSuggestionRepository.findOne({
         where: {
           question: String(question)
         }
       })
 
-      if(!questionExists) {
+      if (!questionExists) {
         return response.status(404).json({
           error: "Sugestão de questão não encontrada"
         })
       }
     }
-    const questionsList = await FAQSuggestionsRepository.find(filters)
+    const questionsList = await FAQSuggestionRepository.find(filters)
 
     return response.status(200).json(questionsList)
   }
@@ -83,18 +82,18 @@ class FAQSuggestionsController {
     const { id } = request.params
 
 
-    const questionExists = await FAQSuggestionsRepository.findOne({ where: {id} })
+    const questionExists = await FAQSuggestionRepository.findOne({ where: { id } })
 
-    if(!questionExists) {
+    if (!questionExists) {
       return response.status(404).json({
         error: "Sugestão de questão não encontrada"
       })
     }
-    
+
     try {
-      await FAQSuggestionsRepository.createQueryBuilder()
+      await FAQSuggestionRepository.createQueryBuilder()
         .delete()
-        .from(FAQSuggestions)
+        .from(FAQSuggestion)
         .where("id = :id", { id })
         .execute()
       return response.status(200).json({

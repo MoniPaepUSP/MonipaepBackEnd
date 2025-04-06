@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-// import { getCustomRepository } from "typeorm";
 import dayjs from 'dayjs'
 import * as jwt from "../jwt"
 
@@ -10,10 +9,8 @@ import { refreshTokenExpiresIn } from "../refreshTokenExpiration";
 
 class RefreshTokenController {
  
-
   async create(request: Request, response: Response){
     const { refreshToken } = request.body
-
 
     const refreshTokenExists = await RefreshTokenRepository.findOne({
       where: {

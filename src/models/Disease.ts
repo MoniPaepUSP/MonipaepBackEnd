@@ -1,8 +1,14 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { HealthProtocol } from "./HealthProtocol";
+import { Symptom } from "./Symptom";
+import { RiskGroups } from "./RiskGroups";
 
- @Entity("disease")
- export class Disease {
-  @PrimaryColumn({ type: "varchar" })
+@Entity("disease")
+export class Disease {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
+  @Column({ type: "varchar" })
   name: string;
 
   @Column({ type: "integer", name: "infected_monitoring_days" })
@@ -10,4 +16,40 @@ import { Column, Entity, PrimaryColumn } from "typeorm";
 
   @Column({ type: "integer", name: "suspected_monitoring_days" })
   suspectedMonitoringDays: number;
- }
+
+  @Column({ type: "uuid", name: "risk_groups_id" })
+  riskGroupsId: string;
+
+  @OneToOne(() => RiskGroups, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "risk_groups_id" }) // Required for the owning side
+  riskGroups: RiskGroups;
+
+  @ManyToMany(() => Symptom, (symptom) => symptom.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinTable({
+    name: "disease_symptoms",
+    joinColumn: { name: "disease_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "symptom_id", referencedColumnName: "id" }
+  })
+  symptoms: Symptom[];
+
+  @ManyToMany(() => Symptom, (symptom) => symptom.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinTable({
+    name: "disease_alarm_signs",
+    joinColumn: { name: "disease_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "symptom_id", referencedColumnName: "id" }
+  })
+  alarmSigns: Symptom[];
+
+  @ManyToMany(() => Symptom, (symptom) => symptom.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinTable({
+    name: "disease_shock_signs",
+    joinColumn: { name: "disease_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "symptom_id", referencedColumnName: "id" }
+  })
+  shockSigns: Symptom[];
+
+  @OneToMany(() => HealthProtocol, (protocol) => protocol.disease, {
+    cascade: true,
+  })
+  healthProtocols: HealthProtocol[];
+}

@@ -145,7 +145,7 @@ class DiseaseOccurrenceController {
     try {
       await PatientsRepository.createQueryBuilder()
         .update(Patient)
-        .set({ status: finalStatus })
+        .set({ status: finalStatus as "Óbito" | "Infectado" | "Suspeito" | "Saudável" })
         .where("id = :id", { id: patientExists.id })
         .execute()
     } catch (error) {

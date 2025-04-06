@@ -10,7 +10,6 @@ class FAQController{
   async create(request: Request, response: Response){
     const body = request.body
     
-
     const faqAlreadyExists = await FAQRepository.findOne({
       where : {
         question: body.question

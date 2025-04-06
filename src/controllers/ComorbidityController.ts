@@ -55,13 +55,10 @@ class ComorbidityController {
 
     const comorbidityList = await ComorbidityRepository.findAndCount(options)
 
-    return response.status(200).json({
-      comorbidities: comorbidityList[0],
-      total: comorbidityList[1]
-    })
+    return response.status(200).json({ comorbidityList: comorbidityList[0] });
   }
 
-  async update(request: Request, response: Response) {
+  async alterOne(request: Request, response: Response) {
     const { name } = request.params
     const body = request.body
 

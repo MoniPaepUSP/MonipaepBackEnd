@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { DiseaseOccurrence } from "./DiseaseOccurrence"; // assuming DiseaseOccurrence entity is defined in DiseaseOccurrence.ts
+import { DiseaseOccurrence } from "./DiseaseOccurrence"; 
 
 @Entity("patient_movement_history")
 export class PatientMovementHistory {

@@ -8,20 +8,19 @@ import {
   OpenAiController,
   ComorbidityController,
   RiskGroupController,
-  ChatMessageController
+  ChatMessageController,
+  PatientController,
+  FAQController,
+  AboutTheAppController,
+  DiseaseOccurrenceController,
+  PatientMovementHistoryController,
+  PermissionsController,
+  RefreshTokenController,
+  SymptomController,
+  SymptomOccurrenceController,
+  SystemUserController,
+  SpecialConditionController
 } from "./controllers";
-import { AboutTheAppController } from "./controllers/AboutTheAppController";
-import { AppointmentController } from "./controllers/AppointmentController";
-import { AssignedHealthProtocolController } from "./controllers/AssignedHealthProtocolController";
-import { DiseaseOccurrenceController } from "./controllers/DiseaseOccurrenceController";
-import { FAQController } from "./controllers/FAQController";
-import { PatientController } from "./controllers/PatientController";
-import { PatientMovementHistoryController } from "./controllers/PatientMovementHistoryController";
-import { PermissionsController } from "./controllers/PermissionsController";
-import { RefreshTokenController } from "./controllers/RefreshTokenController";
-import { SymptomController } from "./controllers/SymptomController";
-import { SymptomOccurrenceController } from "./controllers/SymptomOccurrenceController";
-import { SystemUserController } from "./controllers/SystemUserController";
 import * as jwt from "./jwt"
 
 const router = Router()
@@ -31,7 +30,6 @@ const faqController = new FAQController()
 const usmController = new USMController()
 const diseaseController = new DiseaseController()
 const healthProtocolController = new HealthProtocolController()
-const assignedHealthProtocolController = new AssignedHealthProtocolController()
 const symptomController = new SymptomController()
 const diseaseOccurrenceController = new DiseaseOccurrenceController()
 const symptomOccurrenceController = new SymptomOccurrenceController()
@@ -45,8 +43,7 @@ const openaiController = new OpenAiController()
 const chatMessageController = new ChatMessageController()
 const comorbidityController = new ComorbidityController()
 const riskGroupController = new RiskGroupController()
-//const appointmentController = new AppointmentController()
-//const vaccineController = new VaccineController()
+const specialConditionController = new SpecialConditionController()
 
 // Refresh Token Routes
 router.post("/refreshtoken", refreshTokenController.create)
@@ -68,10 +65,10 @@ router.delete("/systemuser/:id", jwt.authMiddleware, jwt.localAdminMiddleware, s
 
 // Patient Routes
 router.post("/patients/signup", patientController.create) //geral
-router.post("/patients/login", patientController.loginPost) //geral
+router.post("/patients/login", patientController.login) //geral
 router.get("/patients", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.list) //funcionarios autenticados
 router.get("/patients/me", jwt.authMiddleware, patientController.getOneWithToken) //geral autenticado*
-router.put("/patients/:id", jwt.authMiddleware, patientController.alterOne) //geral autenticado*
+router.put("/patients/alter", jwt.authMiddleware, patientController.alterOne) //geral autenticado*
 router.put("/patients/deactivate/:id", jwt.authMiddleware, patientController.deactivateAccount) //geral autenticado*
 router.delete("/patients/:id", jwt.authMiddleware, jwt.adminMiddleware, patientController.deleteOne) //funcionarios autenticados
 
@@ -115,11 +112,6 @@ router.get("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceContro
 router.put("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.alterOne)//geral autenticado*
 router.delete("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.deleteOne)//geral autenticado*
 
-// AssignedHealthProtocol Routes
-router.post("/assignedhealthprotocol", jwt.authMiddleware, jwt.systemUserMiddleware, assignedHealthProtocolController.create)//usuario do sistema autenticado
-router.get("/assignedhealthprotocol", jwt.authMiddleware, assignedHealthProtocolController.list)//geral autenticado
-router.delete("/assignedhealthprotocol/:disease_name/:healthprotocol_id", jwt.authMiddleware, jwt.systemUserMiddleware, assignedHealthProtocolController.deleteOne)//usuario do sistema autenticado
-
 // PatientMovementHistory Routes
 router.post("/patientmovementhistory", jwt.authMiddleware, patientMovementHistoryController.create) //geral autenticado*
 router.get("/patientmovementhistory", jwt.authMiddleware, patientMovementHistoryController.list) //geral autenticado
@@ -146,27 +138,23 @@ router.delete("/about/:id", jwt.authMiddleware, jwt.systemUserMiddleware, aboutC
 // Comorbidity Routes
 router.post("/comorbidity", jwt.authMiddleware, jwt.localAdminMiddleware, comorbidityController.create)//adm e adm locais
 router.get("/comorbidity", comorbidityController.list)//geral sem autenticacao
-router.put("/comorbidity/:name", jwt.authMiddleware, jwt.localAdminMiddleware, comorbidityController.update)///adm e adm locais
-router.delete("/comorbidity/:name", jwt.authMiddleware, jwt.localAdminMiddleware, comorbidityController.delete)//adm e adm locais
+router.put("/comorbidity/:id", jwt.authMiddleware, jwt.localAdminMiddleware, comorbidityController.alterOne)///adm e adm locais
+router.delete("/comorbidity/:id", jwt.authMiddleware, jwt.localAdminMiddleware, comorbidityController.delete)//adm e adm locais
 
-// RiskGroup Routes
-router.post("/riskgroup", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.create)//adm e adm locais
-router.get("/riskgroup", riskGroupController.list)//geral sem autenticacao
-router.put("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.update)///adm e adm locais
-router.delete("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.delete)//adm e adm locais
+// SpecialCondition Routes
+router.post("/specialcondition", jwt.authMiddleware, jwt.localAdminMiddleware, specialConditionController.create)//adm e adm locais
+router.get("/specialcondition", specialConditionController.list)//geral sem autenticacao
+router.put("/specialcondition/:id", jwt.authMiddleware, jwt.localAdminMiddleware, specialConditionController.alterOne)///adm e adm locais
+router.delete("/specialcondition/:id", jwt.authMiddleware, jwt.localAdminMiddleware, specialConditionController.delete)//adm e adm locais
+
+// RiskGroup Routes - TBD
+// router.post("/riskgroup", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.create)//adm e adm locais
+// router.get("/riskgroup", riskGroupController.list)//geral sem autenticacao
+// router.put("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.update)///adm e adm locais
+// router.delete("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.delete)//adm e adm locais
 
 // Chat Routes
 router.post("/chat", jwt.authMiddleware, openaiController.chat) // geral autenticado*
 router.get("/chat/:occurrence_id", jwt.authMiddleware, chatMessageController.getMessagesFromOccurrence) // geral autenticado*
-
-// Appointments Routes - TBD
-// router.post("/appointments", appointmentController.create)//funcionarios USM
-
-// Vaccine Routes
-// router.post("/vaccine", jwt.authMiddleware, vaccineController.create)//geral autenticado*
-// router.get("/vaccine", jwt.authMiddleware, vaccineController.list)//geral autenticado
-// router.get("/vaccine/:vaccine_id", jwt.authMiddleware, vaccineController.getOne)//geral autenticado
-// router.put("/vaccine/:vaccine_id", jwt.authMiddleware, vaccineController.alterOne)//geral autenticado*
-// router.delete("/vaccine/:vaccine_id", jwt.authMiddleware, vaccineController.deleteOne)//geral autenticado*
 
 export { router }

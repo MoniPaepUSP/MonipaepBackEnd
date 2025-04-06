@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { In, IsNull, Like } from "typeorm";
 
-import { DiseaseOccurrence, Patient, SymptomOccurrence } from "../models";
+import { SymptomOccurrence } from "../models";
 import {
   DiseaseOccurrenceRepository,
   PatientsRepository,
@@ -108,8 +108,6 @@ class SymptomOccurrenceController {
 
   async list(request: Request, response: Response) {
     try {
-      // Clean up occurrences without symptoms in a single query.
-      // await SymptomOccurrenceRepository.delete({ symptoms: IsNull() });
 
       const { id, patient_id, symptom_name, disease_occurrence_id, unassigned } = request.query;
       let filters: any = {};

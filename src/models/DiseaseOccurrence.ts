@@ -13,29 +13,31 @@ export class DiseaseOccurrence {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: "uuid", name: "patient_id" })
-  patientId: string;
-
-  @Column({ type: "varchar", name: "disease_name" })
-  diseaseName: string;
-
   @Column({ type: "varchar", nullable: true })
   diagnosis: string | null;
-
+  
   @Column({ type: "timestamp", name: "date_start", nullable: true })
   dateStart: Date | null;
-
+  
   @Column({ type: "timestamp", name: "date_end", nullable: true })
   dateEnd: Date | null;
-
+  
   @Column({ type: "varchar" })
   status: string;
 
+  @Column({ type: "uuid", name: "patient_id" })
+  patientId: string;
+  
+  // Each disease occurrence will be related to one patient
   @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "patient_id" })
   patient: Patient;
 
+  @Column({ type: "uuid", name: "disease_id" })
+  diseaseId: string;
+
+  // There will be a lot of occurrences of the same disease
   @ManyToOne(() => Disease, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinColumn({ name: "disease_name" })
+  @JoinColumn({ name: "disease_id" })
   disease: Disease;
 }

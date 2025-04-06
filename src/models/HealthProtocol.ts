@@ -1,16 +1,19 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-import { v4 as uuid } from 'uuid'
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Disease } from "./Disease";
 
-@Entity("health_protocols")
-class HealthProtocol{
+@Entity("health_protocol")
+class HealthProtocol {
   @PrimaryGeneratedColumn("uuid")
   id: string;
-  
-  @Column({ type: "varchar", nullable: false })
-  title: string;
 
-  @Column({ type: "varchar", nullable: false })
-  description: string;
+  @Column()
+  severity: "mild" | "moderate" | "severe";
+
+  @Column({ type: "text" })
+  instructions: string;
+
+  @ManyToOne(() => Disease, (disease) => disease.healthProtocols)
+  disease: Disease;
 }
 
 export { HealthProtocol };

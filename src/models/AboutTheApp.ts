@@ -1,15 +1,14 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm"
-import { Patient } from "./Patient"
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 @Entity("about")
-class AboutTheApp{
+class AboutTheApp {
   @PrimaryGeneratedColumn("uuid")
-  id:string
+  id: string
 
-  @Column({ type:"varchar", nullable: false })
+  @Column({ type: "varchar", nullable: false })
   main: string
 
-  @Column({ type:"varchar", nullable: false })
+  @Column({ type: "varchar", nullable: false })
   secondary: string
 }
 

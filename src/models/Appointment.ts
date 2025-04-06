@@ -6,8 +6,9 @@ import {
   JoinColumn,
 } from "typeorm";
 import { Patient } from "./Patient"; // assuming Patient entity is defined in Patient.ts
+import { USM } from "./USM";
 
-@Entity("appointments")
+@Entity("appointment")
 export class Appointment {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -19,10 +20,14 @@ export class Appointment {
   whenRemember: Date;
 
   @Column({ type: "varchar" })
-  location: string;
-
-  @Column({ type: "varchar" })
   type: string;
+
+  @Column({ type: "uuid", name: "usm_id" })
+  usmId: string;
+
+  @ManyToOne(() => USM, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "usm_id" })
+  usm: USM;
 
   @Column({ type: "uuid", name: "patient_id" })
   patientId: string;
