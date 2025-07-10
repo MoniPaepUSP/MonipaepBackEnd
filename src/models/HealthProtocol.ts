@@ -12,7 +12,11 @@ class HealthProtocol {
   @Column({ type: "text" })
   instructions: string;
 
-  @ManyToOne(() => Disease, (disease) => disease.healthProtocols)
+  @Column({ type: "uuid", name: "disease_id" })
+  diseaseId: string;
+
+  @ManyToOne(() => Disease, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinColumn({ name: "disease_id" })
   disease: Disease;
 }
 

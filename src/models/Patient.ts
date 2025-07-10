@@ -26,29 +26,32 @@ export class Patient {
   @Column({ type: "varchar" })
   phone: string;
 
-  @Column({ type: "varchar", nullable: true, name: "last_gps_location" })
-  lastGPSLocation: string | null;
+  @Column({ type: "date" })
+  birthdate: Date;
 
-  @Column({ type: "boolean", name: "allow_sms" })
-  allowSms: boolean;
+  @Column({ type: "varchar" })
+  cep: string;
 
-  @Column({ type: "varchar", nullable: true, name: "work_address" })
-  workAddress: string | null;
+  @Column({ type: "varchar" })
+  state: string;
 
-  @Column({ type: "varchar", name: "home_address" })
-  homeAddress: string;
+  @Column({ type: "varchar" })
+  city: string;
 
   @Column({ type: "varchar" })
   neighborhood: string;
 
+  @Column({ type: "varchar" })
+  street: string;
+
   @Column({ type: "integer", name: "house_number" })
   houseNumber: number;
 
+  @Column({ type: "boolean", name: "allow_sms" })
+  allowSms: boolean;
+
   @Column({ type: "boolean", name: "has_health_plan" })
   hasHealthPlan: boolean;
-
-  @Column({ type: "date" })
-  birthdate: Date;
 
   @Column({ type: "varchar", nullable: false })
   status: "Óbito" | "Infectado" | "Suspeito" | "Saudável";

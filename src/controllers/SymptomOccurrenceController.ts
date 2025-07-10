@@ -34,7 +34,6 @@ class SymptomOccurrenceController {
       });
 
       const registeredDate = new Date();
-      const symptomsText = symptoms.join(", ");
 
       // Build occurrence(s) based on existing disease occurrences.
       const occurrencesToCreate: Partial<SymptomOccurrence>[] = ongoingDiseaseOccurrences.length === 0
@@ -42,14 +41,14 @@ class SymptomOccurrenceController {
           patientId: patient_id,
           diseaseOccurrenceId: undefined,
           registeredDate,
-          symptoms: symptomsText,
+          symptoms,
           remarks,
         }]
         : ongoingDiseaseOccurrences.map(diseaseOccurrence => ({
           patientId: patient_id,
           diseaseOccurrenceId: diseaseOccurrence.id,
           registeredDate,
-          symptoms: symptomsText,
+          symptoms,
           remarks,
         }));
 
@@ -92,7 +91,7 @@ class SymptomOccurrenceController {
           name: occurrence.patient.name,
           email: occurrence.patient.email,
         },
-        symptoms: occurrence.symptoms ? occurrence.symptoms.split(",").map(s => s.trim()) : [],
+        symptoms: occurrence.symptoms,
         remarks: occurrence.remarks,
       }));
 
@@ -113,7 +112,12 @@ class SymptomOccurrenceController {
       let filters: any = {};
 
       if (id) {
-        const occurrence = await SymptomOccurrenceRepository.findOne({ where: { id: String(id) } });
+        const occurrence = await SymptomOccurrenceRepository.findOne({
+          where: { id: String(id) },
+          relations: {
+            symptoms: true
+          }
+        });
         if (!occurrence) {
           return response.status(404).json({ error: "Ocorrência de sintoma não encontrada" });
         }
@@ -121,7 +125,9 @@ class SymptomOccurrenceController {
       }
 
       if (patient_id) {
-        const patient = await PatientsRepository.findOne({ where: { id: String(patient_id) } });
+        const patient = await PatientsRepository.findOne({
+          where: { id: String(patient_id) },
+        });
         if (!patient) {
           return response.status(404).json({ error: "Paciente não encontrado" });
         }
@@ -133,7 +139,9 @@ class SymptomOccurrenceController {
       }
 
       if (disease_occurrence_id) {
-        const diseaseOccurrence = await DiseaseOccurrenceRepository.findOne({ where: { id: String(disease_occurrence_id) } });
+        const diseaseOccurrence = await DiseaseOccurrenceRepository.findOne({
+          where: { id: String(disease_occurrence_id) },
+        });
         if (!diseaseOccurrence) {
           return response.status(404).json({ error: "Ocorrência de doença não encontrada" });
         }
@@ -144,18 +152,16 @@ class SymptomOccurrenceController {
         filters.diseaseOccurrenceId = IsNull();
       }
 
-      const occurrencesList = await SymptomOccurrenceRepository.find({
+      const symptomOccurrences = await SymptomOccurrenceRepository.find({
         where: filters,
         order: { registeredDate: "DESC" },
+        relations: {
+          symptoms: true
+        }
       });
 
-      const formattedData = occurrencesList.map(occurrence => ({
-        ...occurrence,
-        symptoms: occurrence.symptoms ? occurrence.symptoms.split(",").map(s => s.trim()) : [],
-      }));
-
       return response.status(200).json({
-        symptomOccurrences: formattedData,
+        symptomOccurrences,
       });
     } catch (error) {
       console.error("Erro ao listar ocorrências:", error);
@@ -208,18 +214,17 @@ class SymptomOccurrenceController {
   async findOne(request: Request, response: Response) {
     try {
       const { id } = request.params;
-      const occurrence = await SymptomOccurrenceRepository.findOne({ where: { id } });
+      const occurrence = await SymptomOccurrenceRepository.findOne({
+        where: { id },
+        relations: {
+          symptoms: true
+        }
+      });
       if (!occurrence) {
         return response.status(404).json({ error: "Ocorrência de sintoma inválida" });
       }
 
-      const formattedData = {
-        ...occurrence,
-        symptoms: occurrence.symptoms ? occurrence.symptoms.split(",").map(s => s.trim()) : [],
-        remarks: occurrence.remarks,
-      };
-
-      return response.status(200).json(formattedData);
+      return response.status(200).json(occurrence);
     } catch (error) {
       console.error("Erro ao buscar ocorrência:", error);
       return response.status(500).json({ error: "Erro ao buscar ocorrência de sintoma" });

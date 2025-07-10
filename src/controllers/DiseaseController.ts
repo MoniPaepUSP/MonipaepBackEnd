@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
-import { Disease, HealthProtocol, RiskGroups } from "../models";
+import { Disease, HealthProtocol, RiskGroups, Symptom } from "../models";
 import { ComorbidityRepository, DiseaseRepository, RiskGroupRepository, SpecialConditionRepository, SymptomRepository } from "../repositories";
 import { openai } from "src/openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
+import { DiseaseKeySymptom } from "src/models/DiseaseKeySymptom";
+import { DiseaseKeySymptomRepository } from "src/repositories/DiseaseKeySymptomRepository";
 
 class DiseaseController {
 
@@ -234,7 +236,7 @@ class DiseaseController {
   async generateWithGPT(request: Request, response: Response) {
     const { name } = request.body;
 
-    // Schema para os dados iniciais da doença
+    // Schema for the disease data
     const DiseaseInitialSchema = z.object({
       name: z.string(),
       infectedMonitoringDays: z.number(),
@@ -247,217 +249,299 @@ class DiseaseController {
       )
     });
 
-    // Prompt aprimorado para gerar os dados iniciais da doença
+    // Prompt for disease data
     const diseasePrompt = `
-      Dada a doença "${name}", retorne um JSON com os seguintes dados:
-      {
-        "name": "<nome da doença>",
-        "infectedMonitoringDays": <número de dias de monitoramento para paciente infectado>,
-        "suspectedMonitoringDays": <número de dias de monitoramento para paciente com suspeita>,
-        "healthProtocols": [
-          {
-            "severity": "<leve | moderado | grave | muito grave>",
-            "instructions": "<instruções detalhadas para o protocolo de saúde>"
-          },
-          ...
-        ]
-      }
-      Atenção: utilize valores realistas para os números e protocolos baseados em casos clínicos.
+    Dada a doença "${name}", retorne um JSON com os seguintes dados:
+    {
+      "name": "<nome da doença>",
+      "infectedMonitoringDays": <número de dias de monitoramento para paciente infectado>,
+      "suspectedMonitoringDays": <número de dias de monitoramento para paciente com suspeita>,
+      "healthProtocols": [
+        {
+          "severity": "<leve | moderado | grave | muito grave>",
+          "instructions": "<instrução simples para o protocolo de saúde>"
+        },
+        ...
+      ]
+    }
+
+    Regras importantes:
+    - Gere de 3 a 6 protocolos para cada gravidade (leve, moderado, grave, muito grave), se fizer sentido para a doença.
+    - Os protocolos devem conter instruções clínicas simples e úteis.
+    - Use valores realistas para os dias de monitoramento.
+    - Caso alguma gravidade não seja aplicável à doença, você pode omiti-la, mas apenas se realmente não fizer sentido.
+
+    Exemplo de instruções: "Manter repouso", "Hidratar-se bem", "Procurar atendimento médico em caso de febre alta", etc.
     `;
 
-    // Chamada para gerar os dados iniciais da doença
     const diseaseCompletion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: diseasePrompt },
         { role: 'user', content: name }
       ],
-      temperature: 0,
       response_format: zodResponseFormat(DiseaseInitialSchema, 'diseaseInitialSchema')
     });
-
     const diseaseData = diseaseCompletion.choices[0].message.parsed;
     if (!diseaseData) {
       return response.status(404).json({ error: "Erro ao gerar os dados iniciais da doença" });
     }
+    console.log("Dados da doença:", diseaseData);
 
-    console.log(diseaseData);
+    /** ======================================================================
+     *  Available Data Lists (Symptoms, Comorbidities, Special Conditions)
+     *  ====================================================================== */
 
-    // Mapeando para um array com os atributos que interessam para o modelo: id e name
+    // Symptoms
     const availableSymptoms = await SymptomRepository.find();
     const availableSymptomsList = availableSymptoms.map(symptom => ({
       id: symptom.id,
       name: symptom.name
     }));
 
-    // Schema para a resposta do modelo (apenas os IDs dos sintomas)
-    const SymptomsSchema = z.object({
-      symptomIds: z.array(z.string())
-    });
-    const symptomPrompt = `
-      Dada a doença "${name}", retorne um array JSON no seguinte formato:
-      {
-        "symptomIds": ["id1", "id2", ...]
-      }
-      
-      Selecione apenas os IDs dos sintomas que devem ser incluídos no tratamento, considerando apenas os sintomas listados abaixo. 
-      Utilize somente os IDs válidos que constam neste array:
-      
-      ${JSON.stringify(availableSymptomsList, null, 2)}
-      
-      Atenção: retorne apenas os IDs dos sintomas (apenas strings) que se aplicam à doença, sem informações adicionais.
-    `;
-    const symptomCompletion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: symptomPrompt },
-        { role: 'user', content: name }
-      ],
-      temperature: 0,
-      response_format: zodResponseFormat(SymptomsSchema, 'symptomsSchema')
-    });
-    const symptomsData = symptomCompletion.choices[0].message.parsed;
-    const symptomIds = symptomsData?.symptomIds ?? [];
-    if (!symptomIds.length) {
-      return response.status(404).json({ error: "Erro ao gerar os sintomas" });
-    }
-
-    console.log(symptomIds)
-
-    // Schema e prompt para sinais de alarme
-    const AlarmSignsSchema = z.object({
-      alarmSignIds: z.array(z.string())
-    });
-    const alarmSignsPrompt = `
-      Dada a doença "${name}", retorne um array JSON no seguinte formato:
-      {
-        "alarmSignIds": ["id1", "id2", ...]
-      }
-      
-      Selecione os IDs dos sintomas que podem ser considerados sinais de alarme da doença,
-      considerando apenas os sintomas listados abaixo. Utilize somente os IDs válidos que constam neste array:
-      
-      ${JSON.stringify(availableSymptomsList, null, 2)}
-      
-      Atenção: retorne apenas os IDs dos sintomas (apenas strings) que se aplicam à doença, sem informações adicionais.
-    `;
-    const alarmSignsCompletion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: alarmSignsPrompt },
-        { role: 'user', content: name }
-      ],
-      temperature: 0,
-      response_format: zodResponseFormat(AlarmSignsSchema, 'alarmSignsSchema')
-    });
-    const alarmSignIds = alarmSignsCompletion.choices[0].message.parsed?.alarmSignIds ?? [];
-    if (!alarmSignIds.length) {
-      return response.status(404).json({ error: "Erro ao gerar os sinais de alarme" });
-    }
-
-    console.log(alarmSignIds);
-
-    // Schema e prompt para sinais de choque
-    const ShockSignsSchema = z.object({
-      shockSignIds: z.array(z.string())
-    });
-    const shockSignsPrompt = `
-      Dada a doença "${name}", retorne um array JSON no seguinte formato: 
-      {
-        "shockSignIds": ["id1", "id2", ...]
-      }
-      
-      Selecione os IDs dos sintomas que podem ser considerados sinais de choque,
-      considerando apenas os sintomas listados abaixo. Utilize somente os IDs válidos que constam neste array:
-      
-      ${JSON.stringify(availableSymptomsList, null, 2)}
-      
-      Atenção: retorne apenas os IDs dos sintomas (apenas strings) que se aplicam à doença, sem informações adicionais.
-    `;
-    const shockSignsCompletion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: shockSignsPrompt },
-        { role: 'user', content: name }
-      ],
-      temperature: 0,
-      response_format: zodResponseFormat(ShockSignsSchema, 'shockSignsSchema')
-    });
-    const shockSignsData = shockSignsCompletion.choices[0].message.parsed;
-    const shockSignIds = shockSignsData?.shockSignIds ?? [];
-    if (!shockSignIds.length) {
-      return response.status(404).json({ error: "Erro ao gerar os sintomas" });
-    }
-
-    console.log(shockSignIds);
-
-    // Mapeando para um array com os atributos que interessam para o modelo: id e name
+    // Comorbidities
     const availableComorbidities = await ComorbidityRepository.find();
     const availableComorbiditiesList = availableComorbidities.map(comorbidity => ({
       id: comorbidity.id,
       name: comorbidity.name
     }));
+
+    // Special Conditions
     const availableSpecialConditions = await SpecialConditionRepository.find();
     const availableSpecialConditionsList = availableSpecialConditions.map(specialCondition => ({
       id: specialCondition.id,
       name: specialCondition.name
     }));
 
-    // Schema e prompt para grupos de risco: comorbidades e condições especiais
+    // Schema for symptoms IDs
+    const SymptomsSchema = z.object({
+      symptomIds: z.array(z.string())
+    });
+
+    // Prompt for symptom IDs
+    const symptomsPrompt = `
+    Dada a doença "${name}", retorne um JSON no seguinte formato:
+    {
+      "symptomIds": ["id1", "id2", ...]
+    }
+    
+    Selecione apenas os IDs dos sintomas que devem ser incluídos no tratamento, 
+    considerando apenas os sintomas listados abaixo:
+    ${JSON.stringify(availableSymptomsList, null, 2)}
+    
+    Atenção: retorne apenas os IDs válidos.
+  `;
+    const symptomsCompletion = await openai.beta.chat.completions.parse({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: symptomsPrompt },
+        { role: 'user', content: name }
+      ],
+      response_format: zodResponseFormat(SymptomsSchema, 'symptomsSchema')
+    });
+    const symptomsData = symptomsCompletion.choices[0].message.parsed;
+    const symptomIds = symptomsData?.symptomIds ?? [];
+    if (!symptomIds.length) {
+      return response.status(404).json({ error: "Erro ao revisar os sintomas" });
+    }
+    console.log("IDs dos Sintomas:", symptomIds);
+
+    /** ======================================================================
+     *  Alarm Signs Generation
+     *  ====================================================================== */
+
+    // Schema for alarm signs IDs
+    const AlarmSignsSchema = z.object({
+      alarmSignIds: z.array(z.string())
+    });
+
+    // Prompt for alarm signs
+    const alarmSignsPrompt = `
+    Dada a doença "${name}", retorne um JSON no seguinte formato:
+    {
+      "alarmSignIds": ["id1", "id2", ...]
+    }
+    
+    Selecione os IDs dos sintomas que podem ser considerados sinais de alarme, 
+    a partir da seguinte lista:
+    ${JSON.stringify(availableSymptomsList, null, 2)}
+    
+    Retorne apenas os IDs válidos.
+  `;
+    const alarmSignsCompletion = await openai.beta.chat.completions.parse({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: alarmSignsPrompt },
+        { role: 'user', content: name }
+      ],
+      response_format: zodResponseFormat(AlarmSignsSchema, 'alarmSignsSchema')
+    });
+    const alarmSignsData = alarmSignsCompletion.choices[0].message.parsed;
+    const alarmSignIds = alarmSignsData?.alarmSignIds ?? [];
+    if (!alarmSignIds.length) {
+      return response.status(404).json({ error: "Erro ao revisar os sinais de alarme" });
+    }
+    console.log("IDs dos Sinais de Alarme:", alarmSignIds);
+
+    /** ======================================================================
+     *  Shock Signs Generation
+     *  ====================================================================== */
+
+    // Schema for shock signs IDs
+    const ShockSignsSchema = z.object({
+      shockSignIds: z.array(z.string())
+    });
+
+    // Prompt for shock signs
+    const shockSignsPrompt = `
+    Dada a doença "${name}", retorne um JSON no seguinte formato:
+    {
+      "shockSignIds": ["id1", "id2", ...]
+    }
+    
+    Selecione os IDs dos sintomas que podem ser considerados sinais de choque, 
+    usando a lista abaixo:
+    ${JSON.stringify(availableSymptomsList, null, 2)}
+    
+    Retorne apenas os IDs válidos.
+  `;
+    const shockSignsCompletion = await openai.beta.chat.completions.parse({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: shockSignsPrompt },
+        { role: 'user', content: name }
+      ],
+      response_format: zodResponseFormat(ShockSignsSchema, 'shockSignsSchema')
+    });
+    const shockSignsData = shockSignsCompletion.choices[0].message.parsed;
+    const shockSignIds = shockSignsData?.shockSignIds ?? [];
+    if (!shockSignIds.length) {
+      return response.status(404).json({ error: "Erro ao revisar os sinais de choque" });
+    }
+    console.log("IDs dos Sinais de Choque:", shockSignIds);
+
+    /** ======================================================================
+     *  Key Symptoms and Weights Generation
+     *  ====================================================================== */
+
+    // Schema for key symptoms and weights
+    const KeySymptomsSchema = z.object({
+      keySymptoms: z.array(
+        z.object({
+          id: z.string(),
+          weight: z.number()
+        })
+      )
+    });
+    // Prompt for key symptoms and weights
+    const keySymptomsPrompt = `
+    Dada a doença "${name}", retorne um JSON no seguinte formato:
+    {
+      "keySymptoms": [
+        { "id": "id1", "weight": 0.5 },
+        { "id": "id2", "weight": 0.8 },
+        ...
+      ]
+    }
+    Selecione entre 3 a 5 IDs dos sintomas marcantes da doença, que o diferenciam de outros,
+    utilizando a lista abaixo:
+    ${JSON.stringify(availableSymptomsList, null, 2)}
+    Atribua um peso entre 0 e 1 para cada sintoma, onde 0 significa que o sintoma não é relevante e 1 significa que é extremamente relevante.
+    Retorne apenas os IDs encontrados na lista.
+  `;
+    const keySymptomsCompletion = await openai.beta.chat.completions.parse({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: keySymptomsPrompt },
+        { role: 'user', content: name }
+      ],
+      response_format: zodResponseFormat(KeySymptomsSchema, 'keySymptomsSchema')
+    });
+    const keySymptomsData = keySymptomsCompletion.choices[0].message.parsed;
+    const keySymptoms = keySymptomsData?.keySymptoms ?? [];
+    if (!keySymptoms.length) {
+      return response.status(404).json({ error: "Erro ao revisar os sintomas-chave" });
+    }
+    console.log("Sintomas-chave e pesos:", keySymptoms);
+
+    /** ======================================================================
+     *  Risk Groups Generation
+     *  ====================================================================== */
+
+    // Schema for risk groups (comorbidities and special conditions)
     const RiskGroupsSchema = z.object({
       comorbidities: z.array(z.string()),
       specialConditions: z.array(z.string())
     });
+
+    // Prompt for risk groups
     const riskGroupsPrompt = `
-      Dada a doença "${name}", retorne um JSON contendo dois arrays:
-      - "comorbidities": IDs das comorbidades disponíveis que devem ser consideradas como grupos de risco para esta doença.
-      - "specialConditions": IDs das condições especiais disponíveis que devem ser consideradas como grupos de risco para esta doença.
-      
-      Utilize apenas os registros disponíveis abaixo e retorne somente os IDs válidos.
-      
-      Comorbidades disponíveis:
-      ${JSON.stringify(availableComorbiditiesList, null, 2)}
-      
-      Condições especiais disponíveis:
-      ${JSON.stringify(availableSpecialConditionsList, null, 2)}
-      
-      Formato esperado: { "comorbidities": ["id1", "id2", ...], "specialConditions": ["id3", "id4", ...] }
-    `;
+    Dada a doença "${name}", retorne um JSON contendo dois arrays:
+    - "comorbidities": IDs das comorbidades que devem ser consideradas grupos de risco.
+    - "specialConditions": IDs das condições especiais que devem ser consideradas grupos de risco.
+    
+    Utilize apenas os registros disponíveis abaixo:
+    
+    Comorbidades:
+    ${JSON.stringify(availableComorbiditiesList, null, 2)}
+    
+    Condições especiais:
+    ${JSON.stringify(availableSpecialConditionsList, null, 2)}
+    
+    Retorne o JSON no formato:
+    { "comorbidities": ["id1", "id2", ...], "specialConditions": ["id3", "id4", ...] }
+  `;
     const riskGroupsCompletion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: riskGroupsPrompt },
         { role: 'user', content: name }
       ],
-      temperature: 0,
       response_format: zodResponseFormat(RiskGroupsSchema, 'riskGroupsSchema')
     });
     const riskGroupsData = riskGroupsCompletion.choices[0].message.parsed;
     if (!riskGroupsData) {
-      return response.status(404).json({ error: "Erro ao retornar os grupos de risco" });
+      return response.status(404).json({ error: "Erro ao gerar os dados iniciais dos grupos de risco" });
     }
+    console.log("Dados dos Grupos de Risco:", riskGroupsData);
 
-    console.log(riskGroupsData);
-
+    /** ======================================================================
+     *  Final Assembly and Saving of Disease Data
+     *  ====================================================================== */
     try {
-      // Cria instância da doença
+      // Create Disease instance
       const disease = new Disease();
       disease.name = name;
       disease.infectedMonitoringDays = diseaseData.infectedMonitoringDays;
       disease.suspectedMonitoringDays = diseaseData.suspectedMonitoringDays;
 
-      // Cria e associa grupos de risco
+      // Set up Risk Groups
       const riskGroups = new RiskGroups();
-      riskGroups.comorbidities = availableComorbidities.filter((comorbidity) => riskGroupsData.comorbidities.includes(comorbidity.id));
-      riskGroups.specialConditions = availableSpecialConditions.filter((specialCondition) => riskGroupsData.specialConditions.includes(specialCondition.id));
+      riskGroups.comorbidities = availableComorbidities.filter(c =>
+        riskGroupsData.comorbidities.includes(c.id)
+      );
+      riskGroups.specialConditions = availableSpecialConditions.filter(s =>
+        riskGroupsData.specialConditions.includes(s.id)
+      );
       const savedRiskGroup = await RiskGroupRepository.save(riskGroups);
       disease.riskGroups = savedRiskGroup;
 
-      disease.symptoms = availableSymptoms.filter((symptom) => symptomIds.includes(symptom.id));
-      disease.alarmSigns = availableSymptoms.filter((symptom) => alarmSignIds.includes(symptom.id));
-      disease.shockSigns = availableSymptoms.filter((symptom) => shockSignIds.includes(symptom.id));
+      // Map symptoms, alarm signs, and shock signs
+      disease.symptoms = availableSymptoms.filter(s => symptomIds.includes(s.id));
+      disease.alarmSigns = availableSymptoms.filter(s => alarmSignIds.includes(s.id));
+      disease.shockSigns = availableSymptoms.filter(s => shockSignIds.includes(s.id));
 
-      // Protocolos de saúde
+      // Map key symptoms with weights
+      const diseaseKeySymptoms = keySymptoms.map((keySymptom: any) => {
+        const symptom = new DiseaseKeySymptom();
+        symptom.weight = keySymptom.weight;
+        symptom.symptomId = keySymptom.id;
+        symptom.diseaseId = disease.id;
+        return symptom;
+      });
+      disease.diseaseKeySymptoms = diseaseKeySymptoms;
+
+      // Health protocols
       if (Array.isArray(diseaseData.healthProtocols)) {
         disease.healthProtocols = diseaseData.healthProtocols.map((protocol: any) => {
           const hp = new HealthProtocol();
@@ -467,7 +551,7 @@ class DiseaseController {
         });
       }
 
-      // Salva a doença com todos os relacionamentos
+      // Save the complete disease record with all associations
       const createdDisease = await DiseaseRepository.save(disease);
       return response.status(201).json(createdDisease);
     } catch (error) {

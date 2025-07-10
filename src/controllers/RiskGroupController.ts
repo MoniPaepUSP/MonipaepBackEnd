@@ -1,14 +1,31 @@
 import { Request, Response } from 'express';
-import { RiskGroupRepository } from 'src/repositories';
+import { ComorbidityRepository, DiseaseRepository, RiskGroupRepository } from 'src/repositories';
+import { In } from 'typeorm';
 
 class RiskGroupController {
 
   async list(request: Request, response: Response) {
-    const { diseaseId } = request.query
+    const { diseaseId } = request.query;
+    if (!diseaseId) {
+      return response.status(400).json({
+        error: "ID da doença não fornecido"
+      });
+    }
+
+    const disease = await DiseaseRepository.findOne({
+      where: {
+        id: String(diseaseId)
+      }
+    });
+    if (!disease) {
+      return response.status(404).json({
+        error: "Doença não encontrada"
+      });
+    }
 
     const riskGroups = await RiskGroupRepository.find({
       where: {
-        diseaseId
+        disease
       },
       relations: ['comorbidities', 'specialConditions'],
     })
@@ -33,10 +50,33 @@ class RiskGroupController {
         error: "Grupo de risco não encontrado"
       });
     }
+    
+    // Validate comorbidities and special conditions IDs.
+    const comorbidities = await ComorbidityRepository.find({
+      where: {
+        id: In(comorbiditiesIds)
+      }
+    });
+    if (comorbidities.length !== comorbiditiesIds.length) {
+      return response.status(404).json({
+        error: "Algumas comorbidades não foram encontradas"
+      });
+    }
+
+    const specialConditions = await ComorbidityRepository.find({
+      where: {
+        id: In(specialConditionsIds)
+      }
+    });
+    if (specialConditions.length !== specialConditionsIds.length) {
+      return response.status(404).json({
+        error: "Algumas condições especiais não foram encontradas"
+      });
+    }
 
     // Map the IDs to objects with only the id field.
-    riskGroup.comorbidities = comorbiditiesIds.map((comorbidityId) => ({ id: comorbidityId }));
-    riskGroup.specialConditions = specialConditionsIds.map((specialConditionId) => ({ id: specialConditionId }));
+    riskGroup.comorbidities = comorbidities;
+    riskGroup.specialConditions = specialConditions;
 
     try {
       await RiskGroupRepository.save(riskGroup);

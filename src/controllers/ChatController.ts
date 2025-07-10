@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
-import { ChatMessage, Patient, Symptom } from "../models";
+import { Response } from "express";
+import { ChatMessage, Patient } from "../models";
 import {
   PatientsRepository,
   SymptomOccurrenceRepository,
@@ -10,39 +10,15 @@ import {
 import { openai } from "src/openai";
 import { z } from "zod";
 import { zodResponseFormat } from "openai/helpers/zod";
-import { DENGUE } from "src/lib/dengueRules";
-import { ChatCompletionMessageParam } from "openai/resources";
-
-const FurtherEvaluationSchema = z.object({
-  hasAlarmSigns: z.boolean(),
-  hasShockSigns: z.boolean(),
-  hasBleeding: z.boolean(),
-});
-
-const EvalueSchema = z.object({
-  concluded: z.boolean(),
-  message: z.string().optional(),
-  isSuspected: z.boolean().optional(),
-  symptoms: z.array(z.string()).optional(),
-  remarks: z.string().optional(),
-});
-
-interface Evaluation {
-  concluded: boolean;
-  message?: string;
-  isSuspected?: boolean;
-  symptoms?: string[];
-  remarks?: string;
-}
+import { In } from "typeorm";
 
 class ChatController {
-
-  async evalue(request: any, response: Response) {
+  async analysis(request: any, response: Response) {
     const { id } = request.tokenPayload;
     const { symptomIds }: { symptomIds: string[] } = request.body;
 
-    // Get the patient
-    const patient: Patient | null = await PatientsRepository.findOne({
+    // 1) Buscar paciente com comorbidades e condições
+    const patient = await PatientsRepository.findOne({
       where: { id },
       relations: ['comorbidities', 'specialConditions']
     });
@@ -50,126 +26,229 @@ class ChatController {
       return response.status(404).json({ error: 'Paciente não encontrado' });
     }
 
+    const patientSymptoms = await SymptomRepository.find({
+      order: {
+        name: "ASC"
+      },
+      where: {
+        id: In(symptomIds)
+      }
+    })
+
     // Get all the diseases and its data
     const diseases = await DiseaseRepository.find({
       order: {
         name: "ASC"
       },
-      relations: [
-        "riskGroups",
-        "riskGroups.comorbidities",
-        "riskGroups.specialConditions",
-        "symptoms",
-        "alarmSigns",
-        "shockSigns",
-        "healthProtocols"],
+      relations: {
+        riskGroups: {
+          comorbidities: true,
+          specialConditions: true,
+        },
+        symptoms: true,
+        alarmSigns: true,
+        shockSigns: true,
+        healthProtocols: true
+      }
     });
 
+    // 4) Scoring
     const probableDiseases = diseases
       .map(disease => {
-        const symptomMatch = disease.symptoms.filter(symptom => symptomIds.includes(symptom.id));
-        const alarmSignMatch = disease.alarmSigns.filter(alarmSign => symptomIds.includes(alarmSign.id));
-        const shockSignMatch = disease.shockSigns.filter(shockSign => symptomIds.includes(shockSign.id));
+        const symptomMatch = disease.symptoms.filter(s => symptomIds.includes(s.id));
+        const alarmMatch = disease.alarmSigns.filter(s => symptomIds.includes(s.id));
+        const shockMatch = disease.shockSigns.filter(s => symptomIds.includes(s.id));
+        const keyMatchScore = disease.diseaseKeySymptoms
+          .filter(ks => symptomIds.includes(ks.symptom.id))
+          .reduce((sum, ks) => sum + ks.weight * 4 /* keySymptomWeight */, 0);
 
-        const isInComorbidityGroup = disease.riskGroups.comorbidities.some(
-          comorbidity => patient.comorbidities.includes(comorbidity)
-        );
-        const isInSpecialConditionGroup = disease.riskGroups.specialConditions.some(
-          specialCondition => patient.specialConditions.includes(specialCondition)
-        );
-        const isInRiskGroup = isInComorbidityGroup || isInSpecialConditionGroup;
+        const inComorbidityGroup = disease.riskGroups?.comorbidities
+          .some(c => patient.comorbidities.some(p => p.id === c.id)) ?? false;
+        const inSpecialGroup = disease.riskGroups?.specialConditions
+          .some(c => patient.specialConditions.some(p => p.id === c.id)) ?? false;
+        const isRiskGroup = inComorbidityGroup || inSpecialGroup;
 
-        // Severity
-        let severity: "leve" | "moderado" | "grave" | "muito grave" = "leve";
-        if (shockSignMatch.length > 0) {
-          severity = "muito grave";
-        } else if (alarmSignMatch.length > 0) {
-          severity = "grave";
-        } else if (symptomMatch.length > 0 && isInRiskGroup) {
-          severity = "moderado";
-        } else if (symptomMatch.length > 0) {
-          severity = "leve";
-        }
+        // pesos básicos
+        const symptomWeight = 1.5;
+        const alarmSignWeight = 2;
+        const shockSignWeight = 3;
+        const keySymptomWeight = 4;
 
-        // Suspicion score
-        const totalDiseaseIndicators = disease.symptoms.length + disease.alarmSigns.length + disease.shockSigns.length;
-        const matchedIndicators = symptomMatch.length + alarmSignMatch.length * 1.5 + shockSignMatch.length * 2;
-        const baseScore = totalDiseaseIndicators === 0 ? 0 : matchedIndicators / totalDiseaseIndicators;
-        const suspicionScore = Math.min(baseScore + (isInRiskGroup ? 0.2 : 0), 1);
+        // total possível agora inclui key-symptoms
+        const totalPos =
+          disease.symptoms.length * symptomWeight +
+          disease.alarmSigns.length * alarmSignWeight +
+          disease.shockSigns.length * shockSignWeight +
+          disease.diseaseKeySymptoms.length * keySymptomWeight;
 
-        console.log(disease.name, suspicionScore);
+        // peso encontrado
+        const matched =
+          symptomMatch.length * symptomWeight +
+          alarmMatch.length * alarmSignWeight +
+          shockMatch.length * shockSignWeight +
+          keyMatchScore;
+
+        const baseScore = totalPos === 0 ? 0 : matched / totalPos;
+        const riskBonus = isRiskGroup ? 0.1 : 0;
+        const suspicionScore = Math.min(baseScore + riskBonus, 1);
 
         return {
-          disease,
-          severity,
+          id: disease.id,
+          name: disease.name,
+          isPatientInRiskGroup: isRiskGroup,
           suspicionScore
         };
       })
-      .filter(d => d.suspicionScore > 0.2);
+      .filter(d => d.suspicionScore >= 0.3);
 
-    return response.status(200).json({ probableDiseases });
+    // 5) Persistir ocorrência
+    const occurrence = SymptomOccurrenceRepository.create({
+      patientId: id,
+      symptoms: patientSymptoms,
+      chat: probableDiseases.length > 0,
+      registeredDate: new Date(),
+      probableDiseases
+    });
+    await SymptomOccurrenceRepository.save(occurrence);
+
+    return response.status(200).json({ symptomOccurrence: occurrence });
   }
 
   async chat(request: any, response: Response) {
     const { id } = request.tokenPayload;
 
-    // Fetch the patient
+    // Buscar o paciente
     const patient: Patient | null = await PatientsRepository.findOne({ where: { id } });
     if (!patient) {
       return response.status(404).json({ error: 'Paciente não encontrado' });
     }
 
-    // The message sent by the user
-    let { text, symptomOccurrenceId }: {
+    // Dados enviados na mensagem do usuário
+    let { text, symptomOccurrenceId
+    }: {
       text: string;
-      symptomOccurrenceId?: string;
+      symptomOccurrenceId: string;
     } = request.body;
-    console.log(request.body);
 
-    if (!symptomOccurrenceId) {
-      // Assign the new conversation ID
-      symptomOccurrenceId = await createSymptomOccurrence(id);
-      await createChatMessage(symptomOccurrenceId, "user", text);
-    } else {
-      // Save the message to the chat history
-      await saveChatMessage(symptomOccurrenceId, "user", text);
+    // Buscar a ocorrência de sintomas
+    const symptomOccurrence = await SymptomOccurrenceRepository.findOne({
+      where: { id: symptomOccurrenceId }
+    });
+    if (!symptomOccurrence) {
+      return response.status(403).json({ error: "Ocorrência de sintoma não encontrada" });
+    } else if (!symptomOccurrence.chat) {
+      return response.status(403).json({ error: "Não existe chat dessa ocorrência" });
     }
 
+    // Salvar mensagem do usuário
+    await saveChatMessage(symptomOccurrenceId, "user", text);
+
+    // Buscar histórico da conversa
+    const conversationHistory: ChatMessage[] = await ChatMessageRepository.find({
+      where: { symptomOccurrenceId },
+    });
+    const conversationHistoryFormatted = conversationHistory.map(chat => ({
+      role: chat.role as "user" | "assistant",
+      content: chat.message,
+    }));
+
     try {
-      const evaluation: Evaluation = await evalueDengueCase(patient.name, patient.birthdate, symptomOccurrenceId);
-      if (!evaluation.concluded) {
-        if (!evaluation.message) {
-          throw new Error('Erro ao avaliar caso de dengue');
-        }
-        const chatMessage = await saveChatMessage(symptomOccurrenceId, "assistant", evaluation.message);
+      /* 
+         ======= Padrão Híbrido =======
+         1. O prompt do "system" carrega instruções gerais, a lista de doenças prováveis e outras informações relevantes.
+         2. A lista de mensagens traz o histórico real da conversa.
+         Dessa forma, o modelo tem o contexto necessário em ambos os níveis.
+      */
+
+      // Schema para validação da avaliação inicial
+      const EvaluationSchema = z.object({
+        concluded: z.boolean(),
+        message: z.string(),
+      });
+
+      // Monta o prompt de sistema com as instruções gerais e informações de apoio
+      const systemPrompt = `
+      Você é um assistente clínico especializado em triagem de doenças tropicais.
+      Siga as diretrizes clínicas e seja empático ao conversar com o paciente.
+      
+      Lista de doenças prováveis (já avaliadas previamente):
+      ${JSON.stringify(symptomOccurrence.probableDiseases, null, 2)}
+      
+      Utilize o histórico da conversa para formular perguntas claras e objetivas que ajudem a confirmar ou descartar hipóteses diagnósticas. Faça perguntas simples, com no máximo 2 perguntas.
+      Ao final, retorne um JSON no seguinte formato:
+      {
+        "concluded": <true|false>,
+        "message": "<mensagem para o paciente>"
+      }
+    `;
+
+      // Stage 1: Geração inicial da mensagem utilizando o padrão híbrido
+      const initialChatCompletion = await openai.beta.chat.completions.parse({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Nome do paciente: ${patient.name}` },
+          ...conversationHistoryFormatted,
+        ],
+        temperature: 0.1,
+        response_format: zodResponseFormat(EvaluationSchema, 'initialEvaluation'),
+      });
+      const initialEvaluation = initialChatCompletion.choices[0].message.parsed;
+      if (!initialEvaluation) {
+        throw new Error('Erro ao avaliar a conversa inicial');
+      }
+      console.log("Stage 1 - Resposta inicial do chat:", initialEvaluation.message);
+
+      // Stage 2: Revisão e ajuste da resposta inicial utilizando o mesmo padrão híbrido
+      const systemPromptReview = `
+      Você recebeu a seguinte resposta inicial para o chat:
+      "${initialEvaluation.message}"
+      
+      Reavalie essa resposta considerando o contexto clínico, o histórico da conversa e a lista de doenças prováveis:
+      ${JSON.stringify(symptomOccurrence.probableDiseases, null, 2)}
+      
+      Ajuste a mensagem para garantir clareza, objetividade e aderência às diretrizes clínicas.
+      Certifique-se de que não contenha mais de 2 perguntas.
+      Se a informação for suficiente para concluir o atendimento, defina "concluded" como true.
+      Retorne um JSON no mesmo formato:
+      {
+        "concluded": <true|false>,
+        "message": "<mensagem revisada para o paciente>"
+      }
+    `;
+      const reviewChatCompletion = await openai.beta.chat.completions.parse({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPromptReview },
+          // Incluímos a resposta inicial para o modelo revisar
+          { role: 'assistant', content: initialEvaluation.message },
+          // Mantemos também parte do histórico se necessário
+          ...conversationHistoryFormatted,
+        ],
+        temperature: 0.1,
+        response_format: zodResponseFormat(EvaluationSchema, 'reviewEvaluation'),
+      });
+      const reviewedEvaluation = reviewChatCompletion.choices[0].message.parsed;
+      if (!reviewedEvaluation) {
+        throw new Error('Erro ao revisar a mensagem do chat');
+      }
+      console.log("Stage 2 - Mensagem do chat revisada:", reviewedEvaluation.message);
+
+      // Salvar a mensagem final do assistente
+      const chatMessage = await saveChatMessage(symptomOccurrenceId, "assistant", reviewedEvaluation.message);
+
+      // Se o chat não estiver concluído, retorna apenas a mensagem para continuar a conversa
+      if (!reviewedEvaluation.concluded) {
         return response.status(200).json({ chatMessage });
       }
 
-      const { isSuspected, symptoms, remarks } = evaluation;
-      console.log("Suspeito: ", isSuspected, ", Sintomas: ", symptoms, ", Observações:", remarks);
-      await updateSymptomOccurrence(symptomOccurrenceId, symptoms!, remarks!);
-
-      const furtherEval = await furtherEvaluation(isSuspected!, [], [], symptoms!, remarks);
-      console.log(furtherEval);
-
-      const chatMessage = await saveChatMessage(symptomOccurrenceId, "assistant", furtherEval);
+      // Caso o chat esteja concluído, pode-se seguir para uma avaliação final se necessário...
+      // (Aqui, o exemplo segue retornando a mensagem final)
       return response.status(200).json({ chatMessage });
-
     } catch (error: any) {
-      return response.status(500).json({
-        error: "Erro no servidor: " + error
-      })
+      return response.status(500).json({ error: "Erro no servidor: " + error });
     }
   }
-}
-
-async function createChatMessage(symptomOccurrenceId: string, role: "user" | "assistant", message: string): Promise<ChatMessage> {
-  const chatMessage = ChatMessageRepository.create({
-    symptomOccurrenceId,
-    role,
-    message,
-  });
-  return await ChatMessageRepository.save(chatMessage);
 }
 
 async function saveChatMessage(symptomOccurrenceId: string, role: "user" | "assistant", message: string): Promise<ChatMessage> {
@@ -179,172 +258,6 @@ async function saveChatMessage(symptomOccurrenceId: string, role: "user" | "assi
     message,
   });
   return await ChatMessageRepository.save(chatMessage);
-}
-
-async function createSymptomOccurrence(patientId: string): Promise<string> {
-  const symptomOccurrence = SymptomOccurrenceRepository.create({
-    patientId,
-    registeredDate: new Date(),
-  });
-  await SymptomOccurrenceRepository.save(symptomOccurrence);
-  return symptomOccurrence.id;
-}
-
-async function updateSymptomOccurrence(occurrenceId: string, symptoms: string[], remarks: string): Promise<void> {
-  await SymptomOccurrenceRepository.update(occurrenceId, {
-    symptoms: symptoms.join(', '),
-    remarks,
-  });
-}
-
-async function furtherEvaluation(
-  isSuspected: boolean,
-  comorbidities: string[],
-  riskGroups: string[],
-  symptoms: string[],
-  remarks?: string): Promise<string> {
-
-  if (!isSuspected)
-    return 'Você não é um caso suspeito de dengue.';
-
-  const systemContent = `Analise APENAS fatos presentes:
-    Sinais de alarme (${DENGUE.ALARM_SIGNS}): SIM/NÃO
-    Sinais de choque (${DENGUE.SHOCK_SIGNS}): SIM/NÃO
-    Sangramento: SIM/NÃO
-
-    Responda APENAS com o formato JSON especificado`;
-
-  // Sistema de regras para identificar grupo do paciente
-  const completion = await openai.beta.chat.completions.parse({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemContent },
-      { role: 'user', content: `Sintomas: ${symptoms.join(', ')}; Observações: ${remarks}` },
-    ],
-    temperature: 0.1,
-    response_format: zodResponseFormat(FurtherEvaluationSchema, 'furtherEvaluation'),
-  })
-
-  const furtherEvaluation = completion.choices[0].message.parsed;
-  if (!furtherEvaluation) {
-    throw new Error('Erro ao avaliar caso de dengue');
-  }
-
-  console.log(furtherEvaluation);
-
-  const hasComorbidities = comorbidities.length > 0;
-  const isRiskGroup = riskGroups.length > 0;
-  const hasAlarmSigns = furtherEvaluation.hasAlarmSigns;
-  const hasShockSigns = furtherEvaluation.hasShockSigns;
-  const hasBleeding = furtherEvaluation.hasBleeding;
-
-  if (hasShockSigns) {
-    return 'D';
-  }
-
-  if (hasAlarmSigns) {
-    return 'C';
-  }
-
-  if (hasBleeding || hasComorbidities || isRiskGroup) {
-    return 'B';
-  }
-
-  return 'A';
-}
-
-// Função para avaliar caso de dengue
-// Os sintomas já foram extraídos anteriormente, e guardados no banco de dados
-async function evalueDengueCase(
-  name: string,
-  birthdate: Date,
-  symptomOccurrenceId: string,
-) {
-  const systemPrompt = `**Você é um classificador médico objetivo para dengue, que conversa diretamente com o paciente**  
-Seu objetivo é analisar os fatos clinicamente relevantes a partir da conversa com o paciente e classificar o caso com base nos critérios da OMS para dengue.  
-
-### **Critérios de Classificação da OMS para Dengue:**  
-1. **Caso suspeito de dengue:**  
-   - Febre (duração de 2 a 7 dias) **E** pelo menos **2** dos seguintes sintomas:  
-     - Náuseas/vômitos  
-     - Exantema  
-     - Mialgia  
-     - Artralgia  
-     - Cefaleia  
-     - Dor retroorbital  
-2. **Crianças em área endêmica:**  
-   - Febre sem foco aparente pode ser suficiente para suspeita clínica.  
-
-### **Instruções de resposta:**  
-1. **Se for possível concluir a classificação:**  
-   - Retorne um objeto JSON com:  
-     \`\`\`json
-     {
-       "concluded": true,
-       "isSuspected": (true ou false),
-       "symptoms": ["sintoma1", "sintoma2", ...],
-       "remarks": "Observações relevantes sobre duração, intensidade ou frequência dos sintomas."
-     }
-     \`\`\`
-2. **Se não for possível concluir:**  
-   - Retorne um objeto JSON solicitando mais informações:  
-     \`\`\`json
-     {
-       "concluded": false,
-       "message": "Pergunta objetiva solicitando uma informação específica."
-     }
-     \`\`\`
-3. **Importante:**  
-   - **Faça apenas uma pergunta por vez** quando precisar de mais informações.  
-   - **Não inclua explicações, conselhos ou interpretações adicionais.**  
-`;
-
-  // Not using symptom history for now
-
-  // Fetch the conversation history
-  const conversationHistory: ChatMessage[] = await ChatMessageRepository.find({
-    where: { symptomOccurrenceId },
-  });
-
-  // Format the conversation history
-  const symptomsHistoryFormatted: ChatCompletionMessageParam[] = conversationHistory.map((chat) => ({
-    role: chat.role as "user" | "assistant",
-    content: chat.message,
-  }));
-  const age = new Date().getFullYear() - new Date(birthdate).getFullYear();
-
-  // Call the OpenAI API
-  const completion = await openai.beta.chat.completions.parse({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Nome do paciente: ${name}, Idade: ${age}` },
-      ...symptomsHistoryFormatted,
-    ],
-    temperature: 0.1,
-    response_format: zodResponseFormat(EvalueSchema, 'evalueDengueCase'),
-  });
-
-  // Parse the response
-  const evalue = completion.choices[0].message.parsed;
-  if (!evalue) {
-    throw new Error('Erro ao avaliar caso de dengue');
-  }
-
-  // If the evaluation is not concluded, return the message
-  if (!evalue.concluded) {
-    return {
-      concluded: false,
-      message: evalue.message,
-    };
-  } else {
-    return {
-      concluded: true,
-      isSuspected: evalue.isSuspected,
-      symptoms: evalue.symptoms,
-      remarks: evalue.remarks,
-    }
-  }
 }
 
 export { ChatController };

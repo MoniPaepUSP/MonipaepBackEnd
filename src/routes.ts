@@ -58,7 +58,7 @@ router.delete("/permissions/:id", jwt.authMiddleware, jwt.localAdminMiddleware, 
 
 // SystemUser Routes
 router.post("/systemuser/signup", systemUserController.create) //geral *login ira verificar se esta autorizado
-router.post("/systemuser/login", systemUserController.login)//geral
+router.get("/systemuser/login", systemUserController.login)//geral
 router.get("/systemuser", jwt.authMiddleware, jwt.systemUserMiddleware, systemUserController.list)//funcionario autenticado*
 router.get("/systemuser/me", jwt.authMiddleware, jwt.systemUserMiddleware, systemUserController.getOneWithToken)//funcionario autenticado
 router.put("/systemuser/:id", jwt.authMiddleware, jwt.systemUserMiddleware, systemUserController.alterOne)//funcionario autenticado*
@@ -164,7 +164,7 @@ router.delete("/specialcondition/:id", jwt.authMiddleware, jwt.localAdminMiddlew
 
 // Chat Routes
 router.post("/chat", jwt.authMiddleware, chatController.chat) // geral autenticado*
-router.post("/chat/evalue", jwt.authMiddleware, chatController.evalue)
+router.post("/chat/analysis", jwt.authMiddleware, chatController.analysis)
 router.get("/chat/:occurrence_id", jwt.authMiddleware, chatMessageController.getMessagesFromOccurrence) // geral autenticado*
 
 export { router }

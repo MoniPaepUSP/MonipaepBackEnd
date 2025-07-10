@@ -1,5 +1,6 @@
 import { Column, Entity, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Disease } from "./Disease";
+import { SymptomOccurrence } from "./SymptomOccurrence";
 
 @Entity("symptom")
 class Symptom {
@@ -14,6 +15,9 @@ class Symptom {
 
   @ManyToMany(() => Disease, (disease) => disease.symptoms, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   diseases: Disease[];
+
+  @ManyToMany(() => SymptomOccurrence, (symptomOccurrence) => symptomOccurrence.symptoms, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  symptomOccurrences: SymptomOccurrence[];
 }
 
 export { Symptom }

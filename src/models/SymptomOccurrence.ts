@@ -4,18 +4,28 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-  OneToOne,
+  ManyToMany,
+  JoinTable,
 } from "typeorm";
 import { Patient } from "./Patient";
 import { DiseaseOccurrence } from "./DiseaseOccurrence";
+import { Symptom } from "./Symptom";
 
 @Entity("symptom_occurrence")
 export class SymptomOccurrence {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: "text", name: "symptoms", nullable: true })
-  symptoms: string | null;
+  @Column({ type: "boolean" })
+  chat: boolean;
+
+  @ManyToMany(() => Symptom, (symptom) => symptom.symptomOccurrences, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinTable({
+    name: "symptom_occurrence_symptoms",
+    joinColumn: { name: "symptom_occurrence_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "symptom_id", referencedColumnName: "id" }
+  })
+  symptoms: Symptom[];
 
   @Column({ type: "text", name: "remarks", nullable: true })
   remarks: string | null;
@@ -36,4 +46,12 @@ export class SymptomOccurrence {
   @ManyToOne(() => DiseaseOccurrence, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "disease_occurrence_id" })
   diseaseOccurrence: DiseaseOccurrence | null;
+
+  @Column({ type: "jsonb", name: "probable_diseases" })
+  probableDiseases: {
+    id: string;
+    name: string;
+    isPatientInRiskGroup: boolean;
+    suspictionScore: number;
+  }[];
 }

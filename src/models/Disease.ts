@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne,
 import { HealthProtocol } from "./HealthProtocol";
 import { Symptom } from "./Symptom";
 import { RiskGroups } from "./RiskGroups";
+import { DiseaseKeySymptom } from "./DiseaseKeySymptom";
 
 @Entity("disease")
 export class Disease {
@@ -44,6 +45,12 @@ export class Disease {
     inverseJoinColumn: { name: "symptom_id", referencedColumnName: "id" }
   })
   shockSigns: Symptom[];
+
+  @OneToMany(() => DiseaseKeySymptom, (diseaseKeySymptom) => diseaseKeySymptom.disease, {
+    cascade: true,
+    eager: true,
+  })
+  diseaseKeySymptoms: DiseaseKeySymptom[];
 
   @OneToMany(() => HealthProtocol, (protocol) => protocol.disease, {
     cascade: true, onDelete: "CASCADE", onUpdate: "CASCADE"

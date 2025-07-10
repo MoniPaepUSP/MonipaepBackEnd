@@ -2,12 +2,12 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Clear data from specific tables
-TRUNCATE TABLE usm, patient, system_user, permissions, symptom, appointment, vaccines, comorbidity, special_condition, faq, faq_group RESTART IDENTITY CASCADE;
+TRUNCATE TABLE usm, patient, system_user, permissions, symptom, appointment, vaccines, comorbidity, special_condition, faq, faq_group, disease RESTART IDENTITY CASCADE;
 
 -- Insert one user into the patients table
 -- password: Password@123
 INSERT INTO patient (
-    id, name, password, cpf, email, gender, phone, last_gps_location, allow_sms, work_address, home_address, neighborhood, house_number, has_health_plan, birthdate, status, active_account, created_at, updated_at
+    id, name, password, cpf, email, gender, phone, birthdate, cep, state, city, neighborhood, street, house_number, allow_sms, has_health_plan, status, active_account
 )
 VALUES (
     '5b88a57f-55d0-44cb-9bb0-504d82d368c5',  -- id
@@ -17,18 +17,17 @@ VALUES (
     'user@example.com',                      -- email
     'masculino',                             -- gender
     '(11) 91111-1111',                       -- phone
-    NULL,                                    -- lastGPSLocation (NULL because it's null)
-    FALSE,                                   -- allowSMS
-    NULL,                                    -- workAddress (NULL because it's null)
-    '13560-515',                             -- homeAddress
-    'Jardim Lutfalla',                       -- neighborhood
-    394,                                     -- houseNumber
-    FALSE,                                   -- hasHealthPlan
     '2001-01-01',                            -- birthdate (ISO format for date)
+    '13560515',                              -- cep
+    'SP',                                    -- state
+    'São Carlos',                            -- city
+    'Jardim Lutfalla',                       -- neighborhood
+    'Rua Jacinto Favoreto',                  -- street
+    394,                                     -- houseNumber
+    FALSE,                                   -- allowSMS
+    FALSE,                                   -- hasHealthPlan
     'Saudável',                              -- status
-    TRUE,                                    -- activeAccount
-    '2024-10-14T15:57:45.818Z',              -- createdAt (timestamp)
-    '2024-10-14T15:57:45.818Z'               -- lastUpdate (timestamp)
+    TRUE                                     -- activeAccount
 );
 
 -- Insert some example data into the usm table
@@ -223,19 +222,28 @@ VALUES
   ('Rigidez na nuca', 'Dificuldade ou dor ao movimentar o pescoço'),
   ('Dificuldade para engolir', 'Sensação de bloqueio, dor ou incômodo ao deglutir'),
   ('Tremores', 'Movimentos involuntários e repetitivos de partes do corpo'),
-  ('Batimentos cardíacos acelerados', 'Aumento da frequência dos batimentos cardíacos'),
   ('Palpitações', 'Sensação de batimentos cardíacos irregulares ou fortes'),
   ('Dor no peito', 'Desconforto torácico, podendo ser leve ou intenso'),
   ('Respiração ofegante', 'Respiração rápida e curta, associada a esforço respiratório'),
   ('Inchaço nos gânglios linfáticos', 'Aumento palpável dos linfonodos, geralmente no pescoço, axilas ou virilha'),
   ('Pele amarelada', 'Coloração amarela da pele e mucosas, comum em casos de icterícia'),
   ('Sensação de peso nas pernas', 'Desconforto ou fadiga nas pernas, principalmente ao final do dia'),
-  ('Sudorese noturna', 'Transpiração excessiva durante o sono'),
+  ('Sudorese excessiva', 'Transpiração em excesso, mesmo em ambientes com temperaturas controladas'),
   ('Coceira na pele', 'Sensação de prurido que leva ao ato de coçar'),
   ('Rouquidão', 'Alteração na voz, tornando-a mais áspera ou fraca'),
   ('Sensação de opressão no peito', 'Sensação de peso ou pressão na região torácica'),
-  ('Desânimo', 'Falta de motivação, energia ou interesse pelas atividades diárias'),
   ('Pele fria e úmida', 'Sensação tátil de frieza e suor na pele, comum em estados de choque térmico'),
-  ('Falta de ar ao deitar', 'Dificuldade respiratória em posição horizontal'),
   ('Dor nos olhos', 'Sensação dolorosa ou desconforto ocular'),
-  ('Espasmos musculares', 'Contrações involuntárias e súbitas dos músculos');
+  ('Espasmos musculares', 'Contrações involuntárias e súbitas dos músculos'),
+  ('Extremidades frias', 'Sensação de frio em mãos e pés, mesmo em ambiente aquecido'),
+  ('Fraqueza extrema', 'Sensação intensa de cansaço e falta de energia para realizar atividades simples'),
+  ('Letargia e/ou irritabilidade', 'Estado de sonolência excessiva ou mudança de humor com agitação ou irritação'),
+  ('Taquicardia', 'Aumento da frequência dos batimentos cardíacos, geralmente acima de 100 bpm em repouso'),
+  ('Confusão', 'Dificuldade para pensar com clareza, desorientação ou falta de atenção'),
+  ('Palidez', 'Coloração mais clara da pele, especialmente no rosto, lábios ou mãos'),
+  ('Sangue nas fezes', 'Presença de sangue visível nas evacuações, podendo ser vermelho vivo ou escuro'),
+  ('Febre repentina', 'Aumento rápido da temperatura corporal, geralmente acompanhado de calafrios ou mal-estar'),
+  ('Dor nas costas', 'Desconforto ou dor localizada na região posterior do tronco'),
+  ('Convulsões', 'Movimentos corporais involuntários e descontrolados, geralmente acompanhados de perda de consciência'),
+  ('Olhos amarelados', 'Coloração amarelada na parte branca dos olhos, geralmente associada a problemas no fígado'),
+  ('Sangramento na pele', 'Pequenos pontos vermelhos ou manchas roxas na pele causadas por sangramentos sob a pele');
