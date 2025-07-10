@@ -32,55 +32,28 @@ Ter instalado:
   
 #### Para rodar em produção
 
-Ajeite os dados e siga os passos:
-- Rode o projeto com: `docker compose up -d`
-- Rode as migrations com: `docker compose exec app npm run migration:run`
-- Insira os dados de exemplo com `docker compose exec -T postgres psql -U postgres -d monipaep < ./src/database/populate/populate_db.sql`
-- Caso queira terminar, rode: `docker compose down`
+O projeto está configurado para rodar em produção com docker compose. Ele é configurado para rodar na porta 3000, e usamos o **nginx** para fazer o **proxy reverso**. Os comandos úteis na produção são:
 
-#### Para rodar migrations:
+Siga os passos:
+- `docker compose -f docker-compose.prod.yaml build` para buildar o projeto (ele criará uma imagem nova do projeto). Tome cuidado pois ele não deleta a imagem antiga, então você terá que deletar manualmente.
+- `docker compose -f docker-compose.prod.yaml up -d` para rodar o projeto em produção.
+- Rode as migrations com: `docker compose exec app npm run migration:run`
+- Insira os dados iniciais com `docker compose exec -T postgres psql -U postgres -d monipaep < ./src/database/populate/populate_db.sql`
+- `docker compose -f docker-compose.prod.yaml down` para terminar o projeto.
+
+#### Para gerar migrations:
 - `npm run migration:generate` (desenvolvimento)
 - `docker compose exec app npm run migration:generate` (produção)
 
-<!-- ## 💬 Funcionalidades até o momento
-
-<ul>
-
-<li>Gerenciamento de permissões por meio de JWT e refresh tokens</li>
-
-<li>Gerenciamento de Pacientes</li>
-
-<li>Gerenciamento de funcionários</li>
-
-<li>Gerenciamento de Sintomas</li>
-
-<li>Gerenciamento de Doenças</li>
-
-<li>Gerenciamento de Protocólos de Saúde</li>
-
-<li>Gerenciamento de Unidades de Saúde</li>
-
-<li>Gerenciamento de Perguntas Frequentes</li>
-
-<li>Gerenciamento de Vacinas</li>
-
-</ul> -->
-
-  
-
 ## Tecnologias utilizadas
 
-  
-
 <ul>
-	<li>Base de Dados: PostgreeSQL
-	<li>Linguagem de programação: Typescript
-	<li>ORM utilizado: TypeORM
 	<li>NodeJS
+	<li>Linguagem de programação: Typescript
+	<li>Base de Dados: PostgreeSQL
+	<li>ORM utilizado: TypeORM
 	<li>Tipo de commit utilizado: Commitizen
 </ul>
-
-  
 
 ## Padrão Commitizen
 
