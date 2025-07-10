@@ -1,0 +1,226 @@
+{
+  "name": "dengue",
+  "infectedMonitoringDays": 14,
+  "suspectedMonitoringDays": 10,
+  "riskGroups": {
+    "comorbidities": [
+      {
+        "id": "de4bb18b-d238-4d07-8f12-a0e1993c151e",
+        "name": "Diabetes mellitus",
+        "description": "Doença metabólica crônica caracterizada por hiperglicemia persistente"
+      },
+      {
+        "id": "ffaceeef-cff6-406a-bb28-b788f6d0fbd1",
+        "name": "Hipertensão arterial sistêmica",
+        "description": "Doença caracterizada pela elevação sustentada da pressão arterial"
+      },
+      {
+        "id": "da61a960-c4cd-45f1-91d2-9d21b4e7969a",
+        "name": "Doença cardiovascular",
+        "description": "Conjunto de condições que afetam o coração e os vasos sanguíneos"
+      },
+      {
+        "id": "63e42164-336d-413e-acba-b71849b404ca",
+        "name": "Doença pulmonar obstrutiva crônica (DPOC)",
+        "description": "Condição respiratória crônica que dificulta o fluxo de ar nos pulmões"
+      },
+      {
+        "id": "bbfadc52-6e56-4f1e-9557-d233bbd8beaf",
+        "name": "Obesidade grau II ou superior",
+        "description": "Excesso de gordura corporal com índice de massa corporal (IMC) ≥ 35 kg/m²"
+      },
+      {
+        "id": "62ab6338-16a4-4db4-9f0f-66008d5cf313",
+        "name": "Doença renal crônica",
+        "description": "Comprometimento progressivo e irreversível da função renal"
+      },
+      {
+        "id": "daa2c2dd-6d50-481a-8882-9ee1870ef88c",
+        "name": "Insuficiência cardíaca",
+        "description": "Condição em que o coração não consegue bombear sangue adequadamente"
+      }
+    ],
+    "specialConditions": [
+      {
+        "id": "ef75939c-12fa-4341-98f1-3d656af1e057",
+        "name": "Criança menor de 5 anos",
+        "description": "Indivíduo com idade inferior a 5 anos"
+      },
+      {
+        "id": "1a873772-092c-4153-b118-90c674f1a457",
+        "name": "Adulto com 60 anos ou mais",
+        "description": "Indivíduo com 60 anos de idade ou mais"
+      },
+      {
+        "id": "4cf5dbe1-bed8-4e1d-81a0-e05faf3740f6",
+        "name": "Gestante",
+        "description": "Mulher grávida"
+      },
+      {
+        "id": "6ef7e128-63fc-4c60-9dae-b1d84f07b131",
+        "name": "Gestante de alto risco",
+        "description": "Gestante com condições clínicas que aumentam o risco gestacional"
+      }
+    ],
+    "id": "55299898-cfe0-4d9f-9906-0e4ed647ec94"
+  },
+  "symptoms": [
+    {
+      "id": "d950a1ac-8b55-4c54-9b67-de56ba71065b",
+      "name": "Febre",
+      "description": "Aumento anormal da temperatura corporal, geralmente acima de 37,8°C"
+    },
+    {
+      "id": "92b46584-3e53-40b3-b1cf-d7393a23d941",
+      "name": "Calafrios",
+      "description": "Sensação súbita de frio acompanhada de tremores musculares"
+    },
+    {
+      "id": "c8f5e4e0-4815-40b1-9bf2-0c9dd759ce48",
+      "name": "Dor de cabeça",
+      "description": "Sensação dolorosa ou latejante na região da cabeça"
+    },
+    {
+      "id": "7328fea7-ba24-4f88-81ea-49a483b232bd",
+      "name": "Cansaço",
+      "description": "Sensação persistente de fadiga física ou mental"
+    },
+    {
+      "id": "bd7e63eb-2d83-4085-b76b-85117a945691",
+      "name": "Dores musculares",
+      "description": "Desconforto ou dor nos músculos, com ou sem sensibilidade ao toque"
+    },
+    {
+      "id": "a3ac6ca5-c0d3-4a58-9879-5e155ec03209",
+      "name": "Erupções cutâneas",
+      "description": "Lesões na pele, como bolhas, vergões ou vermelhidão"
+    },
+    {
+      "id": "deb1d64f-2eb1-4abb-a0f6-12ca20d653af",
+      "name": "Náusea",
+      "description": "Sensação de enjoo ou vontade de vomitar"
+    },
+    {
+      "id": "944aad0e-50a8-42e3-a66b-7c5828282674",
+      "name": "Vômito",
+      "description": "Expulsão forçada do conteúdo do estômago pela boca"
+    },
+    {
+      "id": "7d867779-e652-4f65-a9a3-0a8ac51ad181",
+      "name": "Dor nas articulações",
+      "description": "Dor ou rigidez nas juntas do corpo"
+    }
+  ],
+  "alarmSigns": [
+    {
+      "id": "944aad0e-50a8-42e3-a66b-7c5828282674",
+      "name": "Vômito",
+      "description": "Expulsão forçada do conteúdo do estômago pela boca"
+    },
+    {
+      "id": "84c6553b-cfb8-49a8-b1da-c7c84fe6915d",
+      "name": "Dor abdominal",
+      "description": "Desconforto ou dor na região do abdômen"
+    },
+    {
+      "id": "971e8a81-7235-402a-893e-9ac6cc27d3dd",
+      "name": "Confusão mental",
+      "description": "Estado de desorientação, dificuldade de concentração ou raciocínio"
+    },
+    {
+      "id": "8cae4f24-df40-420d-bda6-2b15fa5b5d36",
+      "name": "Sangramento nasal",
+      "description": "Perda de sangue pelas narinas"
+    }
+  ],
+  "shockSigns": [
+    {
+      "id": "971e8a81-7235-402a-893e-9ac6cc27d3dd",
+      "name": "Confusão mental",
+      "description": "Estado de desorientação, dificuldade de concentração ou raciocínio"
+    },
+    {
+      "id": "9f239c18-4002-448a-80a6-5237f4264115",
+      "name": "Tontura",
+      "description": "Sensação de instabilidade, vertigem ou desequilíbrio"
+    },
+    {
+      "id": "7219c14a-7be4-44bf-9979-b3b447927df8",
+      "name": "Sensação de desmaio",
+      "description": "Percepção iminente de perda da consciência"
+    },
+    {
+      "id": "4f631686-2c8a-448a-817a-f03c817a2ba8",
+      "name": "Batimentos cardíacos acelerados",
+      "description": "Aumento da frequência dos batimentos cardíacos"
+    },
+    {
+      "id": "e1c64e60-2f4f-43b4-b751-678a16142253",
+      "name": "Pele fria e úmida",
+      "description": "Sensação tátil de frieza e suor na pele, comum em estados de choque térmico"
+    }
+  ],
+  "healthProtocols": [
+    {
+      "severity": "leve",
+      "instructions": "Manter repouso e evitar esforço físico intenso.",
+      "id": "a0b1a1a4-9628-4c4f-8788-a7708df48e92"
+    },
+    {
+      "severity": "leve",
+      "instructions": "Hidratar-se bem com água e soluções de reidratação.",
+      "id": "c8c355d9-44e9-4869-8689-213047364cfc"
+    },
+    {
+      "severity": "leve",
+      "instructions": "Controlar a febre com antipiréticos conforme orientação médica.",
+      "id": "3682c26d-5ba5-4d79-aed2-4eb0538f606f"
+    },
+    {
+      "severity": "moderado",
+      "instructions": "Monitorar sinais de alarme, como dor abdominal intensa e vômitos persistentes.",
+      "id": "6bbcf046-889f-4db6-8321-298dcf3b6742"
+    },
+    {
+      "severity": "moderado",
+      "instructions": "Consultar um médico se os sintomas se agravarem ou surgirem novos sinais.",
+      "id": "fffdd0fd-a5ea-46a8-b8cc-54f5b04048c2"
+    },
+    {
+      "severity": "moderado",
+      "instructions": "Realizar exames laboratoriais para avaliar contagem de plaquetas e hematócrito.",
+      "id": "df87afaf-7d8d-472d-ba2c-2939b15093b1"
+    },
+    {
+      "severity": "grave",
+      "instructions": "Buscar atendimento médico imediatamente se houver sinais de sangramento ou hipotensão.",
+      "id": "589f9ac4-e2be-45a4-aa3f-e89a4c7bf801"
+    },
+    {
+      "severity": "grave",
+      "instructions": "Realizar monitoramento contínuo dos sinais vitais e exames laboratoriais.",
+      "id": "6c65842f-a3c7-4bab-8359-358f357fc427"
+    },
+    {
+      "severity": "grave",
+      "instructions": "Iniciar reposição volêmica sob supervisão médica para evitar complicações.",
+      "id": "30d7f163-05f4-4ee5-865e-ea4ae9ff4b52"
+    },
+    {
+      "severity": "muito grave",
+      "instructions": "Encaminhar para internação hospitalar para monitoramento intensivo.",
+      "id": "a3b8246d-66e5-4efd-ad2f-b8e7440cc525"
+    },
+    {
+      "severity": "muito grave",
+      "instructions": "Administrar fluidos intravenosos e realizar suporte hemodinâmico conforme necessário.",
+      "id": "5b45a7af-1b4d-4fde-a601-2c164a080e4a"
+    },
+    {
+      "severity": "muito grave",
+      "instructions": "Realizar acompanhamento em unidade de terapia intensiva para cuidados avançados.",
+      "id": "6b944b73-87d1-4f94-a16b-45ad23d67722"
+    }
+  ],
+  "id": "70606030-1a33-4b72-88ec-d6e89e47f1d0"
+}

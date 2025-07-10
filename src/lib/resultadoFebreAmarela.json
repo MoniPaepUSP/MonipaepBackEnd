@@ -1,0 +1,226 @@
+{
+  "name": "febre amarela",
+  "infectedMonitoringDays": 14,
+  "suspectedMonitoringDays": 7,
+  "riskGroups": {
+    "comorbidities": [
+      {
+        "id": "d04c7362-7954-4503-8b1a-4241a7e7e108",
+        "name": "Doença autoimune sistêmica",
+        "description": "Condição em que o sistema imune ataca tecidos saudáveis do corpo"
+      },
+      {
+        "id": "ade532ce-d443-48c4-8e3e-cc60a1ca06a1",
+        "name": "Infecção por HIV/Aids",
+        "description": "Condição crônica causada pelo vírus HIV, com ou sem imunossupressão"
+      }
+    ],
+    "specialConditions": [
+      {
+        "id": "c19d2fdb-8a79-4803-ab70-8d4d6363a8b9",
+        "name": "Adulto com 60 anos ou mais",
+        "description": "Indivíduo com 60 anos de idade ou mais"
+      },
+      {
+        "id": "bbd8e2e7-2120-4263-92ae-87c787f409c3",
+        "name": "Gestante",
+        "description": "Mulher grávida"
+      },
+      {
+        "id": "ac75ceca-a83a-499c-9e93-bbe21691bab3",
+        "name": "Gestante de alto risco",
+        "description": "Gestante com condições clínicas que aumentam o risco gestacional"
+      },
+      {
+        "id": "21737711-8707-4847-859f-968512514276",
+        "name": "Puérpera",
+        "description": "Mulher no período pós-parto, até 45 dias após o parto"
+      }
+    ],
+    "id": "a9045e59-5c6c-4b80-b273-5ffdb177ef04"
+  },
+  "symptoms": [
+    {
+      "id": "8eb9242b-cf04-42eb-8bdb-07da574f385c",
+      "name": "Febre",
+      "description": "Aumento anormal da temperatura corporal, geralmente acima de 37,8°C"
+    },
+    {
+      "id": "3fb50e22-b733-44c9-96d3-21f550158f74",
+      "name": "Calafrios",
+      "description": "Sensação súbita de frio acompanhada de tremores musculares"
+    },
+    {
+      "id": "de25b898-df24-4a8a-a4bd-7c951de42117",
+      "name": "Dor de cabeça",
+      "description": "Sensação dolorosa ou latejante na região da cabeça"
+    },
+    {
+      "id": "fa667fd7-538a-48ce-b62a-efb7d1064d53",
+      "name": "Cansaço",
+      "description": "Sensação persistente de fadiga física ou mental"
+    },
+    {
+      "id": "78624f07-958c-458d-8b57-c98364af34fa",
+      "name": "Dores musculares",
+      "description": "Desconforto ou dor nos músculos, com ou sem sensibilidade ao toque"
+    },
+    {
+      "id": "3d861d2b-cb53-40a9-8515-0839d6ab6fe7",
+      "name": "Náusea",
+      "description": "Sensação de enjoo ou vontade de vomitar"
+    },
+    {
+      "id": "48de777d-3d14-4e34-9b55-32c02b2f7256",
+      "name": "Vômito",
+      "description": "Expulsão forçada do conteúdo do estômago pela boca"
+    },
+    {
+      "id": "a00a7ea3-c9d6-41fd-88ad-869253513f93",
+      "name": "Dor abdominal",
+      "description": "Desconforto ou dor na região do abdômen"
+    },
+    {
+      "id": "1058e711-49d9-4c23-8b8e-e38a0832877b",
+      "name": "Pele amarelada",
+      "description": "Coloração amarela da pele e mucosas, comum em casos de icterícia"
+    }
+  ],
+  "alarmSigns": [
+    {
+      "id": "8eb9242b-cf04-42eb-8bdb-07da574f385c",
+      "name": "Febre",
+      "description": "Aumento anormal da temperatura corporal, geralmente acima de 37,8°C"
+    },
+    {
+      "id": "de25b898-df24-4a8a-a4bd-7c951de42117",
+      "name": "Dor de cabeça",
+      "description": "Sensação dolorosa ou latejante na região da cabeça"
+    },
+    {
+      "id": "fa667fd7-538a-48ce-b62a-efb7d1064d53",
+      "name": "Cansaço",
+      "description": "Sensação persistente de fadiga física ou mental"
+    },
+    {
+      "id": "78624f07-958c-458d-8b57-c98364af34fa",
+      "name": "Dores musculares",
+      "description": "Desconforto ou dor nos músculos, com ou sem sensibilidade ao toque"
+    },
+    {
+      "id": "3d861d2b-cb53-40a9-8515-0839d6ab6fe7",
+      "name": "Náusea",
+      "description": "Sensação de enjoo ou vontade de vomitar"
+    },
+    {
+      "id": "48de777d-3d14-4e34-9b55-32c02b2f7256",
+      "name": "Vômito",
+      "description": "Expulsão forçada do conteúdo do estômago pela boca"
+    },
+    {
+      "id": "a00a7ea3-c9d6-41fd-88ad-869253513f93",
+      "name": "Dor abdominal",
+      "description": "Desconforto ou dor na região do abdômen"
+    },
+    {
+      "id": "1058e711-49d9-4c23-8b8e-e38a0832877b",
+      "name": "Pele amarelada",
+      "description": "Coloração amarela da pele e mucosas, comum em casos de icterícia"
+    }
+  ],
+  "shockSigns": [
+    {
+      "id": "58980e1e-d4ff-4dd4-ab3b-1ab7678c9f15",
+      "name": "Dificuldade para respirar",
+      "description": "Sensação de falta de ar ou esforço ao respirar"
+    },
+    {
+      "id": "6d56bd8a-6cdc-48e0-92ae-9256dbdd3b1c",
+      "name": "Confusão mental",
+      "description": "Estado de desorientação, dificuldade de concentração ou raciocínio"
+    },
+    {
+      "id": "9dea0099-2e92-4da1-bd72-7f77eaec7f2c",
+      "name": "Tontura",
+      "description": "Sensação de instabilidade, vertigem ou desequilíbrio"
+    },
+    {
+      "id": "f5d94472-f050-4dfa-bf96-7a20b2b5f81f",
+      "name": "Sensação de desmaio",
+      "description": "Percepção iminente de perda da consciência"
+    },
+    {
+      "id": "cb5316c4-58f9-4392-9926-64b64dd64401",
+      "name": "Batimentos cardíacos acelerados",
+      "description": "Aumento da frequência dos batimentos cardíacos"
+    },
+    {
+      "id": "07d07e55-63ef-4060-a194-f8c6250fe40c",
+      "name": "Palpitações",
+      "description": "Sensação de batimentos cardíacos irregulares ou fortes"
+    },
+    {
+      "id": "f5c47046-892d-4485-908e-926b4603b706",
+      "name": "Dor no peito",
+      "description": "Desconforto torácico, podendo ser leve ou intenso"
+    },
+    {
+      "id": "c86b99f2-fe28-428c-9f0a-72de0c2a6990",
+      "name": "Respiração ofegante",
+      "description": "Respiração rápida e curta, associada a esforço respiratório"
+    },
+    {
+      "id": "eb1314bb-a72b-42a4-8b9b-8a228aa46181",
+      "name": "Sensação de opressão no peito",
+      "description": "Sensação de peso ou pressão na região torácica"
+    },
+    {
+      "id": "9680bbe9-d376-4e69-a5c6-f78ad0baef97",
+      "name": "Pele fria e úmida",
+      "description": "Sensação tátil de frieza e suor na pele, comum em estados de choque térmico"
+    }
+  ],
+  "healthProtocols": [
+    {
+      "severity": "leve",
+      "instructions": "Manter repouso e evitar atividades físicas.",
+      "id": "a9c2f5cc-56ce-4ddb-bee3-b62f489975e4"
+    },
+    {
+      "severity": "leve",
+      "instructions": "Hidratar-se adequadamente com água e sucos naturais.",
+      "id": "7f7a1f85-cf7a-4bee-b28a-ec3816e597e0"
+    },
+    {
+      "severity": "moderado",
+      "instructions": "Buscar atendimento médico para avaliação dos sintomas.",
+      "id": "e372fa84-827c-4b39-b1a0-b9712f83ec2c"
+    },
+    {
+      "severity": "moderado",
+      "instructions": "Monitorar a temperatura e usar antitérmicos conforme orientação médica.",
+      "id": "c8394155-da07-4580-899c-5e8c05456724"
+    },
+    {
+      "severity": "grave",
+      "instructions": "Internação hospitalar para tratamento intensivo.",
+      "id": "e9742c5d-65bb-42b7-a79f-952737d82cb2"
+    },
+    {
+      "severity": "grave",
+      "instructions": "Realizar exames para monitorar a função hepática e renal.",
+      "id": "52da353b-314a-4ae7-95e2-9b072cc7b8f7"
+    },
+    {
+      "severity": "muito grave",
+      "instructions": "Suporte em UTI para manejo de complicações.",
+      "id": "922709af-def7-48ea-ad78-0733e3ce880c"
+    },
+    {
+      "severity": "muito grave",
+      "instructions": "Transfusão de sangue ou plasma para tratar hemorragias, se necessário.",
+      "id": "49087ae6-87ef-4567-a70f-c47b27840b8d"
+    }
+  ],
+  "id": "f33c794b-5ea3-47ea-82a0-c38c9b497b65"
+}
