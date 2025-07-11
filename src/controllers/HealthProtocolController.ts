@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import {  Like } from "typeorm";
+import { Like } from "typeorm";
 import { HealthProtocol } from "../models";
 import { HealthProtocolRepository } from "../repositories/HealthProtocolRepository";
 
@@ -11,7 +11,8 @@ class HealthProtocolController {
 
     const isAlreadyRegistered = await HealthProtocolRepository.findOne({
       where: {
-        title: body.title
+        disease: body.disease,
+        severity: body.severity,
       }
     })
 
@@ -33,22 +34,22 @@ class HealthProtocolController {
       return response.status(403).json({
         error: "Erro no registro do protocolo de saúde"
       })
-    }    
+    }
   }
 
-  async list(request: Request, response: Response){
-    const { id, page, title, description } = request.query
+  async list(request: Request, response: Response) {
+    const { id, page } = request.query
     let filters = {}
-    
 
-    if(id) {
+    if (id) {
       const isValidHealthProtocol = await HealthProtocolRepository.findOne({
-        where : {
+        where: {
           id: String(id)
-        }
+        },
+        relations: ['disease']
       })
 
-      if(!isValidHealthProtocol) {
+      if (!isValidHealthProtocol) {
         return response.status(400).json({
           error: "Protocolo de saúde inválido"
         })
@@ -57,23 +58,11 @@ class HealthProtocolController {
       return response.status(200).json(isValidHealthProtocol)
     }
 
-    if(description) {
-      filters = { description: Like(`%${String(description)}%`) }
-    } 
-
-    if(title) {
-      filters = { title: Like(`%${String(title)}%`) }
-    } 
-
     let options: any = {
       where: filters,
-      order: {
-        title: 'ASC',
-        description: 'ASC'
-      },
     }
 
-    if(page) {
+    if (page) {
       const take = 10
       options = { ...options, take, skip: ((Number(page) - 1) * take) }
     }
@@ -86,14 +75,13 @@ class HealthProtocolController {
     })
   }
 
-  async alterOne(request: Request, response: Response){
+  async alterOne(request: Request, response: Response) {
     const body = request.body
     const { id } = request.params
 
+    const isValidHealthProtocol = await HealthProtocolRepository.findOne({ where: { id } })
 
-    const isValidHealthProtocol = await HealthProtocolRepository.findOne({ where: {id} })
-    
-    if(!isValidHealthProtocol){
+    if (!isValidHealthProtocol) {
       return response.status(404).json({
         error: "Protocolo de saúde não encontrado"
       })
@@ -101,7 +89,8 @@ class HealthProtocolController {
 
     const isAlreadyRegistered = await HealthProtocolRepository.findOne({
       where: {
-        title: body.title
+        disease: body.disease,
+        severity: body.severity,
       }
     })
 
@@ -127,13 +116,12 @@ class HealthProtocolController {
     }
   }
 
-  async deleteOne(request: Request, response: Response){
+  async deleteOne(request: Request, response: Response) {
     const { id } = request.params
 
+    const isValidHealthProtocol = await HealthProtocolRepository.findOne({ where: { id } })
 
-    const isValidHealthProtocol = await HealthProtocolRepository.findOne({ where: {id} })
-    
-    if(!isValidHealthProtocol){
+    if (!isValidHealthProtocol) {
       return response.status(404).json({
         error: "Protocolo de saúde não encontrado"
       })

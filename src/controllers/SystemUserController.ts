@@ -181,11 +181,9 @@ class SystemUserController {
   }
 
   async list(request: Request, response: Response) {
-    // this.initializeRepositories();
 
     const { id, department } = request.query
     let filters = {}
-    
 
     if(id) {
       filters = { ...filters, id: String(id) }

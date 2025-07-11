@@ -59,7 +59,7 @@ class SpecialConditionController {
 
     const specialConditionList = await SpecialConditionRepository.findAndCount(options);
 
-    return response.status(200).json({ specialConditionList: specialConditionList[0] });
+    return response.status(200).json({ specialConditions: specialConditionList[0], totalSpecialConditions: specialConditionList[1] });
   }
 
   async delete(request: Request, response: Response) {

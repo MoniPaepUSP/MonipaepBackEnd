@@ -6,6 +6,7 @@ import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { DiseaseKeySymptom } from "src/models/DiseaseKeySymptom";
 import { DiseaseKeySymptomRepository } from "src/repositories/DiseaseKeySymptomRepository";
+import { Like } from "typeorm";
 
 class DiseaseController {
 
@@ -88,9 +89,15 @@ class DiseaseController {
   }
 
   async list(request: Request, response: Response) {
-    const { page } = request.query
+    const { name, page } = request.query
+    let filters = {}
+    
+    if (name) {
+      filters = { name: Like(`%${String(name)}%`) }
+    }
 
     let options: any = {
+      where: filters,
       order: {
         name: "ASC"
       },

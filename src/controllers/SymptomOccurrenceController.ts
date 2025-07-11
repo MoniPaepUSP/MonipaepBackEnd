@@ -162,6 +162,7 @@ class SymptomOccurrenceController {
 
       return response.status(200).json({
         symptomOccurrences,
+        totalSymptomOccurrences: symptomOccurrences.length,
       });
     } catch (error) {
       console.error("Erro ao listar ocorrências:", error);

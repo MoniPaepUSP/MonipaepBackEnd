@@ -97,8 +97,8 @@ router.delete("/healthprotocol/:id", jwt.authMiddleware, jwt.usmUserMiddleware, 
 // Symptom Routes
 router.post("/symptom", jwt.authMiddleware, jwt.localAdminMiddleware, symptomController.create)//adm e adm locais
 router.get("/symptom", symptomController.list)//geral
-router.put("/symptom/:symptom", jwt.authMiddleware, jwt.localAdminMiddleware, symptomController.alterOne)//adm e adm locais
-router.delete("/symptom/:symptom", jwt.authMiddleware, jwt.localAdminMiddleware, symptomController.deleteOne)//adm e adm locais
+router.put("/symptom/:id", jwt.authMiddleware, jwt.localAdminMiddleware, symptomController.alterOne)//adm e adm locais
+router.delete("/symptom/:id", jwt.authMiddleware, jwt.localAdminMiddleware, symptomController.deleteOne)//adm e adm locais
 
 // DiseaseOccurrence Routes
 router.post("/diseaseoccurrence", jwt.authMiddleware, jwt.systemUserMiddleware, diseaseOccurrenceController.create)//geral autenticado*

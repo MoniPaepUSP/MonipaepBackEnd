@@ -55,16 +55,16 @@ class ComorbidityController {
 
     const comorbidityList = await ComorbidityRepository.findAndCount(options)
 
-    return response.status(200).json({ comorbidityList: comorbidityList[0] });
+    return response.status(200).json({ comorbidities: comorbidityList[0], totalComorbidities: comorbidityList[1] });
   }
 
   async alterOne(request: Request, response: Response) {
-    const { name } = request.params
+    const { id } = request.params
     const body = request.body
 
     const comorbidity = await ComorbidityRepository.findOne({
       where: {
-        name
+        id
       }
     })
 
@@ -75,7 +75,7 @@ class ComorbidityController {
     }
 
     try {
-      await ComorbidityRepository.update(comorbidity.name, body)
+      await ComorbidityRepository.update(comorbidity.id, body)
 
       return response.status(200).json({
         success: "Comorbidade atualizada com sucesso"
@@ -88,11 +88,11 @@ class ComorbidityController {
   }
 
   async delete(request: Request, response: Response) {
-    const { name } = request.params
+    const { id } = request.params
 
     const comorbidity = await ComorbidityRepository.findOne({
       where: {
-        name
+        id
       }
     })
 
@@ -103,7 +103,7 @@ class ComorbidityController {
     }
 
     try {
-      await ComorbidityRepository.delete(comorbidity.name)
+      await ComorbidityRepository.delete(comorbidity.id)
 
       return response.status(200).json({
         success: "Comorbidade deletada com sucesso"

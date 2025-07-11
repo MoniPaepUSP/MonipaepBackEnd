@@ -38,9 +38,8 @@ class SymptomController {
     const { name, page } = request.query
     let filters = {}
 
-
     if (name) {
-      filters = { symptom: Like(`%${String(name)}%`) }
+      filters = { name: Like(`%${String(name)}%`) }
     }
 
     let options: any = {
@@ -57,7 +56,7 @@ class SymptomController {
 
     const symptomsList = await SymptomRepository.findAndCount(options)
 
-    return response.status(200).json({ symptomsList: symptomsList[0] })
+    return response.status(200).json({ symptoms: symptomsList[0], totalSymptoms: symptomsList[1] })
   }
 
   async alterOne(request: Request, response: Response) {

@@ -57,10 +57,9 @@ class PermissionsController {
     const take = 10
     let filters = {}
     
-    
     let options: any = {
       where: filters,
-      relations: ["systemUser"],
+      relations: ["user"],
       order: {
         authorized: 'ASC',
         localAdm: 'ASC',
@@ -93,8 +92,8 @@ class PermissionsController {
       const limit = page ? take : 99999999
       try {
         const items = await PermissionsRepository.createQueryBuilder("permissions")
-          .leftJoinAndSelect("permissions.systemUser", "systemUser")
-          .where("systemUser.name like :name", { name: `%${name}%` })
+          .leftJoinAndSelect("permissions.user", "user")
+          .where("user.name like :name", { name: `%${name}%` })
           .skip(skip)
           .take(limit)
           .getManyAndCount()
