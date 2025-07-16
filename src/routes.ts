@@ -7,7 +7,6 @@ import {
   VaccineController,
   ChatController,
   ComorbidityController,
-  RiskGroupController,
   ChatMessageController,
   PatientController,
   FAQController,
@@ -44,7 +43,6 @@ const aboutController = new AboutTheAppController
 const chatController = new ChatController()
 const chatMessageController = new ChatMessageController()
 const comorbidityController = new ComorbidityController()
-const riskGroupController = new RiskGroupController()
 const specialConditionController = new SpecialConditionController()
 
 // Refresh Token Routes

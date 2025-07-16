@@ -1,19 +1,19 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UpdateSchema1747315082198 implements MigrationInterface {
-    name = 'UpdateSchema1747315082198'
+export class UpdateSchema1752595699452 implements MigrationInterface {
+    name = 'UpdateSchema1752595699452'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`CREATE TABLE "special_condition" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "description" character varying NOT NULL, CONSTRAINT "PK_95949cd790f1b5538783e19f663" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "health_protocol" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "severity" character varying NOT NULL, "instructions" text NOT NULL, "disease_id" uuid NOT NULL, CONSTRAINT "PK_eba535a0388e0c1ddb8a5656111" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "disease_occurrence" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "diagnosis" character varying, "date_start" TIMESTAMP, "date_end" TIMESTAMP, "status" character varying NOT NULL, "patient_id" uuid NOT NULL, "disease_id" uuid NOT NULL, CONSTRAINT "PK_349e7a5d842845ccb673d044b83" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "symptom_occurrence" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "chat" boolean NOT NULL, "remarks" text, "registered_date" TIMESTAMP NOT NULL, "patient_id" uuid NOT NULL, "disease_occurrence_id" uuid, "probable_diseases" jsonb NOT NULL, CONSTRAINT "PK_93d94c53cafa526440a784fcf8c" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "symptom" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "description" character varying NOT NULL, CONSTRAINT "PK_e6bf8581852864d312308633007" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "disease" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "infected_monitoring_days" integer NOT NULL, "suspected_monitoring_days" integer NOT NULL, "risk_groups_id" uuid, CONSTRAINT "REL_911795f414bb2d097fc2c0957e" UNIQUE ("risk_groups_id"), CONSTRAINT "PK_f7a8573a47cdc044735eda4644b" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "risk_groups" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), CONSTRAINT "PK_6fc4bf2b6e44e474239caa6986f" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "disease_key_symptom" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "weight" double precision NOT NULL, "disease_id" uuid NOT NULL, "symptom_id" uuid NOT NULL, CONSTRAINT "PK_0d667e66f620a29b1b345c468bb" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "special_condition" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "description" character varying NOT NULL, CONSTRAINT "PK_95949cd790f1b5538783e19f663" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "disease" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "infected_monitoring_days" integer NOT NULL, "suspected_monitoring_days" integer NOT NULL, CONSTRAINT "PK_f7a8573a47cdc044735eda4644b" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "comorbidity" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "description" character varying NOT NULL, CONSTRAINT "PK_c7abfff283f4f7fcba82fa3f0f8" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "patient" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "password" character varying NOT NULL, "cpf" character varying NOT NULL, "email" character varying NOT NULL, "gender" character varying NOT NULL, "phone" character varying NOT NULL, "birthdate" date NOT NULL, "cep" character varying NOT NULL, "state" character varying NOT NULL, "city" character varying NOT NULL, "neighborhood" character varying NOT NULL, "street" character varying NOT NULL, "house_number" integer NOT NULL, "allow_sms" boolean NOT NULL, "has_health_plan" boolean NOT NULL, "status" character varying NOT NULL, "active_account" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_d1206b00842f789e35c7c5baf61" UNIQUE ("cpf"), CONSTRAINT "UQ_2c56e61f9e1afb07f28882fcebb" UNIQUE ("email"), CONSTRAINT "PK_8dfa510bb29ad31ab2139fbfb99" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "usm" ("id" uuid NOT NULL, "name" character varying NOT NULL, "state" character varying NOT NULL, "city" character varying NOT NULL, "neighborhood" character varying NOT NULL, "street" character varying, "number" character varying, "formatted_address" text NOT NULL, "weekday_descriptions" text array, "latitude" double precision NOT NULL, "longitude" double precision NOT NULL, CONSTRAINT "PK_47be2cd21db53edc2d2a98451c3" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "usm" ("id" uuid NOT NULL, "name" character varying NOT NULL, "state" character varying NOT NULL, "city" character varying NOT NULL, "neighborhood" character varying NOT NULL, "street" character varying, "number" character varying, "weekday_descriptions" text array, "latitude" double precision NOT NULL, "longitude" double precision NOT NULL, CONSTRAINT "PK_47be2cd21db53edc2d2a98451c3" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "appointment" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "date" TIMESTAMP NOT NULL, "when_remember" TIMESTAMP NOT NULL, "type" character varying NOT NULL, "usm_id" uuid NOT NULL, "patient_id" uuid NOT NULL, CONSTRAINT "PK_e8be1a53027415e709ce8a2db74" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "faq_group" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, CONSTRAINT "PK_a77cdcc009ed34cee19bc0dce8f" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "faq" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "question" character varying NOT NULL, "answer" character varying NOT NULL, "faq_group_id" uuid NOT NULL, CONSTRAINT "UQ_1956813f611e3bf038f6b61a61f" UNIQUE ("question"), CONSTRAINT "PK_d6f5a52b1a96dd8d0591f9fbc47" PRIMARY KEY ("id"))`);
@@ -28,6 +28,12 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "symptom_occurrence_symptoms" ("symptom_occurrence_id" uuid NOT NULL, "symptom_id" uuid NOT NULL, CONSTRAINT "PK_26c5a0533da2cd6bf58f236b0ac" PRIMARY KEY ("symptom_occurrence_id", "symptom_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_fdf11ae1bca7e2501628d9254a" ON "symptom_occurrence_symptoms" ("symptom_occurrence_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_5745025b614d303f0f57cb0566" ON "symptom_occurrence_symptoms" ("symptom_id") `);
+        await queryRunner.query(`CREATE TABLE "disease_comorbidities" ("disease_id" uuid NOT NULL, "comorbidity_id" uuid NOT NULL, CONSTRAINT "PK_f173248a6746f9b6ba1ddfecbee" PRIMARY KEY ("disease_id", "comorbidity_id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_c3c6a09af5582656a046cf6084" ON "disease_comorbidities" ("disease_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_4cc862ff9fbc28b73d4c99a30f" ON "disease_comorbidities" ("comorbidity_id") `);
+        await queryRunner.query(`CREATE TABLE "disease_special_conditions" ("disease_id" uuid NOT NULL, "special_condition_id" uuid NOT NULL, CONSTRAINT "PK_22c197463b87a4246d1c1fd5cbd" PRIMARY KEY ("disease_id", "special_condition_id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_631e8f1fcc80621ff0a7376f28" ON "disease_special_conditions" ("disease_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_151f492175b84abd0a697acab9" ON "disease_special_conditions" ("special_condition_id") `);
         await queryRunner.query(`CREATE TABLE "disease_symptoms" ("disease_id" uuid NOT NULL, "symptom_id" uuid NOT NULL, CONSTRAINT "PK_75b571c5d52f3a8185e5df836ea" PRIMARY KEY ("disease_id", "symptom_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_ae2140d8ed7a6d4410ec1d7990" ON "disease_symptoms" ("disease_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_a72e374ecba784b733b44be14c" ON "disease_symptoms" ("symptom_id") `);
@@ -37,12 +43,6 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "disease_shock_signs" ("disease_id" uuid NOT NULL, "symptom_id" uuid NOT NULL, CONSTRAINT "PK_e33873370029abca8bfcf4530cc" PRIMARY KEY ("disease_id", "symptom_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_e2e051be0e7c4b6a03db2975c6" ON "disease_shock_signs" ("disease_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_750ff26b6d519756bd9370800a" ON "disease_shock_signs" ("symptom_id") `);
-        await queryRunner.query(`CREATE TABLE "risk_group_comorbidities" ("risk_group_id" uuid NOT NULL, "comorbidity_id" uuid NOT NULL, CONSTRAINT "PK_5d28750423db09bbcc7eb75b361" PRIMARY KEY ("risk_group_id", "comorbidity_id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_12857b12e60fb569786c749cf7" ON "risk_group_comorbidities" ("risk_group_id") `);
-        await queryRunner.query(`CREATE INDEX "IDX_22e293ddec4524d8b13485f338" ON "risk_group_comorbidities" ("comorbidity_id") `);
-        await queryRunner.query(`CREATE TABLE "risk_group_special_conditions" ("risk_group_id" uuid NOT NULL, "special_condition_id" uuid NOT NULL, CONSTRAINT "PK_d2ef1e607cd1f35bb67d108efd0" PRIMARY KEY ("risk_group_id", "special_condition_id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_9d492da39507b93749c81f428e" ON "risk_group_special_conditions" ("risk_group_id") `);
-        await queryRunner.query(`CREATE INDEX "IDX_d6a5d591f0c2c41c1304768107" ON "risk_group_special_conditions" ("special_condition_id") `);
         await queryRunner.query(`CREATE TABLE "patient_comorbidities" ("patient_id" uuid NOT NULL, "comorbidity_id" uuid NOT NULL, CONSTRAINT "PK_de9d74dce7067a5f224b9dd1d0b" PRIMARY KEY ("patient_id", "comorbidity_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_dd1133ced97733220817e2c709" ON "patient_comorbidities" ("patient_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_1d16ce7fb75dcb1cdf003c8cbb" ON "patient_comorbidities" ("comorbidity_id") `);
@@ -54,7 +54,8 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "disease_occurrence" ADD CONSTRAINT "FK_82297908232bd856dd6283a84cf" FOREIGN KEY ("disease_id") REFERENCES "disease"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "symptom_occurrence" ADD CONSTRAINT "FK_55a9a709defb9eeb8b72ee336e6" FOREIGN KEY ("patient_id") REFERENCES "patient"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "symptom_occurrence" ADD CONSTRAINT "FK_e7170b8270d8b4f2fef34c387de" FOREIGN KEY ("disease_occurrence_id") REFERENCES "disease_occurrence"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
-        await queryRunner.query(`ALTER TABLE "disease" ADD CONSTRAINT "FK_911795f414bb2d097fc2c0957ef" FOREIGN KEY ("risk_groups_id") REFERENCES "risk_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE "disease_key_symptom" ADD CONSTRAINT "FK_ac2b2fb7c05c4e280903735fbf7" FOREIGN KEY ("disease_id") REFERENCES "disease"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "disease_key_symptom" ADD CONSTRAINT "FK_07b7fca2938a49d1e01320aaa44" FOREIGN KEY ("symptom_id") REFERENCES "symptom"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "appointment" ADD CONSTRAINT "FK_bfa31f75b575df09a67bbae9cda" FOREIGN KEY ("usm_id") REFERENCES "usm"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "appointment" ADD CONSTRAINT "FK_86b3e35a97e289071b4785a1402" FOREIGN KEY ("patient_id") REFERENCES "patient"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "faq" ADD CONSTRAINT "FK_70bb0c70c10f6b8a1f2256b4f2e" FOREIGN KEY ("faq_group_id") REFERENCES "faq_group"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
@@ -67,16 +68,16 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "chat_message" ADD CONSTRAINT "FK_55c6864d3c1b37dac8ce6e223de" FOREIGN KEY ("symptom_occurrence_id") REFERENCES "symptom_occurrence"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "symptom_occurrence_symptoms" ADD CONSTRAINT "FK_fdf11ae1bca7e2501628d9254a2" FOREIGN KEY ("symptom_occurrence_id") REFERENCES "symptom_occurrence"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "symptom_occurrence_symptoms" ADD CONSTRAINT "FK_5745025b614d303f0f57cb0566d" FOREIGN KEY ("symptom_id") REFERENCES "symptom"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE "disease_comorbidities" ADD CONSTRAINT "FK_c3c6a09af5582656a046cf6084f" FOREIGN KEY ("disease_id") REFERENCES "disease"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE "disease_comorbidities" ADD CONSTRAINT "FK_4cc862ff9fbc28b73d4c99a30f3" FOREIGN KEY ("comorbidity_id") REFERENCES "comorbidity"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE "disease_special_conditions" ADD CONSTRAINT "FK_631e8f1fcc80621ff0a7376f288" FOREIGN KEY ("disease_id") REFERENCES "disease"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE "disease_special_conditions" ADD CONSTRAINT "FK_151f492175b84abd0a697acab96" FOREIGN KEY ("special_condition_id") REFERENCES "special_condition"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "disease_symptoms" ADD CONSTRAINT "FK_ae2140d8ed7a6d4410ec1d79903" FOREIGN KEY ("disease_id") REFERENCES "disease"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "disease_symptoms" ADD CONSTRAINT "FK_a72e374ecba784b733b44be14c5" FOREIGN KEY ("symptom_id") REFERENCES "symptom"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "disease_alarm_signs" ADD CONSTRAINT "FK_26ac7260d0d388d7c5a95f92ed3" FOREIGN KEY ("disease_id") REFERENCES "disease"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "disease_alarm_signs" ADD CONSTRAINT "FK_7020a547f5ba8c8d2907d0c3870" FOREIGN KEY ("symptom_id") REFERENCES "symptom"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "disease_shock_signs" ADD CONSTRAINT "FK_e2e051be0e7c4b6a03db2975c64" FOREIGN KEY ("disease_id") REFERENCES "disease"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "disease_shock_signs" ADD CONSTRAINT "FK_750ff26b6d519756bd9370800a5" FOREIGN KEY ("symptom_id") REFERENCES "symptom"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
-        await queryRunner.query(`ALTER TABLE "risk_group_comorbidities" ADD CONSTRAINT "FK_12857b12e60fb569786c749cf7f" FOREIGN KEY ("risk_group_id") REFERENCES "risk_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
-        await queryRunner.query(`ALTER TABLE "risk_group_comorbidities" ADD CONSTRAINT "FK_22e293ddec4524d8b13485f3382" FOREIGN KEY ("comorbidity_id") REFERENCES "comorbidity"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
-        await queryRunner.query(`ALTER TABLE "risk_group_special_conditions" ADD CONSTRAINT "FK_9d492da39507b93749c81f428ec" FOREIGN KEY ("risk_group_id") REFERENCES "risk_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
-        await queryRunner.query(`ALTER TABLE "risk_group_special_conditions" ADD CONSTRAINT "FK_d6a5d591f0c2c41c13047681074" FOREIGN KEY ("special_condition_id") REFERENCES "special_condition"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "patient_comorbidities" ADD CONSTRAINT "FK_dd1133ced97733220817e2c7098" FOREIGN KEY ("patient_id") REFERENCES "patient"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "patient_comorbidities" ADD CONSTRAINT "FK_1d16ce7fb75dcb1cdf003c8cbbe" FOREIGN KEY ("comorbidity_id") REFERENCES "comorbidity"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "patient_special_conditions" ADD CONSTRAINT "FK_c1bbb7b5f15551e7dbe1b08ac51" FOREIGN KEY ("patient_id") REFERENCES "patient"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
@@ -88,16 +89,16 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "patient_special_conditions" DROP CONSTRAINT "FK_c1bbb7b5f15551e7dbe1b08ac51"`);
         await queryRunner.query(`ALTER TABLE "patient_comorbidities" DROP CONSTRAINT "FK_1d16ce7fb75dcb1cdf003c8cbbe"`);
         await queryRunner.query(`ALTER TABLE "patient_comorbidities" DROP CONSTRAINT "FK_dd1133ced97733220817e2c7098"`);
-        await queryRunner.query(`ALTER TABLE "risk_group_special_conditions" DROP CONSTRAINT "FK_d6a5d591f0c2c41c13047681074"`);
-        await queryRunner.query(`ALTER TABLE "risk_group_special_conditions" DROP CONSTRAINT "FK_9d492da39507b93749c81f428ec"`);
-        await queryRunner.query(`ALTER TABLE "risk_group_comorbidities" DROP CONSTRAINT "FK_22e293ddec4524d8b13485f3382"`);
-        await queryRunner.query(`ALTER TABLE "risk_group_comorbidities" DROP CONSTRAINT "FK_12857b12e60fb569786c749cf7f"`);
         await queryRunner.query(`ALTER TABLE "disease_shock_signs" DROP CONSTRAINT "FK_750ff26b6d519756bd9370800a5"`);
         await queryRunner.query(`ALTER TABLE "disease_shock_signs" DROP CONSTRAINT "FK_e2e051be0e7c4b6a03db2975c64"`);
         await queryRunner.query(`ALTER TABLE "disease_alarm_signs" DROP CONSTRAINT "FK_7020a547f5ba8c8d2907d0c3870"`);
         await queryRunner.query(`ALTER TABLE "disease_alarm_signs" DROP CONSTRAINT "FK_26ac7260d0d388d7c5a95f92ed3"`);
         await queryRunner.query(`ALTER TABLE "disease_symptoms" DROP CONSTRAINT "FK_a72e374ecba784b733b44be14c5"`);
         await queryRunner.query(`ALTER TABLE "disease_symptoms" DROP CONSTRAINT "FK_ae2140d8ed7a6d4410ec1d79903"`);
+        await queryRunner.query(`ALTER TABLE "disease_special_conditions" DROP CONSTRAINT "FK_151f492175b84abd0a697acab96"`);
+        await queryRunner.query(`ALTER TABLE "disease_special_conditions" DROP CONSTRAINT "FK_631e8f1fcc80621ff0a7376f288"`);
+        await queryRunner.query(`ALTER TABLE "disease_comorbidities" DROP CONSTRAINT "FK_4cc862ff9fbc28b73d4c99a30f3"`);
+        await queryRunner.query(`ALTER TABLE "disease_comorbidities" DROP CONSTRAINT "FK_c3c6a09af5582656a046cf6084f"`);
         await queryRunner.query(`ALTER TABLE "symptom_occurrence_symptoms" DROP CONSTRAINT "FK_5745025b614d303f0f57cb0566d"`);
         await queryRunner.query(`ALTER TABLE "symptom_occurrence_symptoms" DROP CONSTRAINT "FK_fdf11ae1bca7e2501628d9254a2"`);
         await queryRunner.query(`ALTER TABLE "chat_message" DROP CONSTRAINT "FK_55c6864d3c1b37dac8ce6e223de"`);
@@ -110,7 +111,8 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "faq" DROP CONSTRAINT "FK_70bb0c70c10f6b8a1f2256b4f2e"`);
         await queryRunner.query(`ALTER TABLE "appointment" DROP CONSTRAINT "FK_86b3e35a97e289071b4785a1402"`);
         await queryRunner.query(`ALTER TABLE "appointment" DROP CONSTRAINT "FK_bfa31f75b575df09a67bbae9cda"`);
-        await queryRunner.query(`ALTER TABLE "disease" DROP CONSTRAINT "FK_911795f414bb2d097fc2c0957ef"`);
+        await queryRunner.query(`ALTER TABLE "disease_key_symptom" DROP CONSTRAINT "FK_07b7fca2938a49d1e01320aaa44"`);
+        await queryRunner.query(`ALTER TABLE "disease_key_symptom" DROP CONSTRAINT "FK_ac2b2fb7c05c4e280903735fbf7"`);
         await queryRunner.query(`ALTER TABLE "symptom_occurrence" DROP CONSTRAINT "FK_e7170b8270d8b4f2fef34c387de"`);
         await queryRunner.query(`ALTER TABLE "symptom_occurrence" DROP CONSTRAINT "FK_55a9a709defb9eeb8b72ee336e6"`);
         await queryRunner.query(`ALTER TABLE "disease_occurrence" DROP CONSTRAINT "FK_82297908232bd856dd6283a84cf"`);
@@ -122,12 +124,6 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_1d16ce7fb75dcb1cdf003c8cbb"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_dd1133ced97733220817e2c709"`);
         await queryRunner.query(`DROP TABLE "patient_comorbidities"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_d6a5d591f0c2c41c1304768107"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_9d492da39507b93749c81f428e"`);
-        await queryRunner.query(`DROP TABLE "risk_group_special_conditions"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_22e293ddec4524d8b13485f338"`);
-        await queryRunner.query(`DROP INDEX "public"."IDX_12857b12e60fb569786c749cf7"`);
-        await queryRunner.query(`DROP TABLE "risk_group_comorbidities"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_750ff26b6d519756bd9370800a"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_e2e051be0e7c4b6a03db2975c6"`);
         await queryRunner.query(`DROP TABLE "disease_shock_signs"`);
@@ -137,6 +133,12 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_a72e374ecba784b733b44be14c"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_ae2140d8ed7a6d4410ec1d7990"`);
         await queryRunner.query(`DROP TABLE "disease_symptoms"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_151f492175b84abd0a697acab9"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_631e8f1fcc80621ff0a7376f28"`);
+        await queryRunner.query(`DROP TABLE "disease_special_conditions"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_4cc862ff9fbc28b73d4c99a30f"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_c3c6a09af5582656a046cf6084"`);
+        await queryRunner.query(`DROP TABLE "disease_comorbidities"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_5745025b614d303f0f57cb0566"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_fdf11ae1bca7e2501628d9254a"`);
         await queryRunner.query(`DROP TABLE "symptom_occurrence_symptoms"`);
@@ -154,13 +156,13 @@ export class UpdateSchema1747315082198 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "usm"`);
         await queryRunner.query(`DROP TABLE "patient"`);
         await queryRunner.query(`DROP TABLE "comorbidity"`);
-        await queryRunner.query(`DROP TABLE "risk_groups"`);
         await queryRunner.query(`DROP TABLE "disease"`);
+        await queryRunner.query(`DROP TABLE "special_condition"`);
+        await queryRunner.query(`DROP TABLE "disease_key_symptom"`);
         await queryRunner.query(`DROP TABLE "symptom"`);
         await queryRunner.query(`DROP TABLE "symptom_occurrence"`);
         await queryRunner.query(`DROP TABLE "disease_occurrence"`);
         await queryRunner.query(`DROP TABLE "health_protocol"`);
-        await queryRunner.query(`DROP TABLE "special_condition"`);
     }
 
 }

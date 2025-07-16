@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Patient } from "./Patient";
-import { RiskGroups } from "./RiskGroups";
+import { Disease } from "./Disease";
 
 @Entity("special_condition")
 class SpecialCondition {
@@ -13,8 +13,8 @@ class SpecialCondition {
   @Column({ type: "varchar" })
   description: string
 
-  @ManyToMany(() => RiskGroups, (riskGroups) => riskGroups.specialConditions, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  riskGroups: RiskGroups[];
+  @ManyToMany(() => Disease, (disease) => disease.specialConditions, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  diseases: Disease[];
 
   @ManyToMany(() => Patient, (patient) => patient.specialConditions, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   patients: Patient[];

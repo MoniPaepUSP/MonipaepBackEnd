@@ -1,8 +1,9 @@
 import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { HealthProtocol } from "./HealthProtocol";
 import { Symptom } from "./Symptom";
-import { RiskGroups } from "./RiskGroups";
 import { DiseaseKeySymptom } from "./DiseaseKeySymptom";
+import { Comorbidity } from "./Comorbidity";
+import { SpecialCondition } from "./SpecialCondition";
 
 @Entity("disease")
 export class Disease {
@@ -18,9 +19,23 @@ export class Disease {
   @Column({ type: "integer", name: "suspected_monitoring_days" })
   suspectedMonitoringDays: number;
 
-  @OneToOne(() => RiskGroups, (riskGroup) => riskGroup.disease, { cascade: true, onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinColumn({ name: "risk_groups_id" }) // Disease owns the relation
-  riskGroups: RiskGroups;
+  // Each disease will contain some or none comorbitites as risk groups
+  @ManyToMany(() => Comorbidity, (comorbidity) => comorbidity.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinTable({
+    name: "disease_comorbidities",
+    joinColumn: { name: "disease_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "comorbidity_id", referencedColumnName: "id" }
+  })
+  comorbidities: Comorbidity[];
+
+  // Each disease will contain some or none special conditions as risk groups
+  @ManyToMany(() => SpecialCondition, (specialCondition) => specialCondition.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @JoinTable({
+    name: "disease_special_conditions",
+    joinColumn: { name: "disease_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "special_condition_id", referencedColumnName: "id" }
+  })
+  specialConditions: SpecialCondition[];
 
   @ManyToMany(() => Symptom, (symptom) => symptom.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinTable({

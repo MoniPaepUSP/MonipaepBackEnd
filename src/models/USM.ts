@@ -22,10 +22,7 @@ export class USM {
 
   @Column({ type: "varchar", nullable: true })
   number: string | null;
-
-  @Column({ type: "text", name: "formatted_address" })
-  formattedAddress: string;
-
+  
   @Column("text", { array: true, name: "weekday_descriptions", nullable: true })
   weekdayDescriptions: string[];
 

@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Clear data from specific tables
-TRUNCATE TABLE usm, patient, system_user, permissions, symptom, appointment, vaccines, comorbidity, special_condition, faq, faq_group, disease RESTART IDENTITY CASCADE;
+TRUNCATE TABLE usm, patient, system_user, permissions, symptom, appointment, vaccines, comorbidity, special_condition, faq, faq_group RESTART IDENTITY CASCADE;
 
 -- Insert one user into the patients table
 -- password: Password@123
@@ -31,12 +31,11 @@ VALUES (
 );
 
 -- Insert some example data into the usm table
-INSERT INTO usm (id, name, state, city, neighborhood, street, number, formatted_address, weekday_descriptions, latitude, longitude)
+INSERT INTO usm (id, name, state, city, neighborhood, street, number, weekday_descriptions, latitude, longitude)
 VALUES 
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36900',
   'UPA Santa Felícia', 'SP', 'São Carlos', 'Parque Santa Felicia Jardim', 'R. Dr. João Navarro Siquerolli', NULL,
-  'R. Dr. João Navarro Siquerolli, s/n - Parque Santa Felicia Jardim, São Carlos - SP, 13563-714, Brasil',
   ARRAY[
     'segunda-feira: Atendimento 24 horas',
     'terça-feira: Atendimento 24 horas',
@@ -51,7 +50,6 @@ VALUES
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36901',
   'UPA Vila Prado', 'SP', 'São Carlos', 'Vila Prado', 'Av. Grécia', '229',
-  'Av. Grécia, 229 - Vila Prado, São Carlos - SP, 13574-140, Brasil',
   ARRAY[
     'segunda-feira: Atendimento 24 horas',
     'terça-feira: Atendimento 24 horas',
@@ -66,7 +64,6 @@ VALUES
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36902',
   'UPA Cidade Aracy', 'SP', 'São Carlos', 'Cidade Aracy', 's/r', NULL,
-  'Cidade Aracy, São Carlos - SP, 13566, Brasil',
   ARRAY[
     'segunda-feira: Atendimento 24 horas',
     'terça-feira: Atendimento 24 horas',
@@ -81,14 +78,12 @@ VALUES
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36903',
   'UNIDADE DE PRONTO ATENDIMENTO UPA CIDADE ARACY', 'SP', 'São Carlos', 'Cidade Aracy', 'R. Reinaldo Pizani', '357',
-  'R. Reinaldo Pizani, 357 - Cidade Aracy, São Carlos - SP, 13573-228, Brasil',
   NULL,
   -22.0533165, -47.9143543
 ),
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36904',
   'UBS Santa Felícia', 'SP', 'São Carlos', 'Parque Santa Felicia Jardim', 'R. Joaquim Augusto Ribeiro de Souza', '1430',
-  'R. Joaquim Augusto Ribeiro de Souza, 1430 - Parque Santa Felicia Jardim, São Carlos - SP, 13563-330, Brasil',
   ARRAY[
     'segunda-feira: 07:00 – 17:00',
     'terça-feira: 07:00 – 17:00',

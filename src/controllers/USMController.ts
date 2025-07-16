@@ -25,7 +25,6 @@ class USMController {
       const usm = USMRepository.create({
         id: body.id,
         name: body.displayName.text,
-        formattedAddress: body.formattedAddress,
         number: body.addressComponents[0].shortText,
         street: body.addressComponents[1].shortText,
         neighborhood: body.addressComponents[2].shortText,
