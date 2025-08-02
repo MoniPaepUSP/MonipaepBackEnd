@@ -4,7 +4,6 @@ import { ComorbidityRepository, DiseaseRepository, HealthProtocolRepository, Spe
 import { openai } from "src/openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
-import { DiseaseKeySymptom } from "src/models/DiseaseKeySymptom";
 
 class DiseaseController {
 
@@ -18,9 +17,6 @@ class DiseaseController {
       specialConditions: specialConditionsIds,
       // Expect symptoms arrays to be arrays of IDs
       symptoms: symptomIds,
-      alarmSigns: alarmSignIds,
-      shockSigns: shockSignIds,
-      // Expect healthProtocols as an array of objects: { severity, instructions }
       healthProtocols,
     } = request.body;
 
@@ -48,25 +44,19 @@ class DiseaseController {
         where: symptomIds.map((id: string) => ({ id }))
       });
     }
-    if (alarmSignIds && Array.isArray(alarmSignIds)) {
-      disease.alarmSigns = await SymptomRepository.find({
-        where: alarmSignIds.map((id: string) => ({ id }))
-      });
-    }
-    if (shockSignIds && Array.isArray(shockSignIds)) {
-      disease.shockSigns = await SymptomRepository.find({
-        where: shockSignIds.map((id: string) => ({ id }))
-      });
-    }
 
     // Map provided health protocols data into HealthProtocol entities
     if (healthProtocols && Array.isArray(healthProtocols)) {
-      disease.healthProtocols = healthProtocols.map((protocolData: any) => {
+      disease.healthProtocols = await Promise.all(healthProtocols.map(async (protocolData: any) => {
         const protocol = new HealthProtocol();
-        protocol.severity = protocolData.severity;
+        protocol.gravityLevel = protocolData.gravityLevel;
+        protocol.gravityLabel = protocolData.gravityLabel;
         protocol.instructions = protocolData.instructions;
+        protocol.symptoms = protocolData.symptoms;
+        protocol.referUSM = protocolData.referUSM;
+        protocol.diseaseId = protocolData.diseaseId;
         return protocol;
-      });
+      }));
     }
 
     try {
@@ -88,10 +78,8 @@ class DiseaseController {
     // Step 1: Basic disease info only (no many-to-many joins here)
     const baseQuery = DiseaseRepository.createQueryBuilder("disease")
       .leftJoinAndSelect("disease.symptoms", "symptom")
-      .leftJoinAndSelect("disease.alarmSigns", "alarmSign")
-      .leftJoinAndSelect("disease.shockSigns", "shockSign")
       .leftJoinAndSelect("disease.healthProtocols", "healthProtocol")
-      .leftJoinAndSelect("disease.diseaseKeySymptoms", "keySymptom") // if needed
+      .leftJoinAndSelect("healthProtocol.symptoms", "hsymptoms")
 
     if (name) {
       baseQuery.where("disease.name ILIKE :name", { name: `%${name}%` });
@@ -101,29 +89,40 @@ class DiseaseController {
 
     const [diseases, total] = await baseQuery.getManyAndCount();
 
-    // Step 2: Load comorbidities and specialConditions in batch
-    const ids = diseases.map((d) => d.id);
+    if (diseases.length > 0) {
+      const ids = diseases.map(d => d.id);
 
-    const withComorbidities = await DiseaseRepository.createQueryBuilder("disease")
-      .leftJoinAndSelect("disease.comorbidities", "comorbidity")
-      .where("disease.id IN (:...ids)", { ids })
-      .getMany();
+      const withComorbidities = await DiseaseRepository.createQueryBuilder("disease")
+        .leftJoinAndSelect("disease.comorbidities", "comorbidity")
+        .where("disease.id IN (:...ids)", { ids })
+        .getMany();
 
-    const withSpecialConditions = await DiseaseRepository.createQueryBuilder("disease")
-      .leftJoinAndSelect("disease.specialConditions", "specialCondition")
-      .where("disease.id IN (:...ids)", { ids })
-      .getMany();
+      const withSpecialConditions = await DiseaseRepository.createQueryBuilder("disease")
+        .leftJoinAndSelect("disease.specialConditions", "specialCondition")
+        .where("disease.id IN (:...ids)", { ids })
+        .getMany();
 
-    const comorbidityMap = new Map(withComorbidities.map(d => [d.id, d.comorbidities]));
-    const specialConditionMap = new Map(withSpecialConditions.map(d => [d.id, d.specialConditions]));
+      const comorbidityMap = new Map(
+        withComorbidities.map(d => [d.id, d.comorbidities])
+      );
+      const specialConditionMap = new Map(
+        withSpecialConditions.map(d => [d.id, d.specialConditions])
+      );
 
-    for (const disease of diseases) {
-      disease.comorbidities = comorbidityMap.get(disease.id) || [];
-      disease.specialConditions = specialConditionMap.get(disease.id) || [];
+      for (const disease of diseases) {
+        disease.comorbidities = comorbidityMap.get(disease.id) || [];
+        disease.specialConditions = specialConditionMap.get(disease.id) || [];
+      }
+    } else {
+      // No diseases → make sure these fields are empty arrays
+      for (const disease of diseases) {
+        disease.comorbidities = [];
+        disease.specialConditions = [];
+      }
     }
 
     return response.status(200).json({ diseases, totalDiseases: total });
-  }  
+  }
 
   async alterOne(request: Request, response: Response) {
     const { id } = request.params;
@@ -136,9 +135,6 @@ class DiseaseController {
       specialConditions: specialConditionsIds,
       // Expect symptoms arrays to be arrays of IDs
       symptoms: symptomIds,
-      alarmSigns: alarmSignIds,
-      shockSigns: shockSignIds,
-      // Expect healthProtocols as an array of objects: { severity, instructions }
       healthProtocols,
     } = request.body;
 
@@ -147,8 +143,6 @@ class DiseaseController {
     // Find the existing disease, including relations to update them if provided
     const query = DiseaseRepository.createQueryBuilder("disease")
       .leftJoinAndSelect("disease.symptoms", "symptom")
-      .leftJoinAndSelect("disease.alarmSigns", "alarmSign")
-      .leftJoinAndSelect("disease.shockSigns", "shockSign")
       .leftJoinAndSelect("disease.healthProtocols", "healthProtocol")
       .leftJoinAndSelect("disease.comorbidities", "comorbidity")
       .leftJoinAndSelect("disease.specialConditions", "specialCondition")
@@ -165,6 +159,7 @@ class DiseaseController {
     disease.infectedMonitoringDays = infectedMonitoringDays;
     disease.suspectedMonitoringDays = suspectedMonitoringDays;
 
+    // If comorbidities and specialConditions are provided as arrays of IDs, load them
     if (comorbiditiesIds && Array.isArray(comorbiditiesIds)) {
       disease.comorbidities = await ComorbidityRepository.find({
         where: comorbiditiesIds.map((id: string) => ({ id }))
@@ -176,20 +171,10 @@ class DiseaseController {
       })
     }
 
-    // Update many-to-many associations with symptoms, alarmSigns, and shockSigns
+    // Load and assign symptoms, alarmSigns, and shockSigns if provided as arrays of IDs
     if (symptomIds && Array.isArray(symptomIds)) {
       disease.symptoms = await SymptomRepository.find({
-        where: symptomIds.map((id: string) => ({ id })),
-      });
-    }
-    if (alarmSignIds && Array.isArray(alarmSignIds)) {
-      disease.alarmSigns = await SymptomRepository.find({
-        where: alarmSignIds.map((id: string) => ({ id })),
-      });
-    }
-    if (shockSignIds && Array.isArray(shockSignIds)) {
-      disease.shockSigns = await SymptomRepository.find({
-        where: shockSignIds.map((id: string) => ({ id })),
+        where: symptomIds.map((id: string) => ({ id }))
       });
     }
 
@@ -198,13 +183,16 @@ class DiseaseController {
     if (healthProtocols && Array.isArray(healthProtocols)) {
       await HealthProtocolRepository.delete({ disease: { id } });
 
-      disease.healthProtocols = healthProtocols.map((protocolData: any) => {
+      disease.healthProtocols = await Promise.all(healthProtocols.map(async (protocolData: any) => {
         const protocol = new HealthProtocol();
-        protocol.severity = protocolData.severity;
+        protocol.gravityLevel = protocolData.gravityLevel;
+        protocol.gravityLabel = protocolData.gravityLabel;
         protocol.instructions = protocolData.instructions;
+        protocol.symptoms = protocolData.symptoms;
+        protocol.referUSM = protocolData.referUSM;
         protocol.diseaseId = protocolData.diseaseId;
         return protocol;
-      });
+      }));
     }
 
     try {
@@ -255,13 +243,7 @@ class DiseaseController {
     const DiseaseInitialSchema = z.object({
       name: z.string(),
       infectedMonitoringDays: z.number(),
-      suspectedMonitoringDays: z.number(),
-      healthProtocols: z.array(
-        z.object({
-          severity: z.enum(["leve", "moderado", "grave", "muito grave"]),
-          instructions: z.string()
-        })
-      )
+      suspectedMonitoringDays: z.number()
     });
 
     // Prompt for disease data
@@ -270,23 +252,11 @@ class DiseaseController {
     {
       "name": "<nome da doença>",
       "infectedMonitoringDays": <número de dias de monitoramento para paciente infectado>,
-      "suspectedMonitoringDays": <número de dias de monitoramento para paciente com suspeita>,
-      "healthProtocols": [
-        {
-          "severity": "<leve | moderado | grave | muito grave>",
-          "instructions": "<instrução simples para o protocolo de saúde>"
-        },
-        ...
-      ]
+      "suspectedMonitoringDays": <número de dias de monitoramento para paciente com suspeita>
     }
 
     Regras importantes:
-    - Gere de 3 a 6 protocolos para cada gravidade (leve, moderado, grave, muito grave), se fizer sentido para a doença.
-    - Os protocolos devem conter instruções clínicas simples e úteis.
     - Use valores realistas para os dias de monitoramento.
-    - Caso alguma gravidade não seja aplicável à doença, você pode omiti-la, mas apenas se realmente não fizer sentido.
-
-    Exemplo de instruções: "Manter repouso", "Hidratar-se bem", "Procurar atendimento médico em caso de febre alta", etc.
     `;
 
     const diseaseCompletion = await openai.beta.chat.completions.parse({
@@ -362,124 +332,6 @@ class DiseaseController {
     console.log("IDs dos Sintomas:", symptomIds);
 
     /** ======================================================================
-     *  Alarm Signs Generation
-     *  ====================================================================== */
-
-    // Schema for alarm signs IDs
-    const AlarmSignsSchema = z.object({
-      alarmSignIds: z.array(z.string())
-    });
-
-    // Prompt for alarm signs
-    const alarmSignsPrompt = `
-    Dada a doença "${name}", retorne um JSON no seguinte formato:
-    {
-      "alarmSignIds": ["id1", "id2", ...]
-    }
-    
-    Selecione os IDs dos sintomas que podem ser considerados sinais de alarme, 
-    a partir da seguinte lista:
-    ${JSON.stringify(availableSymptomsList, null, 2)}
-    
-    Retorne apenas os IDs válidos.
-  `;
-    const alarmSignsCompletion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: alarmSignsPrompt },
-        { role: 'user', content: name }
-      ],
-      response_format: zodResponseFormat(AlarmSignsSchema, 'alarmSignsSchema')
-    });
-    const alarmSignsData = alarmSignsCompletion.choices[0].message.parsed;
-    const alarmSignIds = alarmSignsData?.alarmSignIds ?? [];
-    if (!alarmSignIds.length) {
-      return response.status(404).json({ error: "Erro ao revisar os sinais de alarme" });
-    }
-    console.log("IDs dos Sinais de Alarme:", alarmSignIds);
-
-    /** ======================================================================
-     *  Shock Signs Generation
-     *  ====================================================================== */
-
-    // Schema for shock signs IDs
-    const ShockSignsSchema = z.object({
-      shockSignIds: z.array(z.string())
-    });
-
-    // Prompt for shock signs
-    const shockSignsPrompt = `
-    Dada a doença "${name}", retorne um JSON no seguinte formato:
-    {
-      "shockSignIds": ["id1", "id2", ...]
-    }
-    
-    Selecione os IDs dos sintomas que podem ser considerados sinais de choque, 
-    usando a lista abaixo:
-    ${JSON.stringify(availableSymptomsList, null, 2)}
-    
-    Retorne apenas os IDs válidos.
-  `;
-    const shockSignsCompletion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: shockSignsPrompt },
-        { role: 'user', content: name }
-      ],
-      response_format: zodResponseFormat(ShockSignsSchema, 'shockSignsSchema')
-    });
-    const shockSignsData = shockSignsCompletion.choices[0].message.parsed;
-    const shockSignIds = shockSignsData?.shockSignIds ?? [];
-    if (!shockSignIds.length) {
-      return response.status(404).json({ error: "Erro ao revisar os sinais de choque" });
-    }
-    console.log("IDs dos Sinais de Choque:", shockSignIds);
-
-    /** ======================================================================
-     *  Key Symptoms and Weights Generation
-     *  ====================================================================== */
-
-    // Schema for key symptoms and weights
-    const KeySymptomsSchema = z.object({
-      keySymptoms: z.array(
-        z.object({
-          id: z.string(),
-          weight: z.number()
-        })
-      )
-    });
-    // Prompt for key symptoms and weights
-    const keySymptomsPrompt = `
-    Dada a doença "${name}", retorne um JSON no seguinte formato:
-    {
-      "keySymptoms": [
-        { "id": "id1", "weight": 0.5 },
-        { "id": "id2", "weight": 0.8 },
-        ...
-      ]
-    }
-    Selecione entre 3 a 5 IDs dos sintomas marcantes da doença, que o diferenciam de outros,
-    utilizando a lista abaixo:
-    ${JSON.stringify(availableSymptomsList, null, 2)}
-    Atribua um peso entre 0 e 1 para cada sintoma, onde 0 significa que o sintoma não é relevante e 1 significa que é extremamente relevante.
-    Retorne apenas os IDs encontrados na lista.
-  `;
-    const keySymptomsCompletion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: keySymptomsPrompt },
-        { role: 'user', content: name }
-      ],
-      response_format: zodResponseFormat(KeySymptomsSchema, 'keySymptomsSchema')
-    });
-    const keySymptomsData = keySymptomsCompletion.choices[0].message.parsed;
-    const keySymptoms = keySymptomsData?.keySymptoms ?? [];
-    if (!keySymptoms.length) {
-      return response.status(404).json({ error: "Erro ao revisar os sintomas-chave" });
-    }
-    console.log("Sintomas-chave e pesos:", keySymptoms);
-
-    /** ======================================================================
      *  Risk Groups Generation
      *  ====================================================================== */
 
@@ -507,9 +359,6 @@ class DiseaseController {
       ],
       response_format: zodResponseFormat(ComorbiditiesSchema, 'riskGroupsSchema')
     });
-    if (!keySymptoms.length) {
-      return response.status(404).json({ error: "Erro ao revisar os sintomas-chave" });
-    }
     const comorbiditiesData = comorbiditiesCompletion.choices[0].message.parsed;
     const comorbiditiesIds = comorbiditiesData?.comorbiditiesIds ?? [];
     if (!comorbiditiesIds.length) {
@@ -565,28 +414,6 @@ class DiseaseController {
 
       // Map symptoms, alarm signs, and shock signs
       disease.symptoms = availableSymptoms.filter(s => symptomIds.includes(s.id));
-      disease.alarmSigns = availableSymptoms.filter(s => alarmSignIds.includes(s.id));
-      disease.shockSigns = availableSymptoms.filter(s => shockSignIds.includes(s.id));
-
-      // Map key symptoms with weights
-      const diseaseKeySymptoms = keySymptoms.map((keySymptom: any) => {
-        const symptom = new DiseaseKeySymptom();
-        symptom.weight = keySymptom.weight;
-        symptom.symptomId = keySymptom.id;
-        symptom.diseaseId = disease.id;
-        return symptom;
-      });
-      disease.diseaseKeySymptoms = diseaseKeySymptoms;
-
-      // Health protocols
-      if (Array.isArray(diseaseData.healthProtocols)) {
-        disease.healthProtocols = diseaseData.healthProtocols.map((protocol: any) => {
-          const hp = new HealthProtocol();
-          hp.severity = protocol.severity;
-          hp.instructions = protocol.instructions;
-          return hp;
-        });
-      }
 
       // Save the complete disease record with all associations
       const createdDisease = await DiseaseRepository.save(disease);

@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt'
 
 import * as jwt from "../jwt"
 import { Patient, RefreshToken } from "../models";
-import { RefreshTokenRepository, PatientsRepository, ComorbidityRepository, SpecialConditionRepository } from "../repositories";
+import { RefreshTokenRepository, PatientsRepository, ComorbidityRepository, SpecialConditionRepository, DiseaseOccurrenceRepository } from "../repositories";
 import { refreshTokenExpiresIn } from "../refreshTokenExpiration";
 import { PatientAlreadyExistsError } from "../errors/patient.errors";
 import { HttpError } from "src/common/app.errors";
@@ -32,7 +32,6 @@ class PatientController {
       throw new PatientAlreadyExistsError();
     }
 
-    body.status = "Saudável";
     body.createdAt = new Date();
     body.lastUpdate = body.createdAt;
 
@@ -63,6 +62,7 @@ class PatientController {
       return response.status(201).json({
         success: "Paciente criado com sucesso",
         patient,
+        status: "Saudável",
         token,
         refreshToken
       });
@@ -157,7 +157,6 @@ class PatientController {
           'houseNumber',
           'allowSms',
           'hasHealthPlan',
-          'status',
           'activeAccount',
         ],
       });
@@ -170,8 +169,23 @@ class PatientController {
 
       refreshToken.patientId = null; // Avoid exposing sensitive data
 
+      const activeDiseaseOccurrences = await DiseaseOccurrenceRepository.createQueryBuilder("occurrence")
+        .where("occurrence.patientId = :patientId", { patientId: patient.id })
+        .andWhere(
+          "(occurrence.dateEnd > :now OR occurrence.dateEnd IS NULL)",
+          { now: new Date() }
+        )
+        .orderBy("occurrence.dateStart", "DESC")
+        .getMany();
+
+      let status = "Saudável";
+      if (activeDiseaseOccurrences.length) {
+        status = activeDiseaseOccurrences[0].status;
+      }
+
       return response.status(200).json({
         patient,
+        status,
         token,
         refreshToken,
       });
@@ -190,8 +204,7 @@ class PatientController {
       cpf,
       gender,
       neighborhood,
-      status,
-      active,
+      activeAccount,
       page } = request.query
     let filters = {}
 
@@ -209,12 +222,8 @@ class PatientController {
       }
     }
 
-    if (status) {
-      filters = { ...filters, status: Like(`%${String(status).toUpperCase()}%`) }
-    }
-
-    if (active) {
-      if (active === "true") {
+    if (activeAccount) {
+      if (activeAccount === "true") {
         filters = { ...filters, activeAccount: true }
       } else {
         filters = { ...filters, activeAccount: false }
@@ -226,7 +235,7 @@ class PatientController {
     }
 
     if (cpf) {
-      filters = { ...filters, CPF: Like(`%${String(cpf)}%`) }
+      filters = { ...filters, cpf: Like(`%${String(cpf)}%`) }
     }
 
     if (gender) {
@@ -253,6 +262,58 @@ class PatientController {
     return response.json({
       patients: patientsList[0],
       totalPatients: patientsList[1]
+    })
+  }
+
+  async getOne(request: any, response: Response) {
+    const { id } = request.params
+
+    const patient = await PatientsRepository.findOne({
+      where: { id },
+      relations: ['comorbidities', 'specialConditions'],
+      select: [
+        'id',
+        'name',
+        'cpf',
+        'email',
+        'gender',
+        'phone',
+        'birthdate',
+        'cep',
+        'state',
+        'city',
+        'neighborhood',
+        'street',
+        'houseNumber',
+        'allowSms',
+        'hasHealthPlan',
+        'activeAccount',
+      ],
+    });
+
+    if (!patient) {
+      return response.status(404).json({
+        error: "Paciente não encontrado"
+      })
+    }
+
+    const activeDiseaseOccurrences = await DiseaseOccurrenceRepository.createQueryBuilder("occurrence")
+      .where("occurrence.patientId = :patientId", { patientId: patient.id })
+      .andWhere(
+        "(occurrence.dateEnd > :now OR occurrence.dateEnd IS NULL)",
+        { now: new Date() }
+      )
+      .orderBy("occurrence.dateStart", "DESC")
+      .getMany();
+
+    let status = "Saudável";
+    if (activeDiseaseOccurrences.length) {
+      status = activeDiseaseOccurrences[0].status;
+    }
+
+    return response.status(200).json({
+      patient,
+      status
     })
   }
 
@@ -284,7 +345,6 @@ class PatientController {
         'houseNumber',
         'allowSms',
         'hasHealthPlan',
-        'status',
         'activeAccount',
       ],
     });
@@ -295,7 +355,24 @@ class PatientController {
       })
     }
 
-    return response.status(200).json(patient)
+    const activeDiseaseOccurrences = await DiseaseOccurrenceRepository.createQueryBuilder("occurrence")
+      .where("occurrence.patientId = :patientId", { patientId: patient.id })
+      .andWhere(
+        "(occurrence.dateEnd > :now OR occurrence.dateEnd IS NULL)",
+        { now: new Date() }
+      )
+      .orderBy("occurrence.dateStart", "DESC")
+      .getMany();
+
+    let status = "Saudável";
+    if (activeDiseaseOccurrences.length) {
+      status = activeDiseaseOccurrences[0].status;
+    }
+
+    return response.status(200).json({
+      patient,
+      status
+    })
   }
 
   async alterOne(request: any, response: Response) {
@@ -407,14 +484,28 @@ class PatientController {
           'houseNumber',
           'allowSms',
           'hasHealthPlan',
-          'status',
           'activeAccount',
         ],
       });
 
+      const activeDiseaseOccurrences = await DiseaseOccurrenceRepository.createQueryBuilder("occurrence")
+        .where("occurrence.patientId = :patientId", { patientId: patient.id })
+        .andWhere(
+          "(occurrence.dateEnd > :now OR occurrence.dateEnd IS NULL)",
+          { now: new Date() }
+        )
+        .orderBy("occurrence.dateStart", "DESC")
+        .getMany();
+
+      let status = "Saudável";
+      if (activeDiseaseOccurrences.length) {
+        status = activeDiseaseOccurrences[0].status;
+      }
+
       return response.status(200).json({
         success: "Paciente atualizado com sucesso",
         patient: updatedPatient,
+        status,
       });
     } catch (error) {
       console.error("Update error:", error);

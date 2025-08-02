@@ -1,6 +1,7 @@
 import { Column, Entity, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Disease } from "./Disease";
 import { SymptomOccurrence } from "./SymptomOccurrence";
+import { HealthProtocol } from "./HealthProtocol";
 
 @Entity("symptom")
 class Symptom {
@@ -18,6 +19,9 @@ class Symptom {
 
   @ManyToMany(() => SymptomOccurrence, (symptomOccurrence) => symptomOccurrence.symptoms, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   symptomOccurrences: SymptomOccurrence[];
+
+  @ManyToMany(() => HealthProtocol, (healthProtocol) => healthProtocol.symptoms, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  healthProtocols: HealthProtocol[];
 }
 
 export { Symptom }

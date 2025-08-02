@@ -1,9 +1,9 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { HealthProtocol } from "./HealthProtocol";
 import { Symptom } from "./Symptom";
-import { DiseaseKeySymptom } from "./DiseaseKeySymptom";
 import { Comorbidity } from "./Comorbidity";
 import { SpecialCondition } from "./SpecialCondition";
+import { DiseaseOccurrence } from "./DiseaseOccurrence";
 
 @Entity("disease")
 export class Disease {
@@ -45,30 +45,11 @@ export class Disease {
   })
   symptoms: Symptom[];
 
-  @ManyToMany(() => Symptom, (symptom) => symptom.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinTable({
-    name: "disease_alarm_signs",
-    joinColumn: { name: "disease_id", referencedColumnName: "id" },
-    inverseJoinColumn: { name: "symptom_id", referencedColumnName: "id" }
-  })
-  alarmSigns: Symptom[];
-
-  @ManyToMany(() => Symptom, (symptom) => symptom.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
-  @JoinTable({
-    name: "disease_shock_signs",
-    joinColumn: { name: "disease_id", referencedColumnName: "id" },
-    inverseJoinColumn: { name: "symptom_id", referencedColumnName: "id" }
-  })
-  shockSigns: Symptom[];
-
-  @OneToMany(() => DiseaseKeySymptom, (diseaseKeySymptom) => diseaseKeySymptom.disease, {
-    cascade: true,
-    eager: true,
-  })
-  diseaseKeySymptoms: DiseaseKeySymptom[];
-
   @OneToMany(() => HealthProtocol, (protocol) => protocol.disease, {
     cascade: true, onDelete: "CASCADE", onUpdate: "CASCADE"
   })
   healthProtocols: HealthProtocol[];
+
+  @ManyToMany(() => DiseaseOccurrence, (diseaseOccurrence) => diseaseOccurrence.diseases, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  diseaseOccurrences: DiseaseOccurrence[];
 }

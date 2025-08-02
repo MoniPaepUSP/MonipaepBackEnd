@@ -17,7 +17,7 @@ class ChatController {
     const { id } = request.tokenPayload;
     const { symptomIds }: { symptomIds: string[] } = request.body;
 
-    // 1) Buscar paciente com comorbidades e condições
+    // Buscar paciente com comorbidades e condições
     const patient = await PatientsRepository.findOne({
       where: { id },
       relations: ['comorbidities', 'specialConditions']
@@ -36,57 +36,56 @@ class ChatController {
     })
 
     // Get all the diseases and its data
-    const diseases = await DiseaseRepository.find({
-      order: {
-        name: "ASC"
-      },
-      relations: {
-        riskGroups: {
-          comorbidities: true,
-          specialConditions: true,
-        },
-        symptoms: true,
-        alarmSigns: true,
-        shockSigns: true,
-        healthProtocols: true
-      }
-    });
+    const query = DiseaseRepository.createQueryBuilder("disease")
+      .leftJoinAndSelect("disease.symptoms", "symptom")
+      .leftJoinAndSelect("disease.healthProtocols", "healthProtocol")
+
+    const [diseases, total] = await query.getManyAndCount();
+
+    const ids = diseases.map((d) => d.id);
+    const withComorbidities = await DiseaseRepository.createQueryBuilder("disease")
+      .leftJoinAndSelect("disease.comorbidities", "comorbidity")
+      .where("disease.id IN (:...ids)", { ids })
+      .getMany();
+
+    const withSpecialConditions = await DiseaseRepository.createQueryBuilder("disease")
+      .leftJoinAndSelect("disease.specialConditions", "specialCondition")
+      .where("disease.id IN (:...ids)", { ids })
+      .getMany();
+
+    const comorbidityMap = new Map(withComorbidities.map(d => [d.id, d.comorbidities]));
+    const specialConditionMap = new Map(withSpecialConditions.map(d => [d.id, d.specialConditions]));
+
+    for (const disease of diseases) {
+      disease.comorbidities = comorbidityMap.get(disease.id) || [];
+      disease.specialConditions = specialConditionMap.get(disease.id) || [];
+    }
 
     // 4) Scoring
     const probableDiseases = diseases
       .map(disease => {
-        const symptomMatch = disease.symptoms.filter(s => symptomIds.includes(s.id));
-        const alarmMatch = disease.alarmSigns.filter(s => symptomIds.includes(s.id));
-        const shockMatch = disease.shockSigns.filter(s => symptomIds.includes(s.id));
-        const keyMatchScore = disease.diseaseKeySymptoms
-          .filter(ks => symptomIds.includes(ks.symptom.id))
-          .reduce((sum, ks) => sum + ks.weight * 4 /* keySymptomWeight */, 0);
-
-        const inComorbidityGroup = disease.riskGroups?.comorbidities
-          .some(c => patient.comorbidities.some(p => p.id === c.id)) ?? false;
-        const inSpecialGroup = disease.riskGroups?.specialConditions
-          .some(c => patient.specialConditions.some(p => p.id === c.id)) ?? false;
-        const isRiskGroup = inComorbidityGroup || inSpecialGroup;
-
         // pesos básicos
         const symptomWeight = 1.5;
         const alarmSignWeight = 2;
         const shockSignWeight = 3;
         const keySymptomWeight = 4;
 
-        // total possível agora inclui key-symptoms
+        // Verifica quais sintomas do paciente estão relacionados com a doença
+        const symptomMatch = disease.symptoms.filter(s => symptomIds.includes(s.id));
+
+        const inComorbidityGroup = disease.comorbidities
+          .some(c => patient.comorbidities.some(p => p.id === c.id)) ?? false;
+        const inSpecialGroup = disease.specialConditions
+          .some(c => patient.specialConditions.some(p => p.id === c.id)) ?? false;
+        const isRiskGroup = inComorbidityGroup || inSpecialGroup;
+
+        // total possível
         const totalPos =
-          disease.symptoms.length * symptomWeight +
-          disease.alarmSigns.length * alarmSignWeight +
-          disease.shockSigns.length * shockSignWeight +
-          disease.diseaseKeySymptoms.length * keySymptomWeight;
+          disease.symptoms.length * symptomWeight;
 
         // peso encontrado
         const matched =
-          symptomMatch.length * symptomWeight +
-          alarmMatch.length * alarmSignWeight +
-          shockMatch.length * shockSignWeight +
-          keyMatchScore;
+          symptomMatch.length * symptomWeight;
 
         const baseScore = totalPos === 0 ? 0 : matched / totalPos;
         const riskBonus = isRiskGroup ? 0.1 : 0;
@@ -101,7 +100,7 @@ class ChatController {
       })
       .filter(d => d.suspicionScore >= 0.3);
 
-    // 5) Persistir ocorrência
+    // Persistir ocorrência
     const occurrence = SymptomOccurrenceRepository.create({
       patientId: id,
       symptoms: patientSymptoms,
@@ -168,7 +167,7 @@ class ChatController {
 
       // Monta o prompt de sistema com as instruções gerais e informações de apoio
       const systemPrompt = `
-      Você é um assistente clínico especializado em triagem de doenças tropicais.
+      Você é um assistente clínico especializado em triagem de doenças.
       Siga as diretrizes clínicas e seja empático ao conversar com o paciente.
       
       Lista de doenças prováveis (já avaliadas previamente):

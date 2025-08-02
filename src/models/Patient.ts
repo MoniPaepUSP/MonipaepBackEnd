@@ -53,9 +53,6 @@ export class Patient {
   @Column({ type: "boolean", name: "has_health_plan" })
   hasHealthPlan: boolean;
 
-  @Column({ type: "varchar", nullable: false })
-  status: "Óbito" | "Infectado" | "Suspeito" | "Saudável";
-
   @Column({ type: "boolean", default: true, name: "active_account" })
   activeAccount: boolean;
 

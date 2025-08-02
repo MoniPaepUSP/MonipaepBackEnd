@@ -11,20 +11,15 @@ class SystemUserController {
 
   async create(request: Request, response: Response) {
 
-
     const body = request.body
 
     // const systemUserRepository = AppDataSource.getRepository(SystemUser);
-    console.log("creating user: " ,body  );
     const userAlreadyExists = await SystemUserRepository.findOne({
       where: [
         { CPF: body.CPF },
         { email: body.email }
       ],
-      
     })
-
-    console.log("aaa");
 
     if (userAlreadyExists) {
       return response.status(400).json({

@@ -67,6 +67,7 @@ router.delete("/systemuser/:id", jwt.authMiddleware, jwt.localAdminMiddleware, s
 router.post("/patients/signup", patientController.create) //geral
 router.post("/patients/login", patientController.login) //geral
 router.get("/patients", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.list) //funcionarios autenticados
+router.get("/patients/:id", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.getOne)
 router.get("/patients/me", jwt.authMiddleware, patientController.getOneWithToken) //geral autenticado*
 router.put("/patients/alter", jwt.authMiddleware, patientController.alterOne) //geral autenticado*
 router.put("/patients/deactivate/:id", jwt.authMiddleware, patientController.deactivateAccount) //geral autenticado*
@@ -108,7 +109,6 @@ router.delete("/diseaseoccurrence/:id", jwt.authMiddleware, jwt.systemUserMiddle
 // SymptomOccurrence Routes
 router.post("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.create)//geral autenticado*
 router.get("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.list)//geral autenticado
-router.get("/symptomoccurrence/unassigned", jwt.authMiddleware, symptomOccurrenceController.getUnassignedOccurrences)//geral autenticado
 router.get("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.findOne)//geral autenticado*
 router.put("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.alterOne)//geral autenticado*
 router.delete("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.deleteOne)//geral autenticado*
@@ -153,12 +153,6 @@ router.post("/specialcondition", jwt.authMiddleware, jwt.localAdminMiddleware, s
 router.get("/specialcondition", specialConditionController.list)//geral sem autenticacao
 router.put("/specialcondition/:id", jwt.authMiddleware, jwt.localAdminMiddleware, specialConditionController.alterOne)///adm e adm locais
 router.delete("/specialcondition/:id", jwt.authMiddleware, jwt.localAdminMiddleware, specialConditionController.delete)//adm e adm locais
-
-// RiskGroup Routes - TBD
-// router.post("/riskgroup", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.create)//adm e adm locais
-// router.get("/riskgroup", riskGroupController.list)//geral sem autenticacao
-// router.put("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.update)///adm e adm locais
-// router.delete("/riskgroup/:name", jwt.authMiddleware, jwt.localAdminMiddleware, riskGroupController.delete)//adm e adm locais
 
 // Chat Routes
 router.post("/chat", jwt.authMiddleware, chatController.chat) // geral autenticado*

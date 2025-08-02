@@ -9,8 +9,6 @@ class PatientMovementHistoryController {
   async create(request: Request, response: Response) {
     const body = request.body
 
-    
-
     const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({
       where: {
         id: body.disease_occurrence_id

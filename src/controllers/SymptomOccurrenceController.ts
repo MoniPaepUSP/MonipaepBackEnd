@@ -12,10 +12,10 @@ class SymptomOccurrenceController {
 
   async create(request: Request, response: Response) {
     try {
-      const { patient_id, symptoms, remarks } = request.body;
+      const { patientId, symptoms, remarks } = request.body;
 
       // Validate patient existence.
-      const patient = await PatientsRepository.findOne({ where: { id: patient_id } });
+      const patient = await PatientsRepository.findOne({ where: { id: patientId } });
       if (!patient) {
         return response.status(404).json({ error: "Paciente não encontrado" });
       }
@@ -28,7 +28,7 @@ class SymptomOccurrenceController {
       // Find ongoing disease occurrences.
       const ongoingDiseaseOccurrences = await DiseaseOccurrenceRepository.find({
         where: {
-          patientId: patient_id,
+          patientId: patientId,
           status: In(["Suspeito", "Infectado"]),
         },
       });
@@ -38,14 +38,14 @@ class SymptomOccurrenceController {
       // Build occurrence(s) based on existing disease occurrences.
       const occurrencesToCreate: Partial<SymptomOccurrence>[] = ongoingDiseaseOccurrences.length === 0
         ? [{
-          patientId: patient_id,
+          patientId: patientId,
           diseaseOccurrenceId: undefined,
           registeredDate,
           symptoms,
           remarks,
         }]
         : ongoingDiseaseOccurrences.map(diseaseOccurrence => ({
-          patientId: patient_id,
+          patientId: patientId,
           diseaseOccurrenceId: diseaseOccurrence.id,
           registeredDate,
           symptoms,
@@ -62,61 +62,14 @@ class SymptomOccurrenceController {
     }
   }
 
-  async getUnassignedOccurrences(request: Request, response: Response) {
-    try {
-      const { page, patient_name } = request.query;
-      const take = 10;
-      const skip = page ? (Number(page) - 1) * take : 0;
-
-      // Build query conditions for unassigned occurrences.
-      const query = SymptomOccurrenceRepository.createQueryBuilder("occurrence")
-        .leftJoinAndSelect("occurrence.patient", "patient")
-        .where("occurrence.diseaseOccurrence IS NULL");
-
-      if (patient_name) {
-        query.andWhere("patient.name LIKE :name", { name: `%${patient_name}%` });
-      }
-
-      query.orderBy("occurrence.registeredDate", "DESC")
-        .skip(skip)
-        .take(take);
-
-      const [items, totalCount] = await query.getManyAndCount();
-
-      const formattedData = items.map(occurrence => ({
-        id: occurrence.id,
-        patient_id: occurrence.patient.id,
-        registered_date: occurrence.registeredDate,
-        patient: {
-          name: occurrence.patient.name,
-          email: occurrence.patient.email,
-        },
-        symptoms: occurrence.symptoms,
-        remarks: occurrence.remarks,
-      }));
-
-      return response.status(200).json({
-        symptomOccurrences: formattedData,
-        totalSymptomOccurrences: totalCount,
-      });
-    } catch (error) {
-      console.error("Erro ao buscar ocorrências não atribuídas:", error);
-      return response.status(500).json({ error: "Erro na listagem das ocorrências de sintomas" });
-    }
-  }
-
   async list(request: Request, response: Response) {
     try {
-
-      const { id, patient_id, symptom_name, disease_occurrence_id, unassigned } = request.query;
+      const { id, patientId, symptom_name, disease_occurrence_id, unassigned } = request.query;
       let filters: any = {};
 
       if (id) {
         const occurrence = await SymptomOccurrenceRepository.findOne({
           where: { id: String(id) },
-          relations: {
-            symptoms: true
-          }
         });
         if (!occurrence) {
           return response.status(404).json({ error: "Ocorrência de sintoma não encontrada" });
@@ -124,14 +77,14 @@ class SymptomOccurrenceController {
         filters.id = String(id);
       }
 
-      if (patient_id) {
+      if (patientId) {
         const patient = await PatientsRepository.findOne({
-          where: { id: String(patient_id) },
+          where: { id: String(patientId) },
         });
         if (!patient) {
           return response.status(404).json({ error: "Paciente não encontrado" });
         }
-        filters.patientId = String(patient_id);
+        filters.patientId = String(patientId);
       }
 
       if (symptom_name) {
@@ -156,7 +109,8 @@ class SymptomOccurrenceController {
         where: filters,
         order: { registeredDate: "DESC" },
         relations: {
-          symptoms: true
+          symptoms: true,
+          patient: true,
         }
       });
 
