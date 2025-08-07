@@ -34,12 +34,9 @@ class PatientController {
 
     body.createdAt = new Date();
     body.lastUpdate = body.createdAt;
+    body.birthdate = body.birthdate ? new Date(body.birthdate) : null;
 
     try {
-      // Hash the password before saving it to the database
-      const hashedPassword = await bcrypt.hash(password, 10);
-      body.password = hashedPassword;
-
       const patientBody = PatientsRepository.create(body);
       const patient: any = await PatientsRepository.save(patientBody);
       const patientId = patient.id;
@@ -58,11 +55,11 @@ class PatientController {
 
       // Avoid exposing sensitive data
       patient.password = undefined;
+      patient.status = "Saudável";
 
       return response.status(201).json({
         success: "Paciente criado com sucesso",
         patient,
-        status: "Saudável",
         token,
         refreshToken
       });
@@ -183,9 +180,11 @@ class PatientController {
         status = activeDiseaseOccurrences[0].status;
       }
 
+      // Put status inside patient object
+      (patient as any).status = status;
+
       return response.status(200).json({
         patient,
-        status,
         token,
         refreshToken,
       });
@@ -311,9 +310,11 @@ class PatientController {
       status = activeDiseaseOccurrences[0].status;
     }
 
+    // Put status inside patient object
+    (patient as any).status = status;
+
     return response.status(200).json({
-      patient,
-      status
+      patient
     })
   }
 
@@ -369,9 +370,11 @@ class PatientController {
       status = activeDiseaseOccurrences[0].status;
     }
 
+    // Put status inside patient object
+    (patient as any).status = status;
+
     return response.status(200).json({
-      patient,
-      status
+      patient
     })
   }
 
@@ -502,10 +505,12 @@ class PatientController {
         status = activeDiseaseOccurrences[0].status;
       }
 
+      // Put status inside patient object
+      (updatedPatient as any).status = status;
+
       return response.status(200).json({
         success: "Paciente atualizado com sucesso",
         patient: updatedPatient,
-        status,
       });
     } catch (error) {
       console.error("Update error:", error);

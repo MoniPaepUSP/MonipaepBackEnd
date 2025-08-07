@@ -1,21 +1,32 @@
 import { Request, Response } from "express";
 import { In, IsNull, Like } from "typeorm";
 
-import { SymptomOccurrence } from "../models";
+import { HealthProtocol, Patient, SymptomOccurrence } from "../models";
 import {
   DiseaseOccurrenceRepository,
+  DiseaseRepository,
+  HealthProtocolRepository,
   PatientsRepository,
   SymptomOccurrenceRepository,
 } from "../repositories";
+import { openai } from "src/openai";
 
 class SymptomOccurrenceController {
 
-  async create(request: Request, response: Response) {
+  async create(request: any, response: Response) {
     try {
-      const { patientId, symptoms, remarks } = request.body;
+      const { id, type } = request.tokenPayload
+
+      if (type !== 'patient') {
+        return response.status(401).json({
+          error: "Token inválido para essa requisição"
+        })
+      }
+
+      const { symptoms, remarks } = request.body;
 
       // Validate patient existence.
-      const patient = await PatientsRepository.findOne({ where: { id: patientId } });
+      const patient = await PatientsRepository.findOne({ where: { id } });
       if (!patient) {
         return response.status(404).json({ error: "Paciente não encontrado" });
       }
@@ -26,36 +37,29 @@ class SymptomOccurrenceController {
       }
 
       // Find ongoing disease occurrences.
-      const ongoingDiseaseOccurrences = await DiseaseOccurrenceRepository.find({
+      const ongoingDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({
         where: {
-          patientId: patientId,
+          patientId: id,
           status: In(["Suspeito", "Infectado"]),
         },
+        order: { dateStart: "DESC" },
       });
 
       const registeredDate = new Date();
 
-      // Build occurrence(s) based on existing disease occurrences.
-      const occurrencesToCreate: Partial<SymptomOccurrence>[] = ongoingDiseaseOccurrences.length === 0
-        ? [{
-          patientId: patientId,
-          diseaseOccurrenceId: undefined,
-          registeredDate,
-          symptoms,
-          remarks,
-        }]
-        : ongoingDiseaseOccurrences.map(diseaseOccurrence => ({
-          patientId: patientId,
-          diseaseOccurrenceId: diseaseOccurrence.id,
-          registeredDate,
-          symptoms,
-          remarks,
-        }));
+      const newSymptomOccurrence = SymptomOccurrenceRepository.create({
+        patientId: id,
+        registeredDate,
+        symptoms,
+        remarks: remarks.trim() || null,
+        chat: false,
+        probableDiseases: [],
+        diseaseOccurrenceId: ongoingDiseaseOccurrence ? ongoingDiseaseOccurrence.id : null,
+        isPatientInRiskGroup: false, // Default value, can be updated later
+      })
+      const symptomOccurrence = await SymptomOccurrenceRepository.save(newSymptomOccurrence);
 
-      const createdOccurrences = SymptomOccurrenceRepository.create(occurrencesToCreate);
-      await SymptomOccurrenceRepository.save(createdOccurrences);
-
-      return response.status(201).json({ success: "Sintoma registrado com sucesso" });
+      return response.status(201).json({ success: "Ocorrência de sintomas registrado com sucesso", symptomOccurrence });
     } catch (error) {
       console.error("Error creating symptom occurrence:", error);
       return response.status(500).json({ error: "Erro no cadastro do sintoma" });
@@ -183,6 +187,202 @@ class SymptomOccurrenceController {
     } catch (error) {
       console.error("Erro ao buscar ocorrência:", error);
       return response.status(500).json({ error: "Erro ao buscar ocorrência de sintoma" });
+    }
+  }
+
+  // This method is used to analyze the symptoms and provide health protocols based on the occurrence.
+  // 1. It gets the possible diseases based on the symptoms (at least 3 symptoms must match).
+  // 2. It retrieves health protocols for those diseases, ordered by gravity level.
+  // 3. It checks if the patient is in a risk group for those diseases.
+  // 4. It returns the health protocols with the risk group status.
+  async analysis(request: any, response: Response) {
+    try {
+      const { id: patientId } = request.tokenPayload
+      const patient = await PatientsRepository.findOne({
+        where: { id: patientId },
+        relations: {
+          comorbidities: true,
+          specialConditions: true
+        }
+      });
+      if (!patient) {
+        return response.status(404).json({ error: "Paciente não encontrado" });
+      }
+
+      // cache the patient’s risk-group IDs
+      const patientComIds = patient.comorbidities.map(c => c.id);
+      const patientSpecIds = patient.specialConditions.map(s => s.id);
+
+      // Get the symptom occurrence by ID
+      const { id } = request.params;
+      const occurrence = await SymptomOccurrenceRepository.findOne({
+        where: { id },
+        relations: {
+          symptoms: true
+        }
+      });
+      if (!occurrence) {
+        return response.status(404).json({ error: "Ocorrência de sintoma inválida" });
+      }
+      const symptomIds = occurrence.symptoms.map(s => s.id);
+
+      // Identify diseases that match at least 3 of the reported symptoms
+      const possibleDiseases = await DiseaseRepository.createQueryBuilder("d")
+        .innerJoin("d.symptoms", "symptom", "symptom.id IN (:...ids)", { ids: symptomIds })
+        .select("d.id", "id")
+        .addSelect("COUNT(symptom.id)", "matchedSymptoms")
+        .groupBy("d.id")
+        .having("COUNT(symptom.id) >= :minSymptoms", { minSymptoms: 3 })
+        .getRawMany();
+
+      // To get the healthprotocols with matching symptoms and gravity levels
+      const healthProtocols = await HealthProtocolRepository.createQueryBuilder("hp")
+        .innerJoin("hp.symptoms", "symptom", "symptom.id IN (:...ids)", { ids: symptomIds })
+        .groupBy("hp.id")
+        .addOrderBy("hp.gravityLevel", "DESC")
+        .getMany();
+
+      // Pick the top protocol per disease (by gravity level)
+      const topByDisease = new Map<string, HealthProtocol>();
+      for (const hp of healthProtocols) {
+        if (!possibleDiseases.some(d => d.id === hp.diseaseId)) {
+          continue; // skip protocols for diseases not in the possibleDiseaseIds
+        }
+
+        const existing = topByDisease.get(hp.diseaseId);
+        if (!existing
+          || hp.gravityLevel > existing.gravityLevel
+        ) {
+          topByDisease.set(hp.diseaseId, hp);
+        }
+      }
+
+      const result = Array.from(topByDisease.values());
+
+      // fetch all the diseases for those protocols, with their risk groups
+      const diseaseIds = result.map(hp => hp.diseaseId);
+      const diseases = await DiseaseRepository.find({
+        where: { id: In(diseaseIds) },
+        relations: ["comorbidities", "specialConditions"]
+      });
+
+      // build a map: diseaseId → boolean (isPatientInRiskGroup)
+      const comorbiditiesMap = new Map<string, string[]>();
+      const specialConditionsMap = new Map<string, string[]>();
+      for (const disease of diseases) {
+        const matchedComorbidities = disease.comorbidities.filter(c => patientComIds.includes(c.id)).map(c => c.name);
+        const matchedSpecialConditions = disease.specialConditions.filter(s => patientSpecIds.includes(s.id)).map(s => s.name);
+        comorbiditiesMap.set(disease.id, matchedComorbidities);
+        specialConditionsMap.set(disease.id, matchedSpecialConditions);
+      }
+
+      // Attach `patientAtRisk` to each protocol
+      const output = result.map(hp => ({
+        healthProtocolId: hp.id,
+        diseaseName: diseases.find(d => d.id === hp.diseaseId)?.name || "Desconhecido",
+        diseaseId: hp.diseaseId,
+        gravityLevel: hp.gravityLevel,
+        gravityLabel: hp.gravityLabel,
+        instructions: hp.instructions,
+        referUSM: hp.referUSM,
+        comorbiditiesMatched: comorbiditiesMap.get(hp.diseaseId) || [],
+        specialConditionsMatched: specialConditionsMap.get(hp.diseaseId) || [],
+      }));
+
+      return response.status(200).json({ output });
+    } catch (error) {
+      console.error("Erro ao gerar análise:", error);
+      return response.status(500).json({ error: "Erro ao gerar análise" });
+    }
+  }
+
+  async protocol(request: any, response: Response) {
+    const { id: patientId } = request.tokenPayload;
+    const { id } = request.params;
+    const {
+      data,
+    }: {
+      data: {
+        healthProtocolId: string;
+        comorbiditiesMatched: string[];
+        specialConditionsMatched: string[];
+      }[];
+    } = request.body;
+
+    console.log("Received protocol request:", { patientId, occurrenceId: id, data });
+
+    // Buscar o paciente
+    const patient: Patient | null = await PatientsRepository.findOne({ where: { id: patientId } });
+    if (!patient) {
+      return response.status(404).json({ error: 'Paciente não encontrado' });
+    }
+
+    // Buscar a ocorrência de sintomas
+    const symptomOccurrence = await SymptomOccurrenceRepository.findOne({
+      where: { id, patientId },
+      relations: ["symptoms"]
+    });
+    if (!symptomOccurrence) {
+      return response.status(403).json({ error: "Ocorrência de sintoma não encontrada" });
+    }
+
+    // Buscar os protocolos de saúde aplicáveis e guardar as informações
+    const healthProtocols: HealthProtocol[] = [];
+    for (const protocol of data) {
+      const healthProtocol = await HealthProtocolRepository.findOne({
+        where: { id: protocol.healthProtocolId },
+        relations: ["disease"]
+      });
+
+      if (!healthProtocol) {
+        return response.status(404).json({ error: `Protocolo de saúde com ID ${protocol.healthProtocolId} não encontrado` });
+      }
+
+      healthProtocols.push(healthProtocol);
+    }
+
+    try {
+      // Monta o prompt de sistema com as instruções gerais e informações de apoio
+      const systemPrompt = `
+            Você é um assistente virtual de saúde, especializado em juntar protocolos de saúde e informações clínicas para fornecer orientações precisas.
+            Sua tarefa é analisar as informações do paciente e da ocorrência de sintomas, e gerar uma mensagem clara e objetiva para o paciente.
+            Considere as seguintes informações:
+            - Nome do Paciente: ${patient.name}
+            - Sintomas relatados: ${symptomOccurrence.symptoms.map(s => s.name).join(", ")}
+            - Protocolos de saúde aplicáveis:
+            ${data.map((protocol, index) =>
+        `Protocolo para doença ${healthProtocols[index].disease.name}:
+                - Gravidade: ${healthProtocols[index].gravityLabel};
+                - Instruções sugeridas: ${healthProtocols[index].instructions};
+                ${healthProtocols[index].referUSM && `- Encaminhar para ${healthProtocols[index].referUSM}`};
+                - Comorbidades do paciente em risco: ${protocol.comorbiditiesMatched.join(", ") || "Nenhuma"};
+                - Condições especiais do paciente em risco: ${protocol.specialConditionsMatched.join(", ") || "Nenhuma"}`
+      ).join("\n")}
+          
+            Com esses dados em mãos, gere uma mensagem para o paciente que:
+            1. Explique de forma clara e objetiva o que ele deve fazer em relação aos sintomas relatados.
+            2. Informe sobre a gravidade dos sintomas e o que isso significa.
+            3. Inclua as instruções do protocolo de saúde aplicável de forma resumida.
+            4. Se necessário, informe sobre o encaminhamento para uma unidade de saúde (UPA ou UBS).
+            5. Seja amigável e empático, mas mantenha o profissionalismo.
+            6. Use uma linguagem acessível, evitando jargões médicos complexos.
+            7. A mensagem deve ser concisa, com no máximo 300 caracteres.
+            8. A mensagem deve ser escrita em português.
+            `;
+
+      // Geração da mensagem com responses
+      const responses = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+        ],
+        temperature: 0.1,
+      });
+      const text = responses.choices[0].message.content;
+
+      return response.status(200).json({ text });
+    } catch (error: any) {
+      return response.status(500).json({ error: "Erro no servidor: " + error });
     }
   }
 }

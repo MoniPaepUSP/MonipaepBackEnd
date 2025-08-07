@@ -27,6 +27,15 @@ export class SymptomOccurrence {
   })
   symptoms: Symptom[];
 
+  @Column({ type: "text", nullable: true })
+  instructions: string | null;
+
+  @Column({ type: "boolean", name: "is_patient_in_risk_group" })
+  isPatientInRiskGroup: boolean;
+  
+  @Column({ type: "varchar", nullable: true, name: "refer_usm" })
+  referUSM?: null | "UPA" | "UBS"
+
   @Column({ type: "text", name: "remarks", nullable: true })
   remarks: string | null;
 

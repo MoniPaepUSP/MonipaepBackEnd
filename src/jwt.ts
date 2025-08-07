@@ -138,7 +138,7 @@ export const systemUserMiddleware = async (request: any, response: Response, nex
     })
   } else {
     return response.status(401).json({
-      error: "Usuário inválido para essa requisição",
+      error: "Usuário inválido para essa requisição hihi",
       code: "not.system.user"
     })
   }

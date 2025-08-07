@@ -44,8 +44,8 @@ export class Patient {
   @Column({ type: "varchar" })
   street: string;
 
-  @Column({ type: "integer", name: "house_number" })
-  houseNumber: number;
+  @Column({ type: "varchar", name: "house_number" })
+  houseNumber: string;
 
   @Column({ type: "boolean", name: "allow_sms" })
   allowSms: boolean;

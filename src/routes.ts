@@ -67,8 +67,8 @@ router.delete("/systemuser/:id", jwt.authMiddleware, jwt.localAdminMiddleware, s
 router.post("/patients/signup", patientController.create) //geral
 router.post("/patients/login", patientController.login) //geral
 router.get("/patients", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.list) //funcionarios autenticados
-router.get("/patients/:id", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.getOne)
 router.get("/patients/me", jwt.authMiddleware, patientController.getOneWithToken) //geral autenticado*
+router.get("/patients/:id", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.getOne)
 router.put("/patients/alter", jwt.authMiddleware, patientController.alterOne) //geral autenticado*
 router.put("/patients/deactivate/:id", jwt.authMiddleware, patientController.deactivateAccount) //geral autenticado*
 router.delete("/patients/:id", jwt.authMiddleware, jwt.adminMiddleware, patientController.deleteOne) //funcionarios autenticados
@@ -110,6 +110,8 @@ router.delete("/diseaseoccurrence/:id", jwt.authMiddleware, jwt.systemUserMiddle
 router.post("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.create)//geral autenticado*
 router.get("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.list)//geral autenticado
 router.get("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.findOne)//geral autenticado*
+router.get("/symptomoccurrence/:id/analysis", jwt.authMiddleware, symptomOccurrenceController.analysis) // geral autenticado*
+router.post("/symptomoccurrence/:id/protocol", jwt.authMiddleware, symptomOccurrenceController.protocol) // geral autenticado*
 router.put("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.alterOne)//geral autenticado*
 router.delete("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.deleteOne)//geral autenticado*
 
