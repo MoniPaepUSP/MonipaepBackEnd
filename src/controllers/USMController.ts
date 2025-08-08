@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { Like, Repository } from "typeorm";
 import { USM } from "../models";
-// import { AppDataSource } from "src/database";
+// import { AppDataSource } from "../database";
 import { USMRepository } from "../repositories";
-import { getMedicalUnits, Place } from "src/lib/getMedicalUnits";
+import { getMedicalUnits, Place } from "../lib/getMedicalUnits";
 class USMController {
 
   async create(request: Request, response: Response) {

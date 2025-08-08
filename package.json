@@ -9,11 +9,13 @@
     "typeorm": "ts-node-dev node_modules/typeorm/cli.js",
     "test": "NODE_ENV=test jest",
     "migration:run": "npx typeorm-ts-node-commonjs migration:run -d src/database/index.ts",
+    "migration:run:prod": "npx typeorm-ts-node-commonjs migration:run -d dist/database/index.js",
     "migration:revert": "npx typeorm-ts-node-commonjs migration:revert -d ./src/database/index.ts",
     "migration:generate": "npx typeorm-ts-node-commonjs migration:generate ./src/database/migrations/UpdateSchema -d ./src/database/index.ts",
     "migration:create": "typeorm migration:create ./src/database/migrations/UpdateSchema",
     "populate": "psql -h localhost -U postgres -d monipaep -f ./src/database/populate/populate_db.sql",
-    "prepare": "husky"
+    "build": "tsc",
+    "start": "node -r tsconfig-paths/register dist/server.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
@@ -64,7 +66,7 @@
     "node-schedule": "^2.1.0",
     "openai": "^5.12.1",
     "reflect-metadata": "^0.1.13",
-    "tsconfig-paths": "^3.9.0",
+    "tsconfig-paths": "^4.2.0",
     "typeorm": "^0.3.20",
     "uuid": "^8.3.2",
     "winston": "^3.16.0",

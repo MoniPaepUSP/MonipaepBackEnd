@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import { Like } from 'typeorm'
 import { FAQ } from "../models";
-
-import { FAQRepository } from "../repositories/FAQRepository";
-import { FAQGroupRepository } from "src/repositories";
+import { FAQGroupRepository, FAQRepository } from "../repositories";
 
 class FAQController {
 

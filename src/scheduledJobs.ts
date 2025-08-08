@@ -1,10 +1,9 @@
 import { In } from "typeorm";
 import { DiseaseOccurrenceRepository, PatientsRepository } from "./repositories";
 import { DiseaseOccurrence, Patient } from "./models";
-  
+
 // This function will be called by a cron job
 export const verifyOccurrencesExpiration = async () => {
-
   // Find all occurrences with status "Suspeito" or "Infectado"
   const occurrences = await DiseaseOccurrenceRepository.find({
     where: {
@@ -16,62 +15,34 @@ export const verifyOccurrencesExpiration = async () => {
   const dayInMs = 1000 * 60 * 60 * 24
 
   occurrences.forEach(async (occurrence) => {
-    const currentDate = (new Date("2024-10-27T12:00:00.000-03:00")).getTime() // For testing purposes
-  
+    const currentDate = new Date().getTime()
+
     // Calculate the expiration date based on the disease monitoring days
     const occurrenceStartDate = occurrence.dateStart.getTime()
     let expirationDate = occurrenceStartDate
-    if(occurrence.status === "Suspeito") {
-      expirationDate += occurrence.disease.suspectedMonitoringDays * dayInMs
+    if (occurrence.status === "Suspeito") {
+      let monitoringDays = 0;
+      for (let disease of occurrence.diseases) {
+        monitoringDays = Math.max(monitoringDays, disease.suspectedMonitoringDays);
+      }
+      expirationDate += monitoringDays * dayInMs
     } else {
-      expirationDate += occurrence.disease.infectedMonitoringDays * dayInMs
+      let monitoringDays = 0;
+      for (let disease of occurrence.diseases) {
+        monitoringDays = Math.max(monitoringDays, disease.infectedMonitoringDays);
+      }
+      expirationDate += monitoringDays * dayInMs
     }
 
     // If the current date is greater than the expiration date, update the occurrence status
-    if(currentDate >= expirationDate) {
-      const newStatus = occurrence.status === "Suspeito" ? "Saudável" : "Curado"
+    if (currentDate >= expirationDate) {
+      const newStatus = "Saudável";
       try {
         await DiseaseOccurrenceRepository.createQueryBuilder()
-        .update(DiseaseOccurrence)
-        .set({ status: newStatus, dateEnd: new Date() })
-        .where("id = :id", { id: occurrence.id })
-        .execute()
-
-        const patientDiseaseOccurrences = await DiseaseOccurrenceRepository.find({
-          where: {
-            patientId: occurrence.patientId
-          }
-        })
-
-        let finalStatus = patientDiseaseOccurrences[0].status
-        if(finalStatus !== "Óbito") {
-          for(let occurrence of patientDiseaseOccurrences) {
-            if(occurrence.status === "Óbito") {
-              finalStatus = "Óbito"
-              break
-            }
-            else if(occurrence.status === "Infectado") {
-              finalStatus = "Infectado"
-            }
-            else if(occurrence.status === "Suspeito" && finalStatus !== "Infectado") {
-              finalStatus = "Suspeito"
-            }
-            else if(
-              (occurrence.status === "Saudável" || occurrence.status === "Curado") 
-              && finalStatus !== "Infectado" && finalStatus !== "Suspeito"
-            ) {
-              finalStatus = "Saudável"
-            }
-          }
-        }
-
-        try {
-          await PatientsRepository.createQueryBuilder()
-          .update(Patient)
-          .set({ status: finalStatus })
-          .where("id = :id", { id: occurrence.patientId })
-          .execute()
-        } catch (error) { console.log('CronJob - Patient error: ', error) }
+          .update(DiseaseOccurrence)
+          .set({ status: newStatus, dateEnd: new Date() })
+          .where("id = :id", { id: occurrence.id })
+          .execute();
       } catch (error) { console.log('CronJob - Occurrence error: ', error) }
     }
   })

@@ -3,9 +3,9 @@ import * as jwt from "../jwt"
 
 import bcrypt from 'bcrypt'
 import { RefreshToken, SystemUser } from "../models";
-import { refreshTokenExpiresIn } from "src/refreshTokenExpiration";
+import { refreshTokenExpiresIn } from "../refreshTokenExpiration";
 
-import { SystemUserRepository, PermissionsRepository, RefreshTokenRepository } from "src/repositories";
+import { SystemUserRepository, PermissionsRepository, RefreshTokenRepository } from "../repositories";
 class SystemUserController {
 
 
@@ -39,8 +39,8 @@ class SystemUserController {
         authorized: false
       })
       await PermissionsRepository.save(permissions)
-    
-      userSaved.password = undefined      
+
+      userSaved.password = undefined
       return response.status(201).json({
         success: "Usuário criado com sucesso."
       })
@@ -55,7 +55,7 @@ class SystemUserController {
     // this.initializeRepositories();
 
     let hash
-    
+
     const authorizationHeader = request.headers.authorization;
     if (!authorizationHeader) {
       return response.status(401).json({
@@ -72,9 +72,9 @@ class SystemUserController {
     }
 
     const [email, password] = Buffer.from(hash, 'base64').toString().split(':')
-    
+
     const userExists = await SystemUserRepository.findOne({
-      where: { email }, 
+      where: { email },
       select: ['id', 'email', 'password', 'name', 'department']
     })
 
@@ -87,7 +87,7 @@ class SystemUserController {
     const systemUserId = userExists.id
     const validPassword = await bcrypt.compare(password, userExists.password)
 
-    if(!validPassword) {
+    if (!validPassword) {
       return response.status(400).json({
         error: "Email e/ou senha inválidos."
       })
@@ -100,30 +100,30 @@ class SystemUserController {
         }
       })
 
-      if(!userPermissions) {
+      if (!userPermissions) {
         return response.status(400).json({
           error: "Usuário sem permissões cadastradas"
         })
       }
 
-      if(!userPermissions.authorized) {
+      if (!userPermissions.authorized) {
         return response.status(400).json({
           error: "Usuário não autorizado por um administrador",
         })
       }
-      
+
       const refreshTokenExists = await RefreshTokenRepository.findOne({
         where: {
-          systemUserId : systemUserId
+          systemUserId: systemUserId
         }
       })
-      
-      if(refreshTokenExists) {
+
+      if (refreshTokenExists) {
         await RefreshTokenRepository.createQueryBuilder()
-        .delete()
-        .from(RefreshToken)
-        .where("systemUserId = :id", { id: systemUserId })
-        .execute()
+          .delete()
+          .from(RefreshToken)
+          .where("systemUserId = :id", { id: systemUserId })
+          .execute()
       }
 
       const refreshTokenBody = RefreshTokenRepository.create({
@@ -137,19 +137,19 @@ class SystemUserController {
       const permissions: string[] = []
       const roles: string[] = ['system.user']
 
-      if(userExists.department === "USM") {
+      if (userExists.department === "USM") {
         permissions.push('usm.user')
       }
 
-      if(userExists.department === "SVS") {
+      if (userExists.department === "SVS") {
         permissions.push('svs.user')
       }
 
-      if(userPermissions.localAdm) {
+      if (userPermissions.localAdm) {
         roles.push('local.admin')
       }
 
-      if(userPermissions.generalAdm) {
+      if (userPermissions.generalAdm) {
         roles.push('general.admin')
       }
 
@@ -180,7 +180,7 @@ class SystemUserController {
     const { id, department } = request.query
     let filters = {}
 
-    if(id) {
+    if (id) {
       filters = { ...filters, id: String(id) }
 
       const user = await SystemUserRepository.findOne({
@@ -188,15 +188,15 @@ class SystemUserController {
           id: String(id)
         }
       })
-    
-      if(!user){
+
+      if (!user) {
         return response.status(404).json({
           error: "Usuário não encontrado"
         })
       }
     }
 
-    if(department) {
+    if (department) {
       filters = { ...filters, department: String(department) }
     }
 
@@ -210,19 +210,19 @@ class SystemUserController {
 
     const { id, type } = request.tokenPayload
 
-    if(type !== 'system_user') {
+    if (type !== 'system_user') {
       return response.status(401).json({
         error: "Token inválido para essa requisição"
       })
     }
-    
+
 
     const user = await SystemUserRepository.findOne({
-      where: { id }, 
+      where: { id },
       select: ['id', 'email', 'password', 'name', 'department']
     })
 
-    if(!user) {
+    if (!user) {
       return response.status(401).json({
         error: "Usuário inválido"
       })
@@ -234,7 +234,7 @@ class SystemUserController {
       }
     })
 
-    if(!userPermissions) {
+    if (!userPermissions) {
       return response.status(400).json({
         error: "Usuário sem permissões cadastradas"
       })
@@ -245,19 +245,19 @@ class SystemUserController {
     const permissions: string[] = []
     const roles: string[] = ['system.user']
 
-    if(user.department === "USM") {
+    if (user.department === "USM") {
       permissions.push('usm.user')
     }
 
-    if(user.department === "SVS") {
+    if (user.department === "SVS") {
       permissions.push('svs.user')
     }
 
-    if(userPermissions.localAdm) {
+    if (userPermissions.localAdm) {
       roles.push('local.admin')
     }
 
-    if(userPermissions.generalAdm) {
+    if (userPermissions.generalAdm) {
       roles.push('general.admin')
     }
 
@@ -275,18 +275,18 @@ class SystemUserController {
     const { current_password, new_password } = request.body
     const { id } = request.params
 
-    if(id !== tokenPayload.id || current_password === undefined || new_password === undefined){
+    if (id !== tokenPayload.id || current_password === undefined || new_password === undefined) {
       return response.status(401).json({
         error: "Operação proibida"
       })
     }
 
-    
+
     const userExists = await SystemUserRepository.findOne({
-      where: { id }, 
+      where: { id },
       select: ['password']
     })
-    
+
     if (!userExists) {
       return response.status(401).json({
         error: "Usuário inválido."
@@ -295,14 +295,14 @@ class SystemUserController {
 
     const isValidPassword = await bcrypt.compare(current_password, userExists.password)
 
-    if(!isValidPassword) {
+    if (!isValidPassword) {
       return response.status(400).json({
         error: "Senha atual inválida."
       })
     }
 
     const newPasswordHash = await bcrypt.hash(new_password, 10)
-    
+
     try {
       await SystemUserRepository.createQueryBuilder()
         .update(SystemUser)
@@ -325,15 +325,15 @@ class SystemUserController {
     const body = request.body
     const { id } = request.params
 
-    const userExists = await SystemUserRepository.findOne({ where: { id:id} })
+    const userExists = await SystemUserRepository.findOne({ where: { id: id } })
 
-    if(!userExists){
+    if (!userExists) {
       return response.status(401).json({
         error: "Usuário inválido"
       })
     }
-    
-    if(body.password){
+
+    if (body.password) {
       const hash = await bcrypt.hash(body.password, 10)
       body.password = hash
     }
@@ -359,9 +359,9 @@ class SystemUserController {
 
     const { id } = request.params
 
-    const userExists = await SystemUserRepository.findOne({ where: {id :id} })
+    const userExists = await SystemUserRepository.findOne({ where: { id: id } })
 
-    if(!userExists){
+    if (!userExists) {
       return response.status(401).json({
         error: "Usuário inválido"
       })

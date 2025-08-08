@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
 import { AppointmentsRepository, PatientsRepository } from "../repositories";
 
-
-
 class AppointmentController {
 
   async create(request: Request, response: Response) {

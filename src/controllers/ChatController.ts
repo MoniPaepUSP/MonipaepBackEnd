@@ -7,9 +7,9 @@ import {
   SymptomRepository,
   DiseaseRepository,
 } from "../repositories";
-import { openai } from "src/openai";
+import { openai } from "../openai";
 import { z } from "zod";
-import { zodResponseFormat } from "openai/helpers/zod";
+import { zodTextFormat } from "openai/helpers/zod";
 import { In } from "typeorm";
 
 class ChatController {
@@ -182,7 +182,7 @@ class ChatController {
     `;
 
       // Stage 1: Geração inicial da mensagem utilizando o padrão híbrido
-      const initialChatCompletion = await openai.beta.chat.completions.parse({
+      const initialChatCompletion = await openai.responses.parse({
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
@@ -190,9 +190,11 @@ class ChatController {
           ...conversationHistoryFormatted,
         ],
         temperature: 0.1,
-        response_format: zodResponseFormat(EvaluationSchema, 'initialEvaluation'),
+        text: {
+          format: zodTextFormat(EvaluationSchema, 'initialEvaluation')
+        }
       });
-      const initialEvaluation = initialChatCompletion.choices[0].message.parsed;
+      const initialEvaluation = initialChatCompletion.output_parsed;
       if (!initialEvaluation) {
         throw new Error('Erro ao avaliar a conversa inicial');
       }
@@ -215,7 +217,7 @@ class ChatController {
         "message": "<mensagem revisada para o paciente>"
       }
     `;
-      const reviewChatCompletion = await openai.beta.chat.completions.parse({
+      const reviewChatCompletion = await openai.responses.parse({
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPromptReview },
@@ -225,9 +227,11 @@ class ChatController {
           ...conversationHistoryFormatted,
         ],
         temperature: 0.1,
-        response_format: zodResponseFormat(EvaluationSchema, 'reviewEvaluation'),
+        text: {
+          format: zodTextFormat(EvaluationSchema, 'reviewEvaluation')
+        }
       });
-      const reviewedEvaluation = reviewChatCompletion.choices[0].message.parsed;
+      const reviewedEvaluation = reviewChatCompletion.output_parsed;
       if (!reviewedEvaluation) {
         throw new Error('Erro ao revisar a mensagem do chat');
       }

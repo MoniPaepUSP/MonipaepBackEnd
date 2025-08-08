@@ -7,8 +7,8 @@ import { Patient, RefreshToken } from "../models";
 import { RefreshTokenRepository, PatientsRepository, ComorbidityRepository, SpecialConditionRepository, DiseaseOccurrenceRepository } from "../repositories";
 import { refreshTokenExpiresIn } from "../refreshTokenExpiration";
 import { PatientAlreadyExistsError } from "../errors/patient.errors";
-import { HttpError } from "src/common/app.errors";
-import { GeneralInternalError } from "src/errors/unknown.errors";
+import { HttpError } from "../common/app.errors";
+import { GeneralInternalError } from "../errors/unknown.errors";
 
 class PatientController {
   async create(request: Request, response: Response) {

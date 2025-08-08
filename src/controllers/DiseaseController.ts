@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { Disease, HealthProtocol, Symptom } from "../models";
 import { ComorbidityRepository, DiseaseRepository, HealthProtocolRepository, SpecialConditionRepository, SymptomRepository } from "../repositories";
-import { openai } from "src/openai";
-import { zodResponseFormat } from "openai/helpers/zod";
+import { openai } from "../openai";
+import { zodResponseFormat, zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 
 class DiseaseController {
@@ -259,15 +259,17 @@ class DiseaseController {
     - Use valores realistas para os dias de monitoramento.
     `;
 
-    const diseaseCompletion = await openai.beta.chat.completions.parse({
+    const diseaseCompletion = await openai.responses.parse({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: diseasePrompt },
         { role: 'user', content: name }
       ],
-      response_format: zodResponseFormat(DiseaseInitialSchema, 'diseaseInitialSchema')
+      text: {
+        format: zodTextFormat(DiseaseInitialSchema, 'diseaseInitialSchema')
+      }
     });
-    const diseaseData = diseaseCompletion.choices[0].message.parsed;
+    const diseaseData = diseaseCompletion.output_parsed;
     if (!diseaseData) {
       return response.status(404).json({ error: "Erro ao gerar os dados iniciais da doença" });
     }
@@ -316,15 +318,17 @@ class DiseaseController {
     
     Atenção: retorne apenas os IDs válidos.
   `;
-    const symptomsCompletion = await openai.beta.chat.completions.parse({
+    const symptomsCompletion = await openai.responses.parse({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: symptomsPrompt },
         { role: 'user', content: name }
       ],
-      response_format: zodResponseFormat(SymptomsSchema, 'symptomsSchema')
+      text: {
+        format: zodTextFormat(SymptomsSchema, 'symptomsSchema')
+      }
     });
-    const symptomsData = symptomsCompletion.choices[0].message.parsed;
+    const symptomsData = symptomsCompletion.output_parsed;
     const symptomIds = symptomsData?.symptomIds ?? [];
     if (!symptomIds.length) {
       return response.status(404).json({ error: "Erro ao revisar os sintomas" });
@@ -351,15 +355,17 @@ class DiseaseController {
     usando a lista abaixo:
     ${JSON.stringify(availableComorbiditiesList, null, 2)}
   `;
-    const comorbiditiesCompletion = await openai.beta.chat.completions.parse({
+    const comorbiditiesCompletion = await openai.responses.parse({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: comorbiditiesPrompt },
         { role: 'user', content: name }
       ],
-      response_format: zodResponseFormat(ComorbiditiesSchema, 'riskGroupsSchema')
+      text: {
+        format: zodTextFormat(ComorbiditiesSchema, 'comorbiditiesSchema')
+      }
     });
-    const comorbiditiesData = comorbiditiesCompletion.choices[0].message.parsed;
+    const comorbiditiesData = comorbiditiesCompletion.output_parsed;
     const comorbiditiesIds = comorbiditiesData?.comorbiditiesIds ?? [];
     if (!comorbiditiesIds.length) {
       return response.status(404).json({ error: "Erro ao gerar os dados iniciais das comorbidades" });
@@ -382,15 +388,17 @@ class DiseaseController {
     ${JSON.stringify(availableSpecialConditionsList, null, 2)}
     `;
 
-    const specialConditionsCompletion = await openai.beta.chat.completions.parse({
+    const specialConditionsCompletion = await openai.responses.parse({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: specialConditionsPrompt },
         { role: 'user', content: name }
       ],
-      response_format: zodResponseFormat(SpecialConditionsSchema, 'riskGroupsSchema')
+      text: {
+        format: zodTextFormat(SpecialConditionsSchema, 'specialConditionsSchema')
+      }
     });
-    const specialConditionsData = specialConditionsCompletion.choices[0].message.parsed;
+    const specialConditionsData = specialConditionsCompletion.output_parsed;
     const specialConditionsIds = specialConditionsData?.specialConditionsIds ?? [];
     if (!specialConditionsIds.length) {
       return response.status(404).json({ error: "Erro ao gerar os dados iniciais das condições especiais" });

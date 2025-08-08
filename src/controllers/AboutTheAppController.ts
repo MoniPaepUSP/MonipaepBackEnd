@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import {  Like, Repository } from 'typeorm'
 import { AboutTheApp } from "../models";
 
-import { AboutTheAppRepository } from "src/repositories";
+import { AboutTheAppRepository } from "../repositories";
 
 class AboutTheAppController{
 

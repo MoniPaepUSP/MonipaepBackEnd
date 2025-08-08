@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import { ChatMessage, Patient } from 'src/models';
-import { ChatMessageRepository, PatientsRepository } from 'src/repositories';
+import { ChatMessage, Patient } from '../models';
+import { ChatMessageRepository, PatientsRepository } from '../repositories';
 
 class ChatMessageController {
 

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Like } from 'typeorm'
 import { FAQGroup } from "../models";
 
-import { FAQGroupRepository } from "src/repositories";
+import { FAQGroupRepository } from "../repositories";
 
 class FAQGroupController {
 

@@ -6,16 +6,13 @@
 
 import { DataSource } from 'typeorm';
 import fs from 'fs';
+import path from "path";
 
 const {
     POSTGRES_HOST: HOST,
-    POSTGRES_HOST_FILE: HOST_FILE,
     POSTGRES_USER: USER,
-    POSTGRES_USER_FILE: USER_FILE,
     POSTGRES_PASSWORD: PASSWORD,
-    POSTGRES_PASSWORD_FILE: PASSWORD_FILE,
     POSTGRES_DB: DB,
-    POSTGRES_DB_FILE: DB_FILE,
 
     ENVIRONMENT_TYPE: ENVIRONMENT
 } = process.env; // reading from environment all usefull variables
@@ -26,41 +23,24 @@ let user = "postgres"
 let password = "postgreslabesmonipaep"
 let database = "monipaep"
 
+const isProd = ENVIRONMENT === "PRODUCTION";
+
 // production
-if (ENVIRONMENT == "PRODUCTION") {
+if (isProd) {
     console.log("Entering production mode")
-
-    if (!HOST && !HOST_FILE) {
-        console.error("HOST or HOST_FILE is required");
-        process.exit(1);
-    }
-    if (!USER && !USER_FILE) {
-        console.error("USER or USER_FILE is required");
-        process.exit(1);
-    }
-    if (!PASSWORD && !PASSWORD_FILE) {
-        console.error("PASSWORD or PASSWORD_FILE is required");
-        process.exit(1);
-    }
-    if (!DB && !DB_FILE) {
-        console.error("DB or DB_FILE is required");
-        process.exit(1);
-    }
-
-    // reading docker secrets in case it runs on production mode
-    host = HOST_FILE ? fs.readFileSync(HOST_FILE).toString() : HOST!;
-    user = USER_FILE ? fs.readFileSync(USER_FILE).toString() : USER!;
-    password = PASSWORD_FILE ? fs.readFileSync(PASSWORD_FILE, 'utf8').toString() : PASSWORD!;
-    database = DB_FILE ? fs.readFileSync(DB_FILE).toString() : DB!;
-} else {
-    console.log("Production: DEVELOPMENT");
-    console.log("Variables:");
-    console.log(host);
-    console.log(user);
-    console.log(password);
-    console.log(database);
+    host = HOST ? HOST : "localhost";
+    user = USER ? USER : "postgres";
+    password = PASSWORD ? PASSWORD : "postgreslabesmonipaep";
+    database = DB ? DB : "monipaep";
 }
 
+const migrationsGlob = isProd
+    ? path.join(__dirname, "migrations", "*.js")
+    : path.join(__dirname, "migrations", "*.ts");
+
+const entitiesGlob = isProd
+    ? path.join(__dirname, "../models", "*.js")
+    : path.join(__dirname, "../models", "*.ts");
 
 // initializing database with typeorm
 export const AppDataSource = new DataSource({
@@ -71,11 +51,8 @@ export const AppDataSource = new DataSource({
     "password": `${password}`,
     "database": `${database}`,
     "logging": false,
-    "migrations": ["./src/database/migrations/**.ts"],
-    "entities": ["./src/models/**.{ts,js}"],
-    // "cli":{
-    //     "migrationsDir": "./src/database/migrations"
-    // }
+    migrations: [migrationsGlob],
+    entities: [entitiesGlob],
 })
 
 
@@ -83,10 +60,10 @@ export const AppDataSource = new DataSource({
 AppDataSource.initialize()
     .then(() => {
         console.log("Data source typeorm initialized!");
-        // console.log(host);
-        // console.log(user);
-        // console.log(password);
-        // console.log(database);
+        console.log(host);
+        console.log(user);
+        console.log(password);
+        console.log(database);
     })
     .catch((err) => {
         console.error("Error on data source typeorm intialization ", err);

@@ -18,8 +18,8 @@ export class DiseaseOccurrence {
   @Column({ type: "varchar", nullable: true })
   diagnosis: string | null;
 
-  @Column({ type: "timestamp", name: "date_start", nullable: true })
-  dateStart: Date | null;
+  @Column({ type: "timestamp", name: "date_start" })
+  dateStart: Date;
 
   @Column({ type: "timestamp", name: "date_end", nullable: true })
   dateEnd?: Date | null;

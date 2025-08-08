@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 import { Patient, USM, Vaccine } from "../models";
 // import { Repository } from "typeorm";
-// import { AppDataSource } from "src/database";
+// import { AppDataSource } from "../database";
 import { PatientsRepository, USMRepository, VaccinesRepository } from "../repositories";
 
-class VaccineController{
-  
-  async create(request: Request, response:Response){
+class VaccineController {
+
+  async create(request: Request, response: Response) {
     const body = request.body
 
-  
+
 
     const patientExists = await PatientsRepository.findOne({
       where: {
@@ -23,13 +23,13 @@ class VaccineController{
       }
     })
 
-    if(!usmExists){
+    if (!usmExists) {
       return response.status(404).json({
         error: "Invalid USM name"
       })
     }
 
-    if(!patientExists){
+    if (!patientExists) {
       return response.status(404).json({
         error: "Invalid patient id"
       })
@@ -47,15 +47,15 @@ class VaccineController{
     }
   }
 
-  async list(request: Request, response: Response){
+  async list(request: Request, response: Response) {
 
     const vaccineList = await VaccinesRepository.find()
 
     return response.json(vaccineList)
   }
 
-  async getOne(request: Request, response: Response){
-    const {vaccine_id} = request.params
+  async getOne(request: Request, response: Response) {
+    const { vaccine_id } = request.params
 
 
     const vaccine = await VaccinesRepository.findOne({
@@ -63,8 +63,8 @@ class VaccineController{
         id: vaccine_id
       }
     })
-    
-    if(!vaccine){
+
+    if (!vaccine) {
       return response.status(404).json({
         error: "Vaccine not found"
       })
@@ -73,9 +73,9 @@ class VaccineController{
     return response.status(302).json(vaccine)
   }
 
-  async alterOne(request: Request, response: Response){
+  async alterOne(request: Request, response: Response) {
     const body = request.body
-    const {vaccine_id} = request.params
+    const { vaccine_id } = request.params
 
 
     const vaccine = await VaccinesRepository.findOne({
@@ -83,8 +83,8 @@ class VaccineController{
         id: vaccine_id
       }
     })
-    
-    if(!vaccine){
+
+    if (!vaccine) {
       return response.status(404).json({
         error: "Vaccine not found"
       })
@@ -103,8 +103,8 @@ class VaccineController{
     }
   }
 
-  async deleteOne(request: Request, response: Response){
-    const {vaccine_id} = request.params
+  async deleteOne(request: Request, response: Response) {
+    const { vaccine_id } = request.params
 
 
     const vaccine = await VaccinesRepository.findOne({
@@ -112,8 +112,8 @@ class VaccineController{
         id: vaccine_id
       }
     })
-    
-    if(!vaccine){
+
+    if (!vaccine) {
       return response.status(404).json({
         error: "Vaccine not found"
       })
@@ -136,4 +136,4 @@ class VaccineController{
   }
 }
 
-export { VaccineController}
+export { VaccineController }

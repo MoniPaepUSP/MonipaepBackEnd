@@ -37,13 +37,12 @@ O projeto está configurado para rodar em produção com docker compose. Ele é 
 Siga os passos:
 - `docker compose -f docker-compose.prod.yaml build` para buildar o projeto (ele criará uma imagem nova do projeto). Tome cuidado pois ele não deleta a imagem antiga, então você terá que deletar manualmente.
 - `docker compose -f docker-compose.prod.yaml up -d` para rodar o projeto em produção.
-- Rode as migrations com: `docker compose exec app npm run migration:run`
+- Rode as migrations com: `docker compose exec app npm run migration:run:prod`
 - Insira os dados iniciais com `docker compose exec -T postgres psql -U postgres -d monipaep < ./src/database/populate/populate_db.sql`
 - `docker compose -f docker-compose.prod.yaml down` para terminar o projeto.
 
 #### Para gerar migrations:
 - `npm run migration:generate` (desenvolvimento)
-- `docker compose exec app npm run migration:generate` (produção)
 
 ## Tecnologias utilizadas
 

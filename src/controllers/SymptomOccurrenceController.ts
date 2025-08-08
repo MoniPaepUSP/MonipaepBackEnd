@@ -9,7 +9,7 @@ import {
   PatientsRepository,
   SymptomOccurrenceRepository,
 } from "../repositories";
-import { openai } from "src/openai";
+import { openai } from "../openai";
 
 class SymptomOccurrenceController {
 

@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
 import { FAQSuggestion } from "../models/FAQSuggestion";
-import { AppDataSource } from "src/database";
+import { AppDataSource } from "../database";
 
 export const FAQSuggestionRepository: Repository<FAQSuggestion> = AppDataSource.getRepository(FAQSuggestion);
