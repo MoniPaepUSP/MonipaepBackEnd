@@ -344,31 +344,35 @@ class SymptomOccurrenceController {
     try {
       // Monta o prompt de sistema com as instruções gerais e informações de apoio
       const systemPrompt = `
-            Você é um assistente virtual de saúde, especializado em juntar protocolos de saúde e informações clínicas para fornecer orientações precisas.
-            Sua tarefa é analisar as informações do paciente e da ocorrência de sintomas, e gerar uma mensagem clara e objetiva para o paciente.
-            Considere as seguintes informações:
-            - Nome do Paciente: ${patient.name}
-            - Sintomas relatados: ${symptomOccurrence.symptoms.map(s => s.name).join(", ")}
-            - Protocolos de saúde aplicáveis:
-            ${data.map((protocol, index) =>
-        `Protocolo para doença ${healthProtocols[index].disease.name}:
-                - Gravidade: ${healthProtocols[index].gravityLabel};
-                - Instruções sugeridas: ${healthProtocols[index].instructions};
-                ${healthProtocols[index].referUSM && `- Encaminhar para ${healthProtocols[index].referUSM}`};
-                - Comorbidades do paciente em risco: ${protocol.comorbiditiesMatched.join(", ") || "Nenhuma"};
-                - Condições especiais do paciente em risco: ${protocol.specialConditionsMatched.join(", ") || "Nenhuma"}`
-      ).join("\n")}
-          
-            Com esses dados em mãos, gere uma mensagem para o paciente que:
-            1. Explique de forma clara e objetiva o que ele deve fazer em relação aos sintomas relatados.
-            2. Informe sobre a gravidade dos sintomas e o que isso significa.
-            3. Inclua as instruções do protocolo de saúde aplicável de forma resumida.
-            4. Se necessário, informe sobre o encaminhamento para uma unidade de saúde (UPA ou UBS).
-            5. Seja amigável e empático, mas mantenha o profissionalismo.
-            6. Use uma linguagem acessível, evitando jargões médicos complexos.
-            7. A mensagem deve ser concisa, com no máximo 300 caracteres.
-            8. A mensagem deve ser escrita em português.
-            `;
+        Você é um assistente virtual de saúde. Sua tarefa é analisar os sintomas relatados por um paciente e os protocolos de saúde aplicáveis, e gerar uma mensagem clara, empática e objetiva com orientações baseadas nesses dados.
+
+        Informações:
+        - Nome do paciente: ${patient.name}
+        - Sintomas relatados: ${symptomOccurrence.symptoms.map(s => s.name).join(", ")}
+
+        Protocolos identificados:
+        ${data.map((protocol, index) => {
+        const hp = healthProtocols[index];
+        return `
+        [${index + 1}] Protocolo para: ${hp.disease.name}
+          - Gravidade: ${hp.gravityLabel}
+          - Instruções: ${hp.instructions}
+          - Encaminhamento: ${hp.referUSM ? hp.referUSM : "Não necessário"}
+          - Comorbidades de risco encontradas: ${protocol.comorbiditiesMatched.join(", ") || "Nenhuma"}
+          - Condições especiais de risco encontradas: ${protocol.specialConditionsMatched.join(", ") || "Nenhuma"}`;
+      }).join("\n")}
+
+        Com base nessas informações, escreva uma mensagem final para o paciente que:
+
+        1. Explique de forma clara e breve os próximos passos;
+        2. Destaque se há sinais de gravidade;
+        3. Resuma as instruções do(s) protocolo(s);
+        4. Informe se é necessário ir a uma UPA/UBS;
+        5. Seja amigável, acolhedor e profissional;
+        6. Use uma linguagem acessível, sem termos médicos difíceis;
+        7. Tenha no máximo 300 caracteres.
+        `;
+
 
       // Geração da mensagem com responses
       const responses = await openai.chat.completions.create({
