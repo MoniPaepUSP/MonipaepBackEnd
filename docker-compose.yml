@@ -1,7 +1,9 @@
 services:
   app:
     restart: always
-    build: .
+    build: 
+      context: .
+      network: host
     depends_on:
       - postgres
     environment:
@@ -10,7 +12,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      ENVIRONMENT_TYPE: PRODUCTION
+      ENVIRONMENT_TYPE: DEVELOPMENT
       PORT: 3333
     ports:
       - "3333:3333"

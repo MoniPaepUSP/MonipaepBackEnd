@@ -5,7 +5,6 @@
 // }
 
 import { DataSource } from 'typeorm';
-import fs from 'fs';
 import path from "path";
 
 const {
@@ -17,22 +16,12 @@ const {
     ENVIRONMENT_TYPE: ENVIRONMENT
 } = process.env; // reading from environment all usefull variables
 
-// development
-let host = "localhost"
-let user = "postgres"
-let password = "postgreslabesmonipaep"
-let database = "monipaep"
-
 const isProd = ENVIRONMENT === "PRODUCTION";
 
-// production
-if (isProd) {
-    console.log("Entering production mode")
-    host = HOST ? HOST : "localhost";
-    user = USER ? USER : "postgres";
-    password = PASSWORD ? PASSWORD : "postgreslabesmonipaep";
-    database = DB ? DB : "monipaep";
-}
+const host = HOST ? HOST : "localhost";
+const user = USER ? USER : "postgres";
+const password = PASSWORD ? PASSWORD : "postgreslabesmonipaep";
+const database = DB ? DB : "monipaep";
 
 const migrationsGlob = isProd
     ? path.join(__dirname, "migrations", "*.js")
@@ -40,7 +29,7 @@ const migrationsGlob = isProd
 
 const entitiesGlob = isProd
     ? path.join(__dirname, "../models", "*.js")
-    : path.join(__dirname, "../models", "*.ts");
+    : path.join(__dirname, "../models", "index.ts");
 
 // initializing database with typeorm
 export const AppDataSource = new DataSource({

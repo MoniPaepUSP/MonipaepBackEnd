@@ -184,7 +184,7 @@ class ChatController {
       // Stage 1: Geração inicial da mensagem utilizando o padrão híbrido
       const initialChatCompletion = await openai.responses.parse({
         model: 'gpt-4o-mini',
-        messages: [
+        input: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Nome do paciente: ${patient.name}` },
           ...conversationHistoryFormatted,
@@ -219,7 +219,7 @@ class ChatController {
     `;
       const reviewChatCompletion = await openai.responses.parse({
         model: 'gpt-4o-mini',
-        messages: [
+        input: [
           { role: 'system', content: systemPromptReview },
           // Incluímos a resposta inicial para o modelo revisar
           { role: 'assistant', content: initialEvaluation.message },

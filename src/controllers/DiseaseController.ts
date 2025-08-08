@@ -261,7 +261,7 @@ class DiseaseController {
 
     const diseaseCompletion = await openai.responses.parse({
       model: 'gpt-4o-mini',
-      messages: [
+      input: [
         { role: 'system', content: diseasePrompt },
         { role: 'user', content: name }
       ],
@@ -320,7 +320,7 @@ class DiseaseController {
   `;
     const symptomsCompletion = await openai.responses.parse({
       model: 'gpt-4o-mini',
-      messages: [
+      input: [
         { role: 'system', content: symptomsPrompt },
         { role: 'user', content: name }
       ],
@@ -357,7 +357,7 @@ class DiseaseController {
   `;
     const comorbiditiesCompletion = await openai.responses.parse({
       model: 'gpt-4o-mini',
-      messages: [
+      input: [
         { role: 'system', content: comorbiditiesPrompt },
         { role: 'user', content: name }
       ],
@@ -390,7 +390,7 @@ class DiseaseController {
 
     const specialConditionsCompletion = await openai.responses.parse({
       model: 'gpt-4o-mini',
-      messages: [
+      input: [
         { role: 'system', content: specialConditionsPrompt },
         { role: 'user', content: name }
       ],
