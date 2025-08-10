@@ -18,7 +18,7 @@ if (!secret) {
   throw new Error("JWT_SECRET is not defined in the environment variables");
 }
 
-export const sign = (payload: TokenPayload) => jwt.sign(payload, secret, { expiresIn: 60 * 60 * 24 })
+export const sign = (payload: TokenPayload) => jwt.sign(payload, secret, { expiresIn: 60 * 60 * 24 }) // 1 day expiration
 export const verify = (token: string) => jwt.verify(token, secret)
 
 export const authMiddleware = async (request: any, response: Response, next: any) => {
@@ -138,7 +138,7 @@ export const systemUserMiddleware = async (request: any, response: Response, nex
     })
   } else {
     return response.status(401).json({
-      error: "Usuário inválido para essa requisição hihi",
+      error: "Usuário inválido para essa requisição",
       code: "not.system.user"
     })
   }

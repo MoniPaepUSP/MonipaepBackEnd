@@ -4,12 +4,13 @@ import { AppointmentsRepository, PatientsRepository } from "../repositories";
 class AppointmentController {
 
   async create(request: Request, response: Response) {
-    const body = request.body
+    const body = request.body;
+    const { patiendId } = body;
 
     const patientExists = await PatientsRepository.findOne(
       {
         where: {
-          id: body.patient_id
+          id: patiendId
         }
       })
 

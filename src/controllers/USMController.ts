@@ -130,7 +130,17 @@ class USMController {
   }
 
   async getGooglePlaces(request: Request, response: Response) {
-    const { state, city, neighborhood, nextPageTokenUBS, nextPageTokenUPA } = request.body;
+    const state = typeof request.query.state === 'string' ? request.query.state : undefined;
+    const city = typeof request.query.city === 'string' ? request.query.city : undefined;
+    const neighborhood = typeof request.query.neighborhood === 'string' ? request.query.neighborhood : undefined;
+    const nextPageTokenUBS = typeof request.query.nextPageTokenUBS === 'string' ? request.query.nextPageTokenUBS : undefined;
+    const nextPageTokenUPA = typeof request.query.nextPageTokenUPA === 'string' ? request.query.nextPageTokenUPA : undefined;
+
+    if (!state || !city) {
+      return response.status(400).json({
+        error: "Estado e cidade são obrigatórios"
+      })
+    }
 
     try {
       const medicalUnits = await getMedicalUnits({ state, city, neighborhood, nextPageTokenUBS, nextPageTokenUPA });

@@ -11,7 +11,7 @@ class PatientMovementHistoryController {
 
     const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({
       where: {
-        id: body.disease_occurrence_id
+        id: body.diseaseOccurrenceId
       }
     })
 
@@ -81,7 +81,6 @@ class PatientMovementHistoryController {
     const body = request.body
     const { id } = request.params
             
-
     const isValidMovement = await PatientMovementHistoryRepository.findOne({ where: {id : id} })
 
     if(!isValidMovement) {
@@ -108,7 +107,6 @@ class PatientMovementHistoryController {
 
   async deleteOne(request: Request, response: Response) {
     const { id } = request.params
-            
 
     const isValidMovement = await PatientMovementHistoryRepository.findOne({ where: {id :id} })
 

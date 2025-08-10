@@ -5,7 +5,6 @@ import { HealthProtocolRepository } from "../repositories/HealthProtocolReposito
 
 class HealthProtocolController {
 
-
   async create(request: Request, response: Response) {
     const body = request.body
 

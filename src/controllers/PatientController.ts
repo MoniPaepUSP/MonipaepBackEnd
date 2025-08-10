@@ -29,7 +29,13 @@ class PatientController {
     });
 
     if (patientAlreadyExists) {
-      throw new PatientAlreadyExistsError();
+      const error = new PatientAlreadyExistsError(undefined, "Paciente com esse CPF ou email já existe");
+      return response.status(error.httpCode).json({
+        apiContext: error.apiContext,
+        httpCode: error.httpCode,
+        message: error.message,
+        externalServiceError: error.externalServiceError
+      });
     }
 
     body.createdAt = new Date();
@@ -258,6 +264,25 @@ class PatientController {
     }
 
     const patientsList = await PatientsRepository.findAndCount(options)
+    for (const patient of patientsList[0]) {
+      const activeDiseaseOccurrences = await DiseaseOccurrenceRepository.createQueryBuilder("occurrence")
+        .where("occurrence.patientId = :patientId", { patientId: patient.id })
+        .andWhere(
+          "(occurrence.dateEnd > :now OR occurrence.dateEnd IS NULL)",
+          { now: new Date() }
+        )
+        .orderBy("occurrence.dateStart", "DESC")
+        .getMany();
+
+      let status = "Saudável";
+      if (activeDiseaseOccurrences.length) {
+        status = activeDiseaseOccurrences[0].status;
+      }
+
+      // Put status inside patient object
+      (patient as any).status = status;
+    }
+
     return response.json({
       patients: patientsList[0],
       totalPatients: patientsList[1]

@@ -68,7 +68,7 @@ router.post("/patients/signup", patientController.create) //geral
 router.post("/patients/login", patientController.login) //geral
 router.get("/patients", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.list) //funcionarios autenticados
 router.get("/patients/me", jwt.authMiddleware, patientController.getOneWithToken) //geral autenticado*
-router.get("/patients/:id", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.getOne)
+router.get("/patients/:id", jwt.authMiddleware, jwt.systemUserMiddleware, patientController.getOne) //funcionarios autenticados
 router.put("/patients/alter", jwt.authMiddleware, patientController.alterOne) //geral autenticado*
 router.put("/patients/deactivate/:id", jwt.authMiddleware, patientController.deactivateAccount) //geral autenticado*
 router.delete("/patients/:id", jwt.authMiddleware, jwt.adminMiddleware, patientController.deleteOne) //funcionarios autenticados
@@ -108,7 +108,8 @@ router.delete("/diseaseoccurrence/:id", jwt.authMiddleware, jwt.systemUserMiddle
 
 // SymptomOccurrence Routes
 router.post("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.create)//geral autenticado*
-router.get("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.list)//geral autenticado
+router.get("/symptomoccurrence", jwt.authMiddleware, symptomOccurrenceController.listFromToken)//geral autenticado
+router.get("/symptomoccurrence/list", jwt.authMiddleware, jwt.systemUserMiddleware, symptomOccurrenceController.list)//geral autenticado
 router.get("/symptomoccurrence/:id", jwt.authMiddleware, symptomOccurrenceController.findOne)//geral autenticado*
 router.get("/symptomoccurrence/:id/analysis", jwt.authMiddleware, symptomOccurrenceController.analysis) // geral autenticado*
 router.post("/symptomoccurrence/:id/protocol", jwt.authMiddleware, symptomOccurrenceController.protocol) // geral autenticado*
@@ -134,8 +135,8 @@ router.put("/faq/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqControll
 router.delete("/faq/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqController.deleteOne)//usuario de sistema autenticado
 
 // FAQ Suggestions Routes
-router.post("/faqsuggestion", faqSuggestionsController.create)
-router.get("/faqsuggestion", faqSuggestionsController.list)
+router.post("/faqsuggestion", jwt.authMiddleware, faqSuggestionsController.create)
+router.get("/faqsuggestion", jwt.authMiddleware, jwt.systemUserMiddleware, faqSuggestionsController.list)
 router.delete("/faqsuggestion/:id", jwt.authMiddleware, jwt.systemUserMiddleware, faqSuggestionsController.deleteOne)
 
 // About The App Routes

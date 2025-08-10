@@ -68,7 +68,7 @@ class SymptomOccurrenceController {
 
   async list(request: Request, response: Response) {
     try {
-      const { id, patientId, symptom_name, disease_occurrence_id, unassigned } = request.query;
+      const { id, patientId, symptomName, diseaseOccurrenceId, unassigned } = request.query;
       let filters: any = {};
 
       if (id) {
@@ -91,18 +91,18 @@ class SymptomOccurrenceController {
         filters.patientId = String(patientId);
       }
 
-      if (symptom_name) {
-        filters.symptoms = Like(`%${String(symptom_name)}%`);
+      if (symptomName) {
+        filters.symptoms = Like(`%${String(symptomName)}%`);
       }
 
-      if (disease_occurrence_id) {
+      if (diseaseOccurrenceId) {
         const diseaseOccurrence = await DiseaseOccurrenceRepository.findOne({
-          where: { id: String(disease_occurrence_id) },
+          where: { id: String(diseaseOccurrenceId) },
         });
         if (!diseaseOccurrence) {
           return response.status(404).json({ error: "Ocorrência de doença não encontrada" });
         }
-        filters.diseaseOccurrenceId = String(disease_occurrence_id);
+        filters.diseaseOccurrenceId = String(diseaseOccurrenceId);
       }
 
       if (unassigned) {
@@ -124,6 +124,35 @@ class SymptomOccurrenceController {
       });
     } catch (error) {
       console.error("Erro ao listar ocorrências:", error);
+      return response.status(500).json({ error: "Erro na listagem de ocorrências de sintomas" });
+    }
+  }
+
+  async listFromToken(request: any, response: Response) {
+    const { id: patientId, type } = request.tokenPayload;
+
+    if (type !== 'patient') {
+      return response.status(401).json({
+        error: "Token inválido para essa requisição"
+      });
+    } 
+
+    try {
+      const symptomOccurrences = await SymptomOccurrenceRepository.find({
+        where: { patientId },
+        order: { registeredDate: "DESC" },
+        relations: {
+          symptoms: true,
+          patient: true,
+        }
+      });
+
+      return response.status(200).json({
+        symptomOccurrences,
+        totalSymptomOccurrences: symptomOccurrences.length,
+      });
+    } catch (error) {
+      console.error("Erro ao listar ocorrências de sintomas:", error);
       return response.status(500).json({ error: "Erro na listagem de ocorrências de sintomas" });
     }
   }
