@@ -10,7 +10,6 @@ class PermissionsController {
   async create(request: Request, response: Response){
     const body = request.body
 
-
     const userExists = await SystemUserRepository.findOne({
       where : {
         id: body.userId

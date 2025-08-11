@@ -11,7 +11,7 @@ class HealthProtocolController {
     const isAlreadyRegistered = await HealthProtocolRepository.findOne({
       where: {
         diseaseId: body.diseaseId,
-        gravityLevel: body.gravityLabel
+        gravityLevel: body.gravityLevel
       }
     })
 

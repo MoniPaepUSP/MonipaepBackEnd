@@ -75,7 +75,9 @@ router.delete("/patients/:id", jwt.authMiddleware, jwt.adminMiddleware, patientC
 
 // USM Routes
 router.post("/usm", jwt.authMiddleware, jwt.adminMiddleware, usmController.create)//adm e adm local
+router.post("/usm/bulk", jwt.authMiddleware, jwt.adminMiddleware, usmController.bulkCreate)//adm e adm local
 router.get("/usm", usmController.list)//geral sem autenticacao
+router.get("/usm/closeby", jwt.authMiddleware, usmController.listCloseBy)//geral autenticado
 router.put("/usm/:id", jwt.authMiddleware, jwt.adminMiddleware, usmController.alterOne)//adm e adm local
 router.delete("/usm/:id", jwt.authMiddleware, jwt.adminMiddleware, usmController.deleteOne)//adm e adm local
 router.get("/usm/google/places", jwt.authMiddleware, usmController.getGooglePlaces)//geral sem autenticacao

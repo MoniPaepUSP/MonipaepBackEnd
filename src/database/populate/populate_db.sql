@@ -31,7 +31,7 @@ VALUES (
 );
 
 -- Insert some example data into the usm table
-INSERT INTO usm (id, name, state, city, neighborhood, street, number, weekday_descriptions, latitude, longitude)
+INSERT INTO usm (id, name, state, city, neighborhood, street, number, weekday_descriptions, latitude, longitude, type)
 VALUES 
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36900',
@@ -45,7 +45,8 @@ VALUES
     'sábado: Atendimento 24 horas',
     'domingo: Atendimento 24 horas'
   ],
-  -21.9962442, -47.9150354
+  -21.9962442, -47.9150354,
+  'UPA'
 ),
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36901',
@@ -59,11 +60,12 @@ VALUES
     'sábado: Atendimento 24 horas',
     'domingo: Atendimento 24 horas'
   ],
-  -22.035452, -47.8963573
+  -22.035452, -47.8963573,
+  'UPA'
 ),
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36902',
-  'UPA Cidade Aracy', 'SP', 'São Carlos', 'Cidade Aracy', 's/r', NULL,
+  'UPA Cidade Aracy', 'SP', 'São Carlos', 'Cidade Aracy', 'R. Reinaldo Pizani', 357,
   ARRAY[
     'segunda-feira: Atendimento 24 horas',
     'terça-feira: Atendimento 24 horas',
@@ -73,13 +75,8 @@ VALUES
     'sábado: Atendimento 24 horas',
     'domingo: Atendimento 24 horas'
   ],
-  -22.0551792, -47.9133565
-),
-(
-  '5b88a57f-55d0-44cb-9bb0-504d82d36903',
-  'UNIDADE DE PRONTO ATENDIMENTO UPA CIDADE ARACY', 'SP', 'São Carlos', 'Cidade Aracy', 'R. Reinaldo Pizani', '357',
-  NULL,
-  -22.0533165, -47.9143543
+  -22.0551792, -47.9133565,
+  'UPA'
 ),
 (
   '5b88a57f-55d0-44cb-9bb0-504d82d36904',
@@ -93,7 +90,8 @@ VALUES
     'sábado: Fechado',
     'domingo: Fechado'
   ],
-  -21.9990823, -47.9194131
+  -21.9990823, -47.9194131,
+  'UBS'
 );
 
 INSERT INTO faq_group (id, name)
@@ -207,7 +205,6 @@ VALUES
   ('Sensação de desmaio', 'Percepção iminente de perda da consciência'),
   ('Sangramento nasal', 'Perda de sangue pelas narinas'),
   ('Falta de apetite', 'Redução ou ausência da vontade de se alimentar'),
-  ('Irritabilidade', 'Mudanças de humor frequentes com maior tendência à irritação'),
   ('Sensibilidade à luz', 'Desconforto ou dor ao olhar para fontes de luz'),
   ('Olhos vermelhos', 'Irritação ocular com coloração avermelhada da esclera'),
   ('Olhos lacrimejantes', 'Produção excessiva de lágrimas'),

@@ -93,8 +93,14 @@ export async function getMedicalUnits({ state, city, neighborhood, nextPageToken
     })
   }
 
-  const dataUBS = await responseUBS.json();
-  const dataUPA = await responseUPA.json();
+  let dataUBS = { places: [], nextPageToken: '' };
+  let dataUPA = { places: [], nextPageToken: '' };
+  if (responseUBS.ok) {
+    dataUBS = await responseUBS.json();
+  }
+  if (responseUPA.ok) {
+    dataUPA = await responseUPA.json();
+  }
 
   const placesUBS = (dataUBS.places as Place[]) ?? [];
   const placesUPA = (dataUPA.places as Place[]) ?? [];
