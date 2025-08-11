@@ -9,7 +9,7 @@ export const verifyOccurrencesExpiration = async () => {
     where: {
       status: In(["Suspeito", "Infectado"])
     },
-    relations: ["Disease"]
+    relations: ["diseases"]
   })
 
   const dayInMs = 1000 * 60 * 60 * 24
