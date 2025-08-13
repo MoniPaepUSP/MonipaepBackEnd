@@ -24,7 +24,7 @@ class HealthProtocol {
   instructions: string;
 
   @Column({ type: "varchar", nullable: true, name: "refer_usm" })
-  referUSM?: null | "UPA" | "UBS"
+  referUSM?: "UPA" | "UBS"
 
   @ManyToMany(() => Symptom, (symptom) => symptom.healthProtocols, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinTable({

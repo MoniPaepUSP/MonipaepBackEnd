@@ -170,7 +170,7 @@ class PatientController {
         });
       }
 
-      refreshToken.patientId = null; // Avoid exposing sensitive data
+      refreshToken.patientId = undefined; // Avoid exposing sensitive data
 
       const activeDiseaseOccurrences = await DiseaseOccurrenceRepository.createQueryBuilder("occurrence")
         .where("occurrence.patientId = :patientId", { patientId: patient.id })

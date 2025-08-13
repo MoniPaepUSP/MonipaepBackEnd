@@ -51,11 +51,9 @@ class SymptomOccurrenceController {
         patientId: id,
         registeredDate,
         symptoms,
-        remarks: remarks.trim() || null,
-        chat: false,
-        probableDiseases: [],
-        diseaseOccurrenceId: ongoingDiseaseOccurrence ? ongoingDiseaseOccurrence.id : null,
-        isPatientInRiskGroup: false, // Default value, can be updated later
+        remarks: remarks.trim(),
+        diseaseOccurrenceId: ongoingDiseaseOccurrence?.id,
+        isPatientInRiskGroup: false,
       })
       const symptomOccurrence = await SymptomOccurrenceRepository.save(newSymptomOccurrence);
 
@@ -135,7 +133,7 @@ class SymptomOccurrenceController {
       return response.status(401).json({
         error: "Token inválido para essa requisição"
       });
-    } 
+    }
 
     try {
       const symptomOccurrences = await SymptomOccurrenceRepository.find({
@@ -295,7 +293,7 @@ class SymptomOccurrenceController {
         relations: ["comorbidities", "specialConditions"]
       });
 
-      // build a map: diseaseId → boolean (isPatientInRiskGroup)
+      // build a map
       const comorbiditiesMap = new Map<string, string[]>();
       const specialConditionsMap = new Map<string, string[]>();
       for (const disease of diseases) {
@@ -399,9 +397,8 @@ class SymptomOccurrenceController {
         4. Informe se é necessário ir a uma UPA/UBS;
         5. Seja amigável, acolhedor e profissional;
         6. Use uma linguagem acessível, sem termos médicos difíceis;
-        7. Tenha no máximo 300 caracteres.
+        7. Tenha no máximo 1000 caracteres.
         `;
-
 
       // Geração da mensagem com responses
       const responses = await openai.chat.completions.create({

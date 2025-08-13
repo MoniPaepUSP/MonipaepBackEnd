@@ -17,16 +17,16 @@ export class RefreshToken {
   expiresIn: number;
 
   @Column({ type: "uuid", nullable: true, name: "patient_id" })
-  patientId: string | null;
+  patientId?: string;
 
   @Column({ type: "uuid", nullable: true, name: "system_user_id" })
-  systemUserId: string | null;
+  systemUserId?: string;
 
   @ManyToOne(() => Patient, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "patient_id" })
-  patient: Patient | null;
+  patient?: Patient;
 
   @ManyToOne(() => SystemUser, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinColumn({ name: "system_user_id" })
-  systemUser: SystemUser | null;
+  systemUser?: SystemUser;
 }

@@ -18,16 +18,16 @@ export class USM {
   neighborhood: string;
 
   @Column({ type: "varchar", nullable: true })
-  street: string | null;
+  street?: string;
 
   @Column({ type: "varchar", nullable: true })
-  number: string | null;
+  number?: string;
 
   @Column("text", { array: true, name: "weekday_descriptions", nullable: true })
-  weekdayDescriptions?: string[] | null;
+  weekdayDescriptions?: string[];
 
   @Column({ type: "varchar", nullable: true })
-  type?: null | "UPA" | "UBS"
+  type?: "UPA" | "UBS"
 
   @Column({ type: "double precision" })
   latitude: number;

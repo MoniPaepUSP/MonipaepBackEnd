@@ -40,7 +40,7 @@ export const verifyOccurrencesExpiration = async () => {
       try {
         await DiseaseOccurrenceRepository.createQueryBuilder()
           .update(DiseaseOccurrence)
-          .set({ status: newStatus, dateEnd: new Date() })
+          .set({ status: newStatus, dateEnd: new Date(expirationDate) })
           .where("id = :id", { id: occurrence.id })
           .execute();
       } catch (error) { console.log('CronJob - Occurrence error: ', error) }

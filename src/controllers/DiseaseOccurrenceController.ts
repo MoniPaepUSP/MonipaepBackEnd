@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { IsNull, Like, Repository } from "typeorm";
 
-import { DiseaseOccurrence, Patient, SymptomOccurrence } from "../models";
+import { Disease, DiseaseOccurrence, Patient, SymptomOccurrence } from "../models";
 import {
   DiseaseOccurrenceRepository,
   DiseaseRepository,
@@ -34,14 +34,14 @@ class DiseaseOccurrenceController {
     }
 
     if (!body.dateStart) {
-      body.dateStart = new Date()
+      body.dateStart = new Date(body.dateStart)
     }
 
-    let diseases = [], duration = 0;
-    for (let id in body.diseaseId) {
+    let diseases = [];
+    for (let id of body.diseaseIds) {
       const validDisease = await DiseaseRepository.findOne({
         where: {
-          name: id
+          id
         }
       })
 
@@ -51,17 +51,12 @@ class DiseaseOccurrenceController {
         })
       }
 
-      if (body.status == "Suspeito")
-        duration = Math.max(duration, validDisease.suspectedMonitoringDays);
-      else if (body.status == "Infectado")
-        duration = Math.max(duration, validDisease.infectedMonitoringDays);
       diseases.push(validDisease);
     }
 
     const diseaseOccurrenceBody = DiseaseOccurrenceRepository.create({
       status: body.status,
       dateStart: body.dateStart,
-      dateEnd: duration ? new Date(new Date(body.dateStart).getTime() + duration * 24 * 60 * 60 * 1000) : null,
       diagnosis: body.diagnosis,
       patient: patientExists,
       diseases
@@ -102,7 +97,6 @@ class DiseaseOccurrenceController {
       id,
       patientId,
       patientName,
-      diseaseName,
       status,
       page
     } = request.query
@@ -114,13 +108,14 @@ class DiseaseOccurrenceController {
       const limit = page ? take : 99999999
       try {
         const items = await DiseaseOccurrenceRepository.createQueryBuilder("diseaseOccurrence")
-          .leftJoinAndSelect("diseaseOccurrence.patient", "patients")
-          .where("patients.name like :name", { name: `%${patientName}%` })
+          .leftJoinAndSelect("diseaseOccurrence.patient", "patient")
+          .where("patient.name like :name", { name: `%${patientName}%` })
           .skip(skip)
           .take(limit)
           .orderBy('diseaseOccurrence.dateStart', 'DESC')
           .addOrderBy('diseaseOccurrence.status', 'ASC')
           .getManyAndCount()
+
         const formattedData = items[0].map(occurrence => {
           return {
             ...occurrence,
@@ -149,17 +144,13 @@ class DiseaseOccurrenceController {
       filters = { ...filters, patientId: String(patientId) }
     }
 
-    if (diseaseName) {
-      filters = { ...filters, diseaseName: Like(`%${String(diseaseName)}%`) }
-    }
-
     if (status) {
       filters = { ...filters, status: Like(`%${String(status)}%`) }
     }
 
     let options: any = {
       where: filters,
-      relations: ["patient"],
+      relations: ["patient", "diseases"],
       order: {
         dateStart: 'DESC',
         status: 'ASC'
@@ -191,86 +182,76 @@ class DiseaseOccurrenceController {
   async listDiseaseDetails(request: Request, response: Response) {
     const { id } = request.params
 
-    const diseaseOccurrenceDetails = await DiseaseOccurrenceRepository.findOne({
+    const diseaseOccurrence = await DiseaseOccurrenceRepository.findOne({
       where: { id },
+      relations: ['diseases']
     })
 
-    if (!diseaseOccurrenceDetails) {
+    if (!diseaseOccurrence) {
       return response.status(404).json({
         error: "Ocorrência de doença não encontrada"
       })
     }
 
-    const movementHistory = await PatientMovementHistoryRepository.find({
-      where: { diseaseOccurrenceId: id },
-    })
+    // const movementHistory = await PatientMovementHistoryRepository.find({
+    //   where: { diseaseOccurrenceId: id },
+    // })
 
-    const symptomOccurrencesList = await SymptomOccurrenceRepository.find({
+    const symptomOccurrences = await SymptomOccurrenceRepository.find({
       where: { diseaseOccurrenceId: id },
       order: {
         registeredDate: 'DESC'
-      }
+      },
+      relations: ['symptoms']
     })
 
     return response.status(200).json({
-      occurrenceDetails: diseaseOccurrenceDetails,
-      symptomsList: symptomOccurrencesList,
-      movementHistory
+      diseaseOccurrence,
+      symptomOccurrences,
+      // movementHistory
     })
   }
 
   async alterOne(request: Request, response: Response) {
-    const body = request.body
-    const { id } = request.params
+    const body = request.body;
+    const { id } = request.params;
 
-    const isValidDiseaseOccurrence = await DiseaseOccurrenceRepository.findOne({ where: { id } })
+    const occurrence = await DiseaseOccurrenceRepository.findOne({
+      where: { id },
+      relations: ["diseases"] // preciso carregar relações para poder manipular/limpar
+    });
 
-    if (!isValidDiseaseOccurrence) {
-      return response.status(404).json({
-        error: "Ocorrência de doença não encontrada"
-      })
-    }
+    if (!occurrence) return response.status(404).json({ error: "Ocorrência de doença não encontrada" });
 
-    const patientExists = await PatientsRepository.findOne({
-      where: {
-        id: isValidDiseaseOccurrence.patientId
-      }
-    })
+    // valida paciente (se necessário)
+    const patientExists = await PatientsRepository.findOne({ where: { id: occurrence.patientId } });
+    if (!patientExists) return response.status(404).json({ error: "Paciente não encontrado" });
 
-    if (!patientExists) {
-      return response.status(404).json({
-        error: "Paciente não encontrado"
-      })
-    }
-
-    if (body.diseaseId) {
-      const diseaseExists = await DiseaseRepository.findOne({
-        where: {
-          name: body.diseaseId
-        }
-      })
-
-      if (!diseaseExists) {
-        return response.status(404).json({
-          error: "Doença não encontrada"
-        })
+    // montar array de entidades Disease
+    const diseases: Disease[] = [];
+    if (body.diseaseIds) {
+      for (const diseaseId of body.diseaseIds) {
+        const disease = await DiseaseRepository.findOne({ where: { id: diseaseId } });
+        if (!disease) return response.status(404).json({ error: `Doença ${diseaseId} não encontrada` });
+        diseases.push(disease);
       }
     }
+
+    // atualizar campos da ocorrência
+    occurrence.status = body.status ?? occurrence.status;
+    occurrence.dateStart = body.dateStart ?? occurrence.dateStart;
+    occurrence.dateEnd = body.dateEnd;
+    occurrence.diagnosis = body.diagnosis ?? occurrence.diagnosis;
+
+    // substituir relações (ou não, depende do comportamento desejado)
+    if (body.diseaseIds) occurrence.diseases = diseases;
 
     try {
-      await DiseaseOccurrenceRepository.createQueryBuilder()
-        .update(DiseaseOccurrence)
-        .set(body)
-        .where("id = :id", { id })
-        .execute()
-
-      return response.status(200).json({
-        success: "Ocorrência de doença atualizada"
-      })
-    } catch (error) {
-      return response.status(404).json({
-        error: "Erro na atualização da ocorrência de doença"
-      })
+      await DiseaseOccurrenceRepository.save(occurrence);
+      return response.status(200).json({ success: "Ocorrência de doença atualizada" });
+    } catch (err) {
+      console.error(err);
+      return response.status(500).json({ error: "Erro na atualização da ocorrência de doença" });
     }
   }
 

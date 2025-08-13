@@ -16,13 +16,13 @@ export class DiseaseOccurrence {
   id: string;
 
   @Column({ type: "varchar", nullable: true })
-  diagnosis: string | null;
+  diagnosis?: string;
 
   @Column({ type: "timestamp", name: "date_start" })
   dateStart: Date;
 
   @Column({ type: "timestamp", name: "date_end", nullable: true })
-  dateEnd?: Date | null;
+  dateEnd?: Date;
 
   @Column({ type: "varchar" })
   status: "Óbito" | "Infectado" | "Suspeito" | "Saudável";

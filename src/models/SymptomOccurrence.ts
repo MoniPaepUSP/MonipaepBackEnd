@@ -16,9 +16,6 @@ export class SymptomOccurrence {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: "boolean" })
-  chat: boolean;
-
   @ManyToMany(() => Symptom, (symptom) => symptom.symptomOccurrences, { onDelete: "CASCADE", onUpdate: "CASCADE" })
   @JoinTable({
     name: "symptom_occurrence_symptoms",
@@ -28,16 +25,16 @@ export class SymptomOccurrence {
   symptoms: Symptom[];
 
   @Column({ type: "text", nullable: true })
-  instructions: string | null;
+  instructions?: string;
 
   @Column({ type: "boolean", name: "is_patient_in_risk_group" })
   isPatientInRiskGroup: boolean;
-  
+
   @Column({ type: "varchar", nullable: true, name: "refer_usm" })
-  referUSM?: null | "UPA" | "UBS"
+  referUSM?: "UPA" | "UBS"
 
   @Column({ type: "text", name: "remarks", nullable: true })
-  remarks: string | null;
+  remarks?: string;
 
   @Column({ type: "timestamp", name: "registered_date" })
   registeredDate: Date;
@@ -50,17 +47,9 @@ export class SymptomOccurrence {
   patient: Patient;
 
   @Column({ type: "uuid", name: "disease_occurrence_id", nullable: true })
-  diseaseOccurrenceId: string | null;
+  diseaseOccurrenceId?: string;
 
-  @ManyToOne(() => DiseaseOccurrence, { onDelete: "CASCADE", onUpdate: "CASCADE" })
+  @ManyToOne(() => DiseaseOccurrence, { onDelete: "SET NULL", onUpdate: "CASCADE" })
   @JoinColumn({ name: "disease_occurrence_id" })
-  diseaseOccurrence: DiseaseOccurrence | null;
-
-  @Column({ type: "jsonb", name: "probable_diseases" })
-  probableDiseases: {
-    id: string;
-    name: string;
-    isPatientInRiskGroup: boolean;
-    suspictionScore: number;
-  }[];
+  diseaseOccurrence?: DiseaseOccurrence;
 }

@@ -5,9 +5,7 @@ import {
   HealthProtocolController,
   USMController,
   VaccineController,
-  ChatController,
   ComorbidityController,
-  ChatMessageController,
   PatientController,
   FAQController,
   AboutTheAppController,
@@ -40,8 +38,6 @@ const faqSuggestionsController = new FAQSuggestionsController()
 const faqGroupController = new FAQGroupController()
 const refreshTokenController = new RefreshTokenController()
 const aboutController = new AboutTheAppController
-const chatController = new ChatController()
-const chatMessageController = new ChatMessageController()
 const comorbidityController = new ComorbidityController()
 const specialConditionController = new SpecialConditionController()
 
@@ -158,10 +154,5 @@ router.post("/specialcondition", jwt.authMiddleware, jwt.localAdminMiddleware, s
 router.get("/specialcondition", specialConditionController.list)//geral sem autenticacao
 router.put("/specialcondition/:id", jwt.authMiddleware, jwt.localAdminMiddleware, specialConditionController.alterOne)///adm e adm locais
 router.delete("/specialcondition/:id", jwt.authMiddleware, jwt.localAdminMiddleware, specialConditionController.delete)//adm e adm locais
-
-// Chat Routes
-router.post("/chat", jwt.authMiddleware, chatController.chat) // geral autenticado*
-router.post("/chat/analysis", jwt.authMiddleware, chatController.analysis)
-router.get("/chat/:occurrence_id", jwt.authMiddleware, chatMessageController.getMessagesFromOccurrence) // geral autenticado*
 
 export { router }
