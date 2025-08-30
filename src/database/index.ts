@@ -42,6 +42,11 @@ export const AppDataSource = new DataSource({
     "logging": false,
     migrations: [migrationsGlob],
     entities: [entitiesGlob],
+    extra: {
+        max: 10,                // max number of clients in pool
+        idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
+        connectionTimeoutMillis: 5000, // time to wait before failing when no connection is available
+    }
 })
 
 
